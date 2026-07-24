@@ -55,6 +55,7 @@ import CountryExplorer from "./components/CountryExplorer";
 import CurrencyConverter from "./components/CurrencyConverter";
 import FlightBookingDesk from "./components/FlightBookingDesk";
 import VisaConsultantsDesk from "./components/VisaConsultantsDesk";
+import AiEmployeesHub from "./components/AiEmployeesHub";
 // @ts-ignore
 import qatarPlaneImg from "./assets/images/qatar_airways_plane_1783877120077.jpg";
 // @ts-ignore
@@ -90,7 +91,7 @@ const getVacancyTags = (vacancyId: string): string[] => {
 
 export default function App() {
   // Navigation / Tabs State
-  const [activeTab, setActiveTab] = useState<"home" | "vacancies" | "tracker" | "flights" | "portal" | "admin" | "ai-showcase" | "girls-jobs" | "country-picker" | "currency" | "consultants">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "vacancies" | "tracker" | "flights" | "portal" | "admin" | "ai-showcase" | "girls-jobs" | "country-picker" | "currency" | "consultants" | "ai-employees">("home");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Country Guide State
@@ -797,6 +798,14 @@ export default function App() {
               </span>
             </button>
             <button 
+              id="tab-btn-ai-employees"
+              onClick={() => setActiveTab("ai-employees")} 
+              className={`px-4 py-2 rounded-lg text-sm font-extrabold transition flex items-center gap-1.5 ${activeTab === "ai-employees" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20" : "bg-slate-900 border border-amber-500/30 text-amber-300 hover:text-amber-200 hover:bg-slate-850"}`}
+            >
+              <span>AI Employees Hub 🤖</span>
+              <span className="text-[9px] bg-amber-950/80 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30 font-mono uppercase">v2.0</span>
+            </button>
+            <button 
               id="tab-btn-ai-showcase"
               onClick={() => setActiveTab("ai-showcase")} 
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === "ai-showcase" ? "bg-amber-500 text-slate-950 font-bold shadow" : "text-slate-400 hover:text-amber-400"}`}
@@ -934,6 +943,14 @@ export default function App() {
             >
               <span>Flight Booking ✈️</span>
               <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-rose-900 text-rose-300 py-0.5 px-2 rounded-full font-bold">5-Star Qatar</span>
+            </button>
+            <button 
+              id="mobile-tab-btn-ai-employees"
+              onClick={() => { setActiveTab("ai-employees"); setIsMobileMenuOpen(false); }} 
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "ai-employees" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-300 hover:text-amber-200 bg-amber-950/30 border border-amber-500/30"}`}
+            >
+              <span>AI Employees Hub 🤖</span>
+              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-amber-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">ConsulPortal v2.0</span>
             </button>
             <button 
               id="mobile-tab-btn-ai-showcase"
@@ -1117,6 +1134,21 @@ export default function App() {
                             <div>
                               <p className="text-xs font-bold text-white group-hover:text-amber-400">Live Passport Tracker</p>
                               <p className="text-[9.5px] text-slate-400">Stamping progress tracker</p>
+                            </div>
+                          </button>
+
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setActiveTab("ai-employees");
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                            }}
+                            className="bg-amber-950/20 hover:bg-amber-950/40 hover:border-amber-500/50 border border-amber-500/20 p-2 rounded-xl text-left transition flex items-center gap-2 group cursor-pointer"
+                          >
+                            <span className="text-xl">🤖</span>
+                            <div>
+                              <p className="text-xs font-bold text-amber-300 group-hover:text-amber-200">AI Employees Hub v2.0</p>
+                              <p className="text-[9.5px] text-slate-400">7 Specialized Agents</p>
                             </div>
                           </button>
 
@@ -3295,7 +3327,14 @@ export default function App() {
           </div>
         )}
 
-        {/* TAB 5: AI INTEGRATION SHOWCASE & SIMULATOR */}
+        {/* TAB 5: AI EMPLOYEES HUB (CONSULPORTAL AI V2.0) */}
+        {activeTab === "ai-employees" && (
+          <div className="animate-fade-in">
+            <AiEmployeesHub />
+          </div>
+        )}
+
+        {/* TAB 6: AI INTEGRATION SHOWCASE & SIMULATOR */}
         {activeTab === "ai-showcase" && (
           <div className="animate-fade-in">
             <AiShowcasePortal />
