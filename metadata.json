@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Gulf, Schengen \u0026 Europe Career Portal",
+  "description": "A premium recruitment and visa consultancy platform for job vacancies in Gulf, Schengen, and European countries, featuring live passport tracking, flight booking, local Pakistani payment methods, and an interactive AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

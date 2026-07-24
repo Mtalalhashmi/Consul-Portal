@@ -1,0 +1,149 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default Deny Catch-All
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Primitives & Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'google.com');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'pehnawa179@gmail.com' ||
+        request.auth.token.email == 'bridgevisaimigration@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    // --- Entity Validation Helpers ---
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'name'])
+        && data.email is string && data.email.size() <= 128
+        && data.name is string && data.name.size() <= 128
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 32))
+        && (!('role' in data) || (data.role is string && data.role.size() <= 32))
+        && (!('passportNum' in data) || (data.passportNum is string && data.passportNum.size() <= 32))
+        && (!('trackId' in data) || (data.trackId is string && data.trackId.size() <= 64));
+    }
+
+    function isValidApplication(data) {
+      return data.keys().hasAll(['applicantEmail', 'vacancyId'])
+        && data.applicantEmail is string && data.applicantEmail.size() <= 128
+        && data.vacancyId is string && data.vacancyId.size() <= 64
+        && (!('applicantName' in data) || (data.applicantName is string && data.applicantName.size() <= 128))
+        && (!('targetCountry' in data) || (data.targetCountry is string && data.targetCountry.size() <= 64))
+        && (!('status' in data) || (data.status is string && data.status.size() <= 32));
+    }
+
+    function isValidPassportTrack(data) {
+      return data.keys().hasAll(['trackId', 'passportNum'])
+        && data.trackId is string && data.trackId.size() <= 64
+        && data.passportNum is string && data.passportNum.size() <= 32
+        && (!('candidateName' in data) || (data.candidateName is string && data.candidateName.size() <= 128))
+        && (!('country' in data) || (data.country is string && data.country.size() <= 64))
+        && (!('status' in data) || (data.status is string && data.status.size() <= 64))
+        && (!('userId' in data) || (data.userId is string && data.userId.size() <= 128));
+    }
+
+    function isValidEmail(data) {
+      return data.keys().hasAll(['recipientEmail', 'subject'])
+        && data.recipientEmail is string && data.recipientEmail.size() <= 128
+        && data.subject is string && data.subject.size() <= 256
+        && (!('body' in data) || (data.body is string && data.body.size() <= 4096));
+    }
+
+    function isValidSetting(data) {
+      return data.keys().hasAll(['key'])
+        && data.key is string && data.key.size() <= 64
+        && (!('value' in data) || (data.value is string && data.value.size() <= 4096));
+    }
+
+    // --- Collection Rules ---
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isOwner(userId) && isValidUser(incoming()) && incoming().role != 'admin';
+      allow update: if isValidId(userId) && isValidUser(incoming()) && (
+        isAdmin() ||
+        (isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'passportNum', 'trackId', 'updatedAt']))
+      );
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    // Applications Collection
+    match /applications/{applicationId} {
+      allow get: if isValidId(applicationId) && (
+        isAdmin() || (isSignedIn() && existing().applicantEmail == request.auth.token.email)
+      );
+      allow list: if isAdmin() || (isSignedIn() && resource.data.applicantEmail == request.auth.token.email);
+      allow create: if isValidId(applicationId) && isSignedIn() && isValidApplication(incoming()) && incoming().applicantEmail == request.auth.token.email;
+      allow update: if isValidId(applicationId) && isValidApplication(incoming()) && (
+        isAdmin() || (isSignedIn() && existing().applicantEmail == request.auth.token.email && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Passports Collection
+    match /passports/{trackId} {
+      allow get: if isValidId(trackId) && (
+        isAdmin() || (isSignedIn() && (existing().userId == request.auth.uid || existing().candidateEmail == request.auth.token.email))
+      );
+      allow list: if isAdmin() || (isSignedIn() && (resource.data.userId == request.auth.uid || resource.data.candidateEmail == request.auth.token.email));
+      allow create: if isValidId(trackId) && (isAdmin() || (isSignedIn() && isValidPassportTrack(incoming())));
+      allow update: if isValidId(trackId) && isValidPassportTrack(incoming()) && (
+        isAdmin() || (isSignedIn() && existing().userId == request.auth.uid)
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Emails Virtual Mailbox
+    match /emails/{emailId} {
+      allow get: if isValidId(emailId) && (
+        isAdmin() || (isSignedIn() && existing().recipientEmail == request.auth.token.email)
+      );
+      allow list: if isAdmin() || (isSignedIn() && resource.data.recipientEmail == request.auth.token.email);
+      allow create: if isAdmin() || (isSignedIn() && isValidEmail(incoming()));
+      allow update, delete: if isAdmin();
+    }
+
+    // Settings Collection
+    match /settings/{settingId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin() && isValidSetting(incoming());
+    }
+
+    // Admins Registry
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

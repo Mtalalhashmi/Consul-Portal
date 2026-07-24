@@ -1,0 +1,96 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Registered candidate or admin profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "format": "email", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "role": { "type": "string", "maxLength": 32 },
+        "passportNum": { "type": "string", "maxLength": 32 },
+        "trackId": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["email", "name"]
+    },
+    "Application": {
+      "title": "Application",
+      "description": "Job application submitted by candidate",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "applicantEmail": { "type": "string", "format": "email", "maxLength": 128 },
+        "applicantName": { "type": "string", "maxLength": 128 },
+        "vacancyId": { "type": "string", "maxLength": 64 },
+        "targetCountry": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "maxLength": 32 },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["applicantEmail", "vacancyId"]
+    },
+    "PassportTrack": {
+      "title": "PassportTrack",
+      "description": "Passport milestone and tracking state",
+      "type": "object",
+      "properties": {
+        "trackId": { "type": "string", "maxLength": 64 },
+        "candidateName": { "type": "string", "maxLength": 128 },
+        "passportNum": { "type": "string", "maxLength": 32 },
+        "country": { "type": "string", "maxLength": 64 },
+        "status": { "type": "string", "maxLength": 64 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["trackId", "passportNum"]
+    },
+    "Email": {
+      "title": "Email",
+      "description": "Virtual inbox mail notification for candidate",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "recipientEmail": { "type": "string", "format": "email", "maxLength": 128 },
+        "subject": { "type": "string", "maxLength": 256 },
+        "body": { "type": "string", "maxLength": 4096 },
+        "sentAt": { "type": "string" }
+      },
+      "required": ["recipientEmail", "subject"]
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Global application configuration settings",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string", "maxLength": 64 },
+        "value": { "type": "string", "maxLength": 4096 }
+      },
+      "required": ["key"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile collection"
+    },
+    "/applications/{applicationId}": {
+      "schema": { "$ref": "#/entities/Application" },
+      "description": "Candidate job applications collection"
+    },
+    "/passports/{trackId}": {
+      "schema": { "$ref": "#/entities/PassportTrack" },
+      "description": "Passport tracking records"
+    },
+    "/emails/{emailId}": {
+      "schema": { "$ref": "#/entities/Email" },
+      "description": "Virtual mail inbox records"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Global settings"
+    }
+  }
+}
