@@ -1006,8 +1006,14 @@ export default function App() {
                 <span className="text-slate-300 font-mono">Government Approved Agency Coordination</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight leading-tight text-white">
-                Premium Careers in the <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-teal-400 bg-clip-text text-transparent">Gulf, Schengen</span> & Europe
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight leading-tight">
+                <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-200 bg-clip-text text-transparent drop-shadow-sm">
+                  Premium Careers
+                </span>{" "}
+                <span className="text-slate-100">in the</span>{" "}
+                <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+                  Gulf, Schengen &amp; Europe
+                </span>
               </h1>
 
               <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl">
