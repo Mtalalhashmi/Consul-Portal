@@ -97,8 +97,8 @@ export default function App() {
   const [selectedCountryGuide, setSelectedCountryGuide] = useState<string>("Saudi Arabia");
 
   // Dynamic Settings States
-  const [whatsAppNum, setWhatsAppNum] = useState("923241332576");
-  const [whatsAppDisplay, setWhatsAppDisplay] = useState("+92 324 1332576");
+  const [whatsAppNum, setWhatsAppNum] = useState("923002122123");
+  const [whatsAppDisplay, setWhatsAppDisplay] = useState("+92 300 2122123");
   const [paymentMethods, setPaymentMethods] = useState<any[]>(PAKISTANI_PAYMENT_METHODS);
 
   // Fetch settings from server on mount with resilient retries
@@ -3422,7 +3422,7 @@ export default function App() {
                   First St SE, Washington, D.C. 20004
                 </p>
                 <p className="text-[11px] text-amber-400 font-bold pt-1">
-                  Phone: +92 324 1332576
+                  Phone: +92 300 2122123
                 </p>
                 <a 
                   href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}

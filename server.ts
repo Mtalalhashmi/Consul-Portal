@@ -313,8 +313,8 @@ const SENT_EMAILS: EmailNotification[] = [
 
 // App settings state
 const APP_SETTINGS = {
-  whatsAppNum: "923241332576",
-  whatsAppDisplay: "+92 324 1332576",
+  whatsAppNum: "923002122123",
+  whatsAppDisplay: "+92 300 2122123",
   paymentMethods: [
     {
       id: "easypaisa",
@@ -2837,7 +2837,7 @@ ${activeVacanciesDescription}
 - Actions: Review applicants, update tracking milestones, manage escrow payments, and monitor live AI chatbot analytics.
 
 7. CONTACT & HELPLINE INFORMATION
-- WhatsApp Support Number: ${APP_SETTINGS.whatsAppDisplay || "+92 324 1332576"} (Linkable number format: ${APP_SETTINGS.whatsAppNum || "923241332576"})
+- WhatsApp Support Number: ${APP_SETTINGS.whatsAppDisplay || "+92 300 2122123"} (Linkable number format: ${APP_SETTINGS.whatsAppNum || "923002122123"})
 - Landline Hotline: +92 (51) 485-7860
 - Email Support: process@consulportal.com.pk (or Brigevisaimigration@gmail.com)
 - Physical Location: First St SE, Washington, D.C. 20004
@@ -2869,10 +2869,10 @@ function getSmartMockResponse(message: string): string {
     return "Yes! All fee deposits are fully protected by a Secure Escrow Wallet. Funds are only released to recruiters once a step is verified. If the embassy rejects your visa application, any unreleased milestone fees are 100% refundable within 5 business days!";
   }
   if (msg.includes("contact") || msg.includes("whatsapp") || msg.includes("phone") || msg.includes("address") || msg.includes("email") || msg.includes("support")) {
-    return `You can connect with us directly:\n- **WhatsApp Support**: ${APP_SETTINGS.whatsAppDisplay || "+92 324 1332576"}\n- **Hotline**: +92 (51) 485-7860\n- **Email**: process@consulportal.com.pk\n- **Office**: First St SE, Washington, D.C. 20004\nYou can also use the contact forms on our Home portal!`;
+    return `You can connect with us directly:\n- **WhatsApp Support**: ${APP_SETTINGS.whatsAppDisplay || "+92 300 2122123"}\n- **Hotline**: +92 (51) 485-7860\n- **Email**: process@consulportal.com.pk\n- **Office**: First St SE, Washington, D.C. 20004\nYou can also use the contact forms on our Home portal!`;
   }
   if (msg.includes("consultation") || msg.includes("book") || msg.includes("appointment")) {
-    return `You can book a premium career consultation by reaching out to our WhatsApp support at **${APP_SETTINGS.whatsAppDisplay || "+92 324 1332576"}** or submit a call-back request on the [Home Portal](tab:home).`;
+    return `You can book a premium career consultation by reaching out to our WhatsApp support at **${APP_SETTINGS.whatsAppDisplay || "+92 300 2122123"}** or submit a call-back request on the [Home Portal](tab:home).`;
   }
   if (msg.includes("faq") || msg.includes("frequently asked") || msg.includes("question")) {
     return "Our top FAQs are: 1. Are fees refundable? (Yes, 100% refund via Escrow if rejected). 2. How to pay? (EasyPaisa, JazzCash, Bank Transfer). 3. How long does it take? (Schengen 60-90 days, Gulf 15-30 days). Try asking me about specific refund rules or payment methods!";
