@@ -187,6 +187,17 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Helper to get clean currency display prefix (e.g., "$ ", "€ ", "AED ", etc.)
+  const getDisplayCurrencyPrefix = (symbol?: string, code?: string) => {
+    if (symbol && symbol.trim() && symbol !== "؋" && symbol !== ".د.ب" && symbol !== "د.ج") {
+      return `${symbol} `;
+    }
+    if (code && code.trim()) {
+      return `${code} `;
+    }
+    return "$ ";
+  };
+
   // Fallback details generator if API call fails or yields empty
   const getFallbackCountryDetails = (countryName: string): CountryDetails => {
     const raw = RAW_COUNTRIES.find(c => c.name.toLowerCase() === countryName.toLowerCase()) || {
@@ -204,8 +215,8 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
 
     return {
       country: raw.name,
-      currencyCode: raw.currencyCode,
-      currencySymbol: raw.currencySymbol,
+      currencyCode: raw.currencyCode || "USD",
+      currencySymbol: raw.currencySymbol || "$",
       capital: raw.capital,
       population: raw.population,
       timezone: raw.timezone,
@@ -222,7 +233,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
         transportationCost: 120,
         healthcareCost: 200,
         taxInfo: "Progressive Income Tax (12% - 38%)",
-        currency: `${raw.currencySymbol} (${raw.currencyCode})`,
+        currency: `${raw.currencySymbol || "$"} (${raw.currencyCode || "USD"})`,
         workingHours: "38-40 hrs/week",
         visaSponsorship: "Yes",
         workPermitInfo: "Express Skilled Work Permit & Regional Sponsorship",
@@ -235,7 +246,9 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
   // Fallback jobs generator if API call fails or yields empty
   const getFallbackJobs = (countryName: string): JobVacancy[] => {
     const raw = RAW_COUNTRIES.find(c => c.name.toLowerCase() === countryName.toLowerCase());
-    const symbol = raw?.currencySymbol || "€";
+    const symbol = (raw?.currencySymbol && raw.currencySymbol !== "؋" && raw.currencySymbol !== ".د.ب" && raw.currencySymbol !== "د.ج") 
+      ? raw.currencySymbol 
+      : (raw?.currencyCode || "$");
     const capital = raw?.capital || "Central District";
 
     return [
@@ -844,7 +857,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                     <div>
                       <p className="text-[10px] text-slate-500 uppercase font-mono">Currency Index</p>
                       <p className="font-semibold text-slate-200">
-                        {countryDetails.currencySymbol} - {countryDetails.currencyCode}
+                        {countryDetails.currencyName ? `${countryDetails.currencyName} (${countryDetails.currencyCode})` : `${countryDetails.currencyCode}`}
                       </p>
                     </div>
                   </div>
@@ -892,19 +905,19 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                       <div className="bg-slate-950/40 p-2.5 rounded-xl border border-slate-900/50">
                         <span className="text-[9px] text-slate-500 block uppercase font-mono">Minimum</span>
                         <span className="text-xs font-mono font-black text-slate-200">
-                          {countryDetails.currencySymbol}{countryDetails.stats.minSalary.toLocaleString()}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.minSalary.toLocaleString()}
                         </span>
                       </div>
                       <div className="bg-rose-500/5 p-2.5 rounded-xl border border-rose-500/10">
                         <span className="text-[9px] text-rose-400 block uppercase font-mono font-bold">Average</span>
                         <span className="text-sm font-mono font-black text-rose-300">
-                          {countryDetails.currencySymbol}{countryDetails.stats.avgSalary.toLocaleString()}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.avgSalary.toLocaleString()}
                         </span>
                       </div>
                       <div className="bg-slate-950/40 p-2.5 rounded-xl border border-slate-900/50">
                         <span className="text-[9px] text-slate-500 block uppercase font-mono">Maximum</span>
                         <span className="text-xs font-mono font-black text-slate-200">
-                          {countryDetails.currencySymbol}{countryDetails.stats.maxSalary.toLocaleString()}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.maxSalary.toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -923,7 +936,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] font-mono text-rose-400 font-bold block">
-                          {countryDetails.currencySymbol}{countryDetails.stats.avgLivingCost.toLocaleString()} / mo
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.avgLivingCost.toLocaleString()} / mo
                         </span>
                         <span className="text-[8px] text-slate-500 font-mono">Total Estimated</span>
                       </div>
@@ -935,7 +948,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                           <Home className="w-3.5 h-3.5 text-blue-400 shrink-0" /> Rent &amp; Flat
                         </span>
                         <strong className="text-slate-300 font-mono">
-                          {countryDetails.currencySymbol}{countryDetails.stats.monthlyRent}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.monthlyRent}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between p-2 bg-slate-950/30 rounded-xl border border-slate-950">
@@ -943,7 +956,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                           <Coins className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Food &amp; Dining
                         </span>
                         <strong className="text-slate-300 font-mono">
-                          {countryDetails.currencySymbol}{countryDetails.stats.foodExpenses}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.foodExpenses}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between p-2 bg-slate-950/30 rounded-xl border border-slate-950">
@@ -951,7 +964,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                           <Bus className="w-3.5 h-3.5 text-purple-400 shrink-0" /> Transit Card
                         </span>
                         <strong className="text-slate-300 font-mono">
-                          {countryDetails.currencySymbol}{countryDetails.stats.transportationCost}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.transportationCost}
                         </strong>
                       </div>
                       <div className="flex items-center justify-between p-2 bg-slate-950/30 rounded-xl border border-slate-950">
@@ -959,7 +972,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                           <HeartPulse className="w-3.5 h-3.5 text-rose-400 shrink-0" /> Health Cover
                         </span>
                         <strong className="text-slate-300 font-mono">
-                          {countryDetails.currencySymbol}{countryDetails.stats.healthcareCost}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.healthcareCost}
                         </strong>
                       </div>
                     </div>
@@ -1187,8 +1200,12 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                           </div>
 
                           <div className="flex items-start gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-center text-base font-bold text-amber-400 select-none shrink-0 shadow-inner">
-                              {job.companyLogo || "🏢"}
+                            <div className="w-10 h-10 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-center text-base font-bold text-amber-400 select-none shrink-0 shadow-inner overflow-hidden">
+                              {job.companyLogo && (job.companyLogo.startsWith("http://") || job.companyLogo.startsWith("https://")) ? (
+                                <img src={job.companyLogo} alt={job.companyName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              ) : (
+                                <span>{job.companyLogo || "🏢"}</span>
+                              )}
                             </div>
                             <div className="space-y-1">
                               <h4 className="text-xs font-black text-slate-100 group-hover:text-rose-400 transition-colors line-clamp-1">
@@ -1282,7 +1299,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                     </label>
                     <div className="relative flex items-center">
                       <span className="absolute left-3.5 text-xs text-slate-400 font-mono">
-                        {countryDetails.currencySymbol}
+                        {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}
                       </span>
                       <input
                         type="number"
@@ -1466,8 +1483,12 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                       </div>
                       
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-lg text-amber-500 font-bold select-none">
-                          {selectedJobForModal.companyLogo}
+                        <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-center text-lg text-amber-500 font-bold select-none overflow-hidden shrink-0">
+                          {selectedJobForModal.companyLogo && (selectedJobForModal.companyLogo.startsWith("http://") || selectedJobForModal.companyLogo.startsWith("https://")) ? (
+                            <img src={selectedJobForModal.companyLogo} alt={selectedJobForModal.companyName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <span>{selectedJobForModal.companyLogo || "🏢"}</span>
+                          )}
                         </div>
                         <div>
                           <h3 className="text-base font-black text-white">{selectedJobForModal.title}</h3>

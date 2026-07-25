@@ -1279,8 +1279,12 @@ export default function GlobalJobDirectory({
                       {/* Employer Info Row */}
                       <div className="flex items-start gap-3">
                         {/* Company Logo */}
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-base bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-850 shadow-inner shrink-0">
-                          {job.companyLogo}
+                        <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-base bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-850 shadow-inner shrink-0 overflow-hidden">
+                          {job.companyLogo && (job.companyLogo.startsWith("http://") || job.companyLogo.startsWith("https://")) ? (
+                            <img src={job.companyLogo} alt={job.companyName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <span>{job.companyLogo || job.title?.charAt(0) || "🏢"}</span>
+                          )}
                         </div>
                         
                         <div className="space-y-0.5">
