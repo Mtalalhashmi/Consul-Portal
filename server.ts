@@ -4064,7 +4064,7 @@ app.post("/api/jobs/search", async (req, res) => {
           Return ONLY the valid JSON array and nothing else. No markdown wrappers.
         `;
         const aiRes = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-2.5-flash",
           contents: aiPrompt,
           config: {
             temperature: 0.3,
