@@ -81,19 +81,20 @@ export default function CurrencyConverter() {
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Perform Calculation
+  // Perform Calculation safely
   useEffect(() => {
-    const rateFrom = getMockUsdRate(fromCurrency);
-    const rateTo = getMockUsdRate(toCurrency);
+    const rateFrom = getMockUsdRate(fromCurrency) || 1;
+    const rateTo = getMockUsdRate(toCurrency) || 1;
+    const safeAmt = isNaN(amount) ? 0 : amount;
     
-    // Amount in USD = amount / rateFrom
-    // Amount in ToCurrency = (amount / rateFrom) * rateTo
-    const inUsd = amount / rateFrom;
+    const inUsd = safeAmt / rateFrom;
     const finalAmount = inUsd * rateTo;
-    setConvertedAmount(Number(finalAmount.toFixed(2)));
+    const safeFinal = isNaN(finalAmount) ? 0 : finalAmount;
+    setConvertedAmount(Number(safeFinal.toFixed(2)));
 
     const singleRate = (1 / rateFrom) * rateTo;
-    setRateText(`1 ${fromCurrency} = ${singleRate.toFixed(4)} ${toCurrency}`);
+    const safeSingle = isNaN(singleRate) ? 0 : singleRate;
+    setRateText(`1 ${fromCurrency} = ${safeSingle.toFixed(4)} ${toCurrency}`);
   }, [amount, fromCurrency, toCurrency]);
 
   const handleSwap = () => {

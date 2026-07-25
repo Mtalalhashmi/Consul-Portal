@@ -1089,7 +1089,7 @@ export default function VisaConsultantsDesk({
                                 {role.sector}
                               </span>
                             </td>
-                            <td className="p-3 text-emerald-400 font-bold">${role.average_hourly_wage_usd.toFixed(2)}/hr</td>
+                            <td className="p-3 text-emerald-400 font-bold">${(role.average_hourly_wage_usd || 0).toFixed(2)}/hr</td>
                             <td className="p-3 text-right">
                               {role.seasonal_only ? (
                                 <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[9px] font-bold border border-amber-500/20">YES</span>

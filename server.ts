@@ -786,8 +786,8 @@ async function sendGmailIfConnectedDirect(to: string, subject: string, htmlBody:
           user,
           pass
         },
-        debug: true,
-        logger: true
+        debug: false,
+        logger: false
       });
 
       // Verify connection configuration
@@ -2347,51 +2347,37 @@ app.post("/api/admin/consultants/delete", (req, res) => {
 
 // Admin Authentication Route
 app.post("/api/admin/login", (req, res) => {
-  const { username, password, quickAccess } = req.body;
-  
-  if (quickAccess) {
-    return res.json({ success: true, token: "admin-jwt-token-consul" });
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username and password are required" });
   }
 
-  const rawUsername = (username || "").trim();
-  const rawPassword = (password || "").trim();
+  const rawUsername = String(username).trim();
+  const rawPassword = String(password).trim();
   const normalizedUsername = rawUsername.toLowerCase();
   const normalizedPassword = rawPassword.toLowerCase();
   
-  // Check USER_ACCOUNTS list
+  // Check USER_ACCOUNTS list for registered admin user
   const adminUser = USER_ACCOUNTS.find(u => 
     (u.email.toLowerCase() === normalizedUsername || u.name.toLowerCase() === normalizedUsername) &&
-    u.role === "admin"
+    u.role === "admin" &&
+    (u.password_hash === getPasswordHash(normalizedPassword) || u.password === normalizedPassword || u.password === rawPassword)
   );
 
-  const validUsernames = [
-    "admin", "bsaj1145", "bsaj1145@gmail", "bsaj1145@gmail.com", 
-    "admin@gmail.com", "admin@consulportal.com", "staff", "executive", "root"
-  ];
-  const validPasswords = [
-    "abd12345", "admin", "admin123", "password123", "123456", "consul123"
-  ];
+  // Authorized hardcoded admin credentials
+  const isAuthorizedStaff = (
+    (normalizedUsername === "bsaj1145" || normalizedUsername === "bsaj1145@gmail" || normalizedUsername === "bsaj1145@gmail.com") &&
+    (rawPassword === "abd12345" || normalizedPassword === "abd12345")
+  ) || (
+    (normalizedUsername === "admin" || normalizedUsername === "admin@consulportal.com" || normalizedUsername === "admin@gmail.com") &&
+    (rawPassword === "admin123" || rawPassword === "consul123" || rawPassword === "abd12345")
+  );
 
-  const isUsernameValid = validUsernames.includes(normalizedUsername) || 
-                          normalizedUsername.includes("admin") || 
-                          normalizedUsername.includes("bsaj") || 
-                          !!adminUser;
-
-  const isPasswordValid = validPasswords.includes(normalizedPassword) || 
-                          normalizedPassword.includes("abd12345") || 
-                          normalizedPassword.includes("admin") ||
-                          normalizedPassword.length >= 3;
-
-  if (isUsernameValid && isPasswordValid) {
-    return res.json({ success: true, token: "admin-jwt-token-consul" });
-  }
-  
-  // Direct fallback to always permit login if username & password are supplied
-  if (rawUsername.length > 0 && rawPassword.length > 0) {
+  if (adminUser || isAuthorizedStaff) {
     return res.json({ success: true, token: "admin-jwt-token-consul" });
   }
 
-  return res.status(401).json({ error: "Invalid admin credentials" });
+  return res.status(401).json({ error: "Invalid username or password. Access denied." });
 });
 
 // Admin endpoint to send test emails for verification

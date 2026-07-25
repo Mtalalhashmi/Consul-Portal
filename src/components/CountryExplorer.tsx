@@ -288,9 +288,13 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
            c.flag.includes(q);
   });
 
-  // Calculate exchanges
-  const pkrEquivalent = (exchangeAmount / localRate) * pkrRate;
-  const usdEquivalent = exchangeAmount / localRate;
+  // Calculate exchanges safely
+  const safeExchangeAmount = isNaN(exchangeAmount) || !exchangeAmount ? 0 : exchangeAmount;
+  const safeLocalRate = (!localRate || isNaN(localRate) || localRate === 0) ? 1 : localRate;
+  const safePkrRate = (!pkrRate || isNaN(pkrRate)) ? 278.5 : pkrRate;
+
+  const usdEquivalent = isNaN(safeExchangeAmount / safeLocalRate) ? 0 : (safeExchangeAmount / safeLocalRate);
+  const pkrEquivalent = isNaN(usdEquivalent * safePkrRate) ? 0 : (usdEquivalent * safePkrRate);
 
   // File Upload Handlers
   const processFile = (file: File) => {
@@ -1097,7 +1101,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                   </div>
 
                   <div className="text-[9px] font-mono text-slate-500 text-center">
-                    1 USD = {localRate.toFixed(4)} {countryDetails.currencyCode} | 1 USD = {pkrRate.toFixed(2)} PKR
+                    1 USD = {safeLocalRate.toFixed(4)} {countryDetails.currencyCode} | 1 USD = {safePkrRate.toFixed(2)} PKR
                   </div>
                 </div>
               </div>

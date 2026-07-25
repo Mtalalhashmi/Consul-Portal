@@ -220,7 +220,7 @@ export default function AdminPortal({
   };
 
   const calculateTotal = () => {
-    let total = baseFee;
+    let total = isNaN(baseFee) ? 0 : baseFee;
     if (embassyChecked) total += 50;
     if (translationChecked) total += 30;
     if (courierChecked) total += 40;
@@ -229,7 +229,7 @@ export default function AdminPortal({
     if (!isNaN(parsedCustom) && parsedCustom > 0) {
       total += parsedCustom;
     }
-    return total;
+    return isNaN(total) ? 0 : total;
   };
 
   const handleOpenEmailWithFees = () => {
@@ -485,35 +485,6 @@ export default function AdminPortal({
     }
   }, []);
 
-  const handleQuickLogin = async () => {
-    setLoginError("");
-    setLoading(true);
-    try {
-      const response = await fetch("/api/admin/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quickAccess: true })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("consul_admin_token", data.token);
-        setIsLoggedIn(true);
-        fetchDashboardData();
-      } else {
-        // Fallback local override
-        localStorage.setItem("consul_admin_token", "admin-jwt-token-consul");
-        setIsLoggedIn(true);
-        fetchDashboardData();
-      }
-    } catch (err) {
-      localStorage.setItem("consul_admin_token", "admin-jwt-token-consul");
-      setIsLoggedIn(true);
-      fetchDashboardData();
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError("");
@@ -530,23 +501,10 @@ export default function AdminPortal({
         setIsLoggedIn(true);
         fetchDashboardData();
       } else {
-        // Fallback local unlock if user entered credentials
-        if (username.trim() && password.trim()) {
-          localStorage.setItem("consul_admin_token", "admin-jwt-token-consul");
-          setIsLoggedIn(true);
-          fetchDashboardData();
-        } else {
-          setLoginError(data.error || "Authentication failed");
-        }
+        setLoginError(data.error || "Invalid admin credentials. Access denied.");
       }
     } catch (err) {
-      if (username.trim() && password.trim()) {
-        localStorage.setItem("consul_admin_token", "admin-jwt-token-consul");
-        setIsLoggedIn(true);
-        fetchDashboardData();
-      } else {
-        setLoginError("Failed to connect to authentication services.");
-      }
+      setLoginError("Failed to connect to authentication services.");
     } finally {
       setLoading(false);
     }
@@ -832,23 +790,6 @@ export default function AdminPortal({
           <p className="text-xs text-slate-400">Authenticate with secure credentials to access candidate registrations, verify escrow fees, and manage status timelines.</p>
         </div>
 
-        {/* Quick One-Click Sign In Banner */}
-        <button
-          type="button"
-          onClick={handleQuickLogin}
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-extrabold py-3.5 px-4 rounded-xl text-xs uppercase tracking-wider transition shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 group cursor-pointer"
-        >
-          <Sparkles className="w-4 h-4 text-slate-950 group-hover:scale-110 transition" />
-          <span>⚡ Instant 1-Click Executive Admin Access</span>
-        </button>
-
-        <div className="relative flex py-1 items-center">
-          <div className="flex-grow border-t border-slate-800"></div>
-          <span className="flex-shrink mx-3 text-[10px] font-mono text-slate-500 uppercase tracking-widest">Or sign in manually</span>
-          <div className="flex-grow border-t border-slate-800"></div>
-        </div>
-
         {loginError && (
           <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl text-xs text-red-400 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
@@ -856,34 +797,13 @@ export default function AdminPortal({
           </div>
         )}
 
-        {/* Demo Credentials Cheat Sheet */}
-        <div className="bg-slate-950/80 border border-amber-500/20 p-3.5 rounded-2xl space-y-1.5 text-xs text-slate-300">
-          <div className="flex items-center justify-between text-[10px] font-mono uppercase text-amber-400 font-bold">
-            <span>Staff Credentials Reference</span>
-            <button
-              type="button"
-              onClick={() => {
-                setUsername("bsaj1145@gmail.com");
-                setPassword("abd12345");
-              }}
-              className="text-amber-400 hover:underline cursor-pointer"
-            >
-              Auto-Fill Form
-            </button>
-          </div>
-          <div className="font-mono text-[11px] text-slate-400 flex flex-col gap-0.5">
-            <div>Username: <span className="text-white font-bold">bsaj1145@gmail.com</span> (or <span className="text-white">admin</span>)</div>
-            <div>Password: <span className="text-white font-bold">abd12345</span> (or <span className="text-white">admin123</span>)</div>
-          </div>
-        </div>
-
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
             <label className="block text-[11px] font-mono text-slate-400 uppercase">Executive ID / Username</label>
             <input 
               type="text" 
               required
-              placeholder="e.g. bsaj1145@gmail.com"
+              placeholder="Enter Admin Username or Email"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
