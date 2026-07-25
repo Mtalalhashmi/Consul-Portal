@@ -489,22 +489,40 @@ export default function AdminPortal({
     e.preventDefault();
     setLoginError("");
     setLoading(true);
+    
+    const cleanUsername = username.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanUsername || !cleanPassword) {
+      setLoginError("Please enter both username and password.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: cleanUsername, password: cleanPassword })
       });
-      const data = await response.json();
-      if (response.ok) {
-        localStorage.setItem("consul_admin_token", data.token);
+      
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        data = {};
+      }
+
+      if (response.ok && data.success) {
+        localStorage.setItem("consul_admin_token", data.token || "admin-jwt-token-consul");
         setIsLoggedIn(true);
         fetchDashboardData();
       } else {
-        setLoginError(data.error || "Invalid admin credentials. Access denied.");
+        setLoginError(data.error || "Invalid username or password. Access denied.");
       }
     } catch (err) {
-      setLoginError("Failed to connect to authentication services.");
+      console.error("Admin Login Fetch Error:", err);
+      setLoginError("Failed to connect to authentication server. Please verify your connection.");
     } finally {
       setLoading(false);
     }
