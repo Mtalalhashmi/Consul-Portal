@@ -389,7 +389,7 @@ export function AiShowcasePortal() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-4">
             <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80 space-y-0.5">
               <span className="text-[9px] font-mono text-slate-500 block uppercase">Autonomous Deflection</span>
-              <strong className="text-lg font-black text-white">{((deflectedCount / totalQueries) * 100).toFixed(1)}%</strong>
+              <strong className="text-lg font-black text-white">{(((deflectedCount || 0) / (totalQueries || 1)) * 100).toFixed(1)}%</strong>
               <div className="text-[9.5px] text-emerald-400 font-mono">⚡ Clear Tickets Instant</div>
             </div>
             <div className="bg-slate-950/70 p-3.5 rounded-2xl border border-slate-800/80 space-y-0.5">

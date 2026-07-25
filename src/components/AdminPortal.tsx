@@ -894,7 +894,7 @@ export default function AdminPortal({
         <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
           <span className="text-[10px] font-mono text-slate-500 block uppercase">Total Cash Verified</span>
           <span className="text-sm sm:text-base font-mono text-emerald-400 font-extrabold block mt-1.5">
-            PKR {passports.reduce((sum, p) => sum + p.totalPaid, 0).toLocaleString()}
+            PKR {passports.reduce((sum, p) => sum + (p.totalPaid || 0), 0).toLocaleString()}
           </span>
         </div>
       </div>
@@ -1146,7 +1146,7 @@ export default function AdminPortal({
                         <div>
                           <div className="text-xs font-bold text-white">Verified Attested File Storage</div>
                           <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                            {selectedApplication.uploadedFile.name} ({(selectedApplication.uploadedFile.size / 1024).toFixed(1)} KB)
+                            {selectedApplication.uploadedFile.name} ({((selectedApplication.uploadedFile.size || 0) / 1024).toFixed(1)} KB)
                           </p>
                         </div>
                       </div>

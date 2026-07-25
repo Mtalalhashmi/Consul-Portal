@@ -1367,7 +1367,7 @@ export default function FlightBookingDesk() {
                       className={`h-full transition-all duration-1000 ${
                         isDeparted ? "bg-rose-500" : isTakingOff ? "bg-amber-500" : "bg-emerald-500"
                       }`} 
-                      style={{ width: `${flight.progress}%` }} 
+                      style={{ width: `${flight.progress || 0}%` }} 
                     />
                   </div>
                 </div>

@@ -195,16 +195,16 @@ export default function OfficialVerificationDesk() {
   };
 
   return (
-    <div id="immigration-verification-desk" className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-8">
+    <div id="immigration-verification-desk" className="bg-slate-900/60 border border-slate-800 rounded-3xl p-3.5 sm:p-8 space-y-6 sm:space-y-8 max-w-full overflow-hidden">
       
       {/* Header section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-800 pb-6">
+      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 border-b border-slate-800 pb-5 sm:pb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-amber-400">
-            <ShieldCheck className="w-5 h-5 text-amber-500" />
+            <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0" />
             <span className="text-xs font-mono font-bold uppercase tracking-widest">Global Escrow Audit & Verification Desk</span>
           </div>
-          <h2 className="text-2xl font-display font-extrabold text-white">
+          <h2 className="text-xl sm:text-2xl font-display font-extrabold text-white">
             Official Government Immigration & Visa Portals
           </h2>
           <p className="text-xs text-slate-400 max-w-3xl leading-relaxed">
@@ -212,27 +212,27 @@ export default function OfficialVerificationDesk() {
           </p>
         </div>
         
-        <div className="bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-2xl flex items-center gap-2">
+        <div className="bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-2xl flex items-center gap-2 shrink-0">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">100% Audited Links</span>
         </div>
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid lg:grid-cols-12 gap-8">
+      <div className="grid lg:grid-cols-12 gap-6 sm:gap-8">
         
         {/* Left Side: Interactive Portal List */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-6">
           <div className="space-y-2">
             <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Select Regional Immigration Centre</h3>
             
             {/* Filter Tabs */}
-            <div className="flex gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-850">
+            <div className="flex gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-850 overflow-x-auto no-scrollbar">
               {(["all", "Schengen", "Gulf", "Canada"] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex-1 text-center py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all capitalize ${
+                  className={`flex-1 min-w-[60px] text-center py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all capitalize whitespace-nowrap ${
                     activeTab === tab 
                       ? "bg-amber-500 text-slate-950" 
                       : "text-slate-400 hover:text-white"
@@ -245,7 +245,7 @@ export default function OfficialVerificationDesk() {
           </div>
 
           {/* List items */}
-          <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1 sm:pr-2 custom-scrollbar">
             {filteredPortals.map(portal => (
               <button
                 key={portal.id}
@@ -253,7 +253,7 @@ export default function OfficialVerificationDesk() {
                   setSelectedPortal(portal);
                   setSandboxCountry(portal.country);
                 }}
-                className={`w-full text-left p-3.5 rounded-2xl border transition-all flex items-start gap-3.5 ${
+                className={`w-full text-left p-3 sm:p-3.5 rounded-2xl border transition-all flex items-start gap-3 ${
                   selectedPortal.id === portal.id
                     ? "bg-amber-500/5 border-amber-500 text-white shadow-lg shadow-amber-500/5"
                     : "bg-slate-950/40 border-slate-850/60 text-slate-300 hover:bg-slate-950/80 hover:border-slate-800"
@@ -275,7 +275,7 @@ export default function OfficialVerificationDesk() {
           </div>
 
           {/* Security Alert Notice */}
-          <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-4 space-y-2.5">
+          <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-3.5 sm:p-4 space-y-2">
             <div className="flex items-center gap-2 text-amber-400">
               <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
               <h4 className="text-xs font-bold">Important Cyber Safety Advisory</h4>
@@ -287,33 +287,33 @@ export default function OfficialVerificationDesk() {
         </div>
 
         {/* Right Side: Dynamic Guide & Link Details */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="lg:col-span-7 space-y-4 sm:space-y-6">
           
-          <div className="bg-slate-950 p-5 sm:p-6 rounded-3xl border border-slate-850/80 space-y-5">
+          <div className="bg-slate-950 p-3.5 sm:p-6 rounded-3xl border border-slate-850/80 space-y-4 sm:space-y-5">
             
             {/* Selected Portal Heading */}
-            <div className="flex justify-between items-start gap-4 pb-4 border-b border-slate-900">
-              <div className="space-y-1">
+            <div className="flex justify-between items-start gap-3 pb-3.5 border-b border-slate-900">
+              <div className="space-y-1 min-w-0 flex-1">
                 <span className="text-[10px] font-mono text-amber-500 uppercase tracking-wider">{selectedPortal.country} Immigration Service</span>
-                <h3 className="text-lg font-display font-extrabold text-white flex items-center gap-1.5">
+                <h3 className="text-base sm:text-lg font-display font-extrabold text-white flex items-center gap-1.5 leading-snug">
                   <span>{selectedPortal.name}</span>
                 </h3>
-                <p className="text-xs text-slate-400">{selectedPortal.agency}</p>
+                <p className="text-xs text-slate-400 leading-normal">{selectedPortal.agency}</p>
               </div>
-              <span className="text-3xl shrink-0 bg-slate-900 p-2.5 rounded-2xl border border-slate-800">{selectedPortal.icon}</span>
+              <span className="text-2xl sm:text-3xl shrink-0 bg-slate-900 p-2 sm:p-2.5 rounded-2xl border border-slate-800">{selectedPortal.icon}</span>
             </div>
 
             {/* Official Link Button */}
-            <div className="bg-slate-900/40 border border-slate-900 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="space-y-1">
+            <div className="bg-slate-900/40 border border-slate-900 p-3.5 sm:p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 overflow-hidden">
+              <div className="space-y-1 min-w-0 w-full sm:w-auto">
                 <span className="text-[9px] font-mono text-slate-500 uppercase block">DIRECT VERIFICATION HYPERLINK</span>
-                <span className="text-xs font-mono text-emerald-400 break-all select-all font-bold block">{selectedPortal.url}</span>
+                <span className="text-[11px] sm:text-xs font-mono text-emerald-400 break-all select-all font-bold block leading-relaxed max-w-full">{selectedPortal.url}</span>
               </div>
               <a 
                 href={selectedPortal.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center gap-1.5 shrink-0 shadow-lg shadow-emerald-500/10"
+                className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5 w-full sm:w-auto shrink-0 shadow-lg shadow-emerald-500/10"
               >
                 <span>Access Portal</span>
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -323,15 +323,15 @@ export default function OfficialVerificationDesk() {
             {/* Verification Step-by-Step Instructions */}
             <div className="space-y-3">
               <h4 className="text-xs font-mono font-bold text-slate-300 flex items-center gap-1.5 uppercase">
-                <FileText className="w-3.5 h-3.5 text-amber-500" />
+                <FileText className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                 <span>How to verify your application status:</span>
               </h4>
               
               <div className="space-y-2">
                 {selectedPortal.guideSteps.map((step, idx) => (
-                  <div key={idx} className="flex gap-2.5 text-xs text-slate-400 leading-normal">
+                  <div key={idx} className="flex gap-2 text-xs text-slate-400 leading-relaxed min-w-0">
                     <span className="text-amber-500 font-mono font-bold shrink-0">{idx + 1}.</span>
-                    <span>{step}</span>
+                    <span className="flex-1 min-w-0 break-words">{step}</span>
                   </div>
                 ))}
               </div>
@@ -340,7 +340,7 @@ export default function OfficialVerificationDesk() {
             {/* Important tips and cautions */}
             <div className="pt-3.5 border-t border-slate-900 space-y-1.5">
               <span className="text-[10px] font-mono font-bold text-amber-500 block uppercase">💡 Cross-Reference Tip</span>
-              <p className="text-[11px] text-slate-400 leading-relaxed italic">
+              <p className="text-[11px] text-slate-400 leading-relaxed italic break-words">
                 "{selectedPortal.tips}"
               </p>
             </div>
@@ -348,9 +348,9 @@ export default function OfficialVerificationDesk() {
           </div>
 
           {/* Interactive Guidelines Sandbox Planner */}
-          <div className="bg-slate-950 p-5 sm:p-6 rounded-3xl border border-slate-850/80 space-y-4">
+          <div className="bg-slate-950 p-3.5 sm:p-6 rounded-3xl border border-slate-850/80 space-y-4">
             <div className="flex items-center gap-2">
-              <Fingerprint className="w-5 h-5 text-amber-500" />
+              <Fingerprint className="w-5 h-5 text-amber-500 shrink-0" />
               <div>
                 <h4 className="text-sm font-display font-extrabold text-white">Personalized Verification Planner</h4>
                 <p className="text-[11px] text-slate-400">Generate tailor-made instructions to input your info on government servers.</p>
@@ -397,25 +397,25 @@ export default function OfficialVerificationDesk() {
               <div className="sm:col-span-12 flex justify-end pt-1">
                 <button
                   type="submit"
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2 rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1.5"
+                  className="w-full sm:w-auto justify-center bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1.5"
                 >
                   <span>Build Cross-Reference Plan</span>
-                  <ArrowRight className="w-3 h-3" />
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             </form>
 
             {/* Sandbox guidelines output */}
             {sandboxResult && (
-              <div className="bg-slate-900/60 border border-slate-850 p-4 rounded-2xl space-y-3 animate-fade-in">
+              <div className="bg-slate-900/60 border border-slate-850 p-3.5 sm:p-4 rounded-2xl space-y-3 animate-fade-in">
                 <div className="flex items-center gap-2 text-emerald-400">
-                  <FileCheck className="w-4 h-4" />
+                  <FileCheck className="w-4 h-4 shrink-0" />
                   <h5 className="text-xs font-bold text-white">{sandboxResult.title}</h5>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-normal">{sandboxResult.description}</p>
+                <p className="text-[11px] text-slate-400 leading-normal break-words">{sandboxResult.description}</p>
                 <div className="space-y-2 bg-slate-950/60 p-3 rounded-xl border border-slate-900">
                   {sandboxResult.instructions.map((inst, i) => (
-                    <p key={i} className="text-[10px] text-slate-300 font-mono leading-relaxed">{inst}</p>
+                    <p key={i} className="text-[10px] text-slate-300 font-mono leading-relaxed break-words">{inst}</p>
                   ))}
                 </div>
                 <div className="flex justify-end pt-1">

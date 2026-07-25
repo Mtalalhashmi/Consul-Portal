@@ -1795,11 +1795,11 @@ export default function VisaConsultantsDesk({
                             <div className="flex items-center gap-2">
                               {isUploading ? (
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-[9px] text-slate-500">{doc.progress}%</span>
+                                  <span className="text-[9px] text-slate-500">{doc.progress || 0}%</span>
                                   <div className="w-12 h-1 bg-slate-900 rounded-full overflow-hidden">
                                     <div 
                                       className="h-full bg-amber-500 transition-all duration-150" 
-                                      style={{ width: `${doc.progress}%` }}
+                                      style={{ width: `${doc.progress || 0}%` }}
                                     />
                                   </div>
                                 </div>

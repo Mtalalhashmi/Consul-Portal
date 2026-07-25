@@ -259,7 +259,7 @@ export default function App() {
           }}
           className="inline-flex items-center gap-1 mx-1 px-2.5 py-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 text-xs font-bold font-mono hover:bg-amber-500/35 transition cursor-pointer"
         >
-          Go to {tabName === "girls-jobs" ? "Girls Jobs 🌸" : tabName === "country-picker" ? "Country Explorer 🌐" : tabName === "flights" ? "Flight Booking ✈️" : tabName === "currency" ? "Currency Desk 💱" : tabName.toUpperCase()}
+          Go to {tabName === "girls-jobs" ? "Girls Jobs 🌸" : tabName === "country-picker" ? "Country Picker 🌐" : tabName === "flights" ? "Flight Booking ✈️" : tabName === "currency" ? "Currency Desk 💱" : tabName.toUpperCase()}
         </button>
       );
       lastIndex = regex.lastIndex;
@@ -584,7 +584,7 @@ export default function App() {
             }}
             className="inline-flex items-center gap-1 mx-1 px-2.5 py-1 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20 text-xs font-bold font-mono hover:bg-amber-500/35 transition cursor-pointer"
           >
-            Go to {tabName === "girls-jobs" ? "Girls Jobs 🌸" : tabName === "country-picker" ? "Country Explorer 🌐" : tabName === "flights" ? "Flight Booking ✈️" : tabName === "currency" ? "Currency Desk 💱" : tabName.toUpperCase()}
+            Go to {tabName === "girls-jobs" ? "Girls Jobs 🌸" : tabName === "country-picker" ? "Country Picker 🌐" : tabName === "flights" ? "Flight Booking ✈️" : tabName === "currency" ? "Currency Desk 💱" : tabName.toUpperCase()}
           </button>
         );
       }
@@ -1550,15 +1550,15 @@ export default function App() {
                         className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
                         style={{ 
                           width: `${
-                            trackData.steps.filter(s => s.status === 'completed').length * 33.3 + 
-                            trackData.steps.filter(s => s.status === 'current').length * 16.6
+                            (trackData.steps.filter(s => s.status === 'completed').length || 0) * 33.3 + 
+                            (trackData.steps.filter(s => s.status === 'current').length || 0) * 16.6
                           }%` 
                         }}
                       ></div>
                     </div>
                     <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                      <span>Total: PKR {trackData.totalFee.toLocaleString()}</span>
-                      <span className="text-emerald-400">Paid: PKR {trackData.totalPaid.toLocaleString()}</span>
+                      <span>Total: PKR {(trackData.totalFee || 0).toLocaleString()}</span>
+                      <span className="text-emerald-400">Paid: PKR {(trackData.totalPaid || 0).toLocaleString()}</span>
                     </div>
                   </div>
                 ) : (
@@ -1645,7 +1645,7 @@ export default function App() {
       </section>
 
       {/* Main Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 pb-28 sm:pb-16 overflow-x-hidden">
 
         {activeTab !== "home" && (
           <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/40 border border-slate-800/80 p-4 rounded-2xl animate-fade-in">
@@ -1676,7 +1676,7 @@ export default function App() {
                  activeTab === "flights" ? "Flight Booking Desk" : 
                  activeTab === "portal" ? "Client Secure Portal" : 
                  activeTab === "ai-showcase" ? "AI Integration Showcase & Simulator" :
-                 activeTab === "girls-jobs" ? "Girls Jobs Abroad 🌸" : activeTab === "country-picker" ? "Country Picker Integration Sandbox 🌐" :
+                 activeTab === "girls-jobs" ? "Girls Jobs Abroad 🌸" : activeTab === "country-picker" ? "Country Explorer Integration Sandbox 🌐" :
                  "Admin Staff Gateway"}
               </span>
             </div>
@@ -2660,7 +2660,7 @@ export default function App() {
                                       <span className="text-[10px] text-slate-500 font-mono uppercase block">EMBASSY COST</span>
                                       {isStepUnlocked ? (
                                         <>
-                                          <span className="text-xs font-mono font-bold text-slate-200">PKR {step.fee.toLocaleString()}</span>
+                                          <span className="text-xs font-mono font-bold text-slate-200">PKR {(step.fee || 0).toLocaleString()}</span>
                                           <div className="pt-1">
                                             {step.feePaid ? (
                                               <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/5 px-2 py-0.5 rounded font-mono font-bold">
@@ -2669,7 +2669,7 @@ export default function App() {
                                             ) : (
                                               <div className="flex flex-wrap items-center gap-1.5 justify-end mt-1">
                                                 <a 
-                                                  href={`https://wa.me/92514857860?text=Hello%20ConsulPortal%20Team%2C%20I%20am%20ready%20to%20pay%20the%20fee%20for%20${encodeURIComponent(step.title)}%20amounting%20to%20PKR%20${step.fee.toLocaleString()}.%20Please%20guide%20me%20on%20the%20deposit%20details.`}
+                                                  href={`https://wa.me/92514857860?text=Hello%20ConsulPortal%20Team%2C%20I%20am%20ready%20to%20pay%20the%20fee%20for%20${encodeURIComponent(step.title)}%20amounting%20to%20PKR%20${(step.fee || 0).toLocaleString()}.%20Please%20guide%20me%20on%20the%20deposit%20details.`}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
                                                   className="inline-flex items-center gap-1 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2.5 py-1.5 rounded font-extrabold transition-all shadow-md hover:scale-105"
@@ -2729,24 +2729,24 @@ export default function App() {
                   <h3 className="font-display font-bold text-lg text-white">Escrow Payment Ledger</h3>
                   
                   {(() => {
-                    const unlockedSteps = trackData.steps.filter((_, sIdx) => sIdx === 0 || trackData.steps[sIdx - 1].feePaid);
-                    const totalMandatoryFee = unlockedSteps.reduce((sum, s) => sum + s.fee, 0);
-                    const totalPaidAmount = trackData.steps.filter(s => s.feePaid).reduce((sum, s) => sum + s.fee, 0);
+                    const unlockedSteps = (trackData.steps || []).filter((_, sIdx) => sIdx === 0 || trackData.steps[sIdx - 1]?.feePaid);
+                    const totalMandatoryFee = unlockedSteps.reduce((sum, s) => sum + (Number(s.fee) || 0), 0);
+                    const totalPaidAmount = (trackData.steps || []).filter(s => s.feePaid).reduce((sum, s) => sum + (Number(s.fee) || 0), 0);
                     const remainingBalance = Math.max(0, totalMandatoryFee - totalPaidAmount);
 
                     return (
                       <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-slate-400">Active Unlocked Fees:</span>
-                          <span className="font-mono text-white font-bold">PKR {totalMandatoryFee.toLocaleString()}</span>
+                          <span className="font-mono text-white font-bold">PKR {(totalMandatoryFee || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs border-t border-slate-900 pt-2">
                           <span className="text-slate-400 font-bold text-white">Total Amount Paid:</span>
-                          <span className="font-mono text-emerald-400 font-bold">PKR {totalPaidAmount.toLocaleString()}</span>
+                          <span className="font-mono text-emerald-400 font-bold">PKR {(totalPaidAmount || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center text-xs border-t border-slate-900 pt-2">
                           <span className="text-slate-400 text-slate-400">Remaining Balance:</span>
-                          <span className="font-mono text-amber-400 font-bold">PKR {remainingBalance.toLocaleString()}</span>
+                          <span className="font-mono text-amber-400 font-bold">PKR {(remainingBalance || 0).toLocaleString()}</span>
                         </div>
                       </div>
                     );
@@ -3174,16 +3174,16 @@ export default function App() {
                         {activePromoCode ? (
                           <div className="space-y-0.5">
                             <p className="text-xs text-slate-500 line-through font-mono">
-                              PKR {offer.pricePKR.toLocaleString()}
+                              PKR {(offer.pricePKR || 0).toLocaleString()}
                             </p>
                             <p className="text-base font-extrabold text-amber-400 font-mono flex items-center justify-end gap-1">
                               <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 py-0.2 rounded border border-amber-500/20 font-sans">15% OFF</span>
-                              PKR {Math.round(offer.pricePKR * 0.85).toLocaleString()}
+                              PKR {Math.round((offer.pricePKR || 0) * 0.85).toLocaleString()}
                             </p>
                           </div>
                         ) : (
                           <p className="text-base font-extrabold text-emerald-400 font-mono">
-                            PKR {offer.pricePKR.toLocaleString()}
+                            PKR {(offer.pricePKR || 0).toLocaleString()}
                           </p>
                         )}
                         <p className="text-[9px] text-slate-400">Incl. Taxes & Baggage</p>
@@ -3215,11 +3215,11 @@ export default function App() {
                           {activePromoCode ? (
                             <span className="font-mono text-amber-400 font-bold flex items-center gap-1.5">
                               <span className="text-[8px] bg-amber-500/10 text-amber-400 px-1 py-0.2 rounded border border-amber-500/20 font-sans">15% PROMO</span>
-                              <span className="line-through text-[10px] text-slate-500">PKR {selectedFlight.pricePKR.toLocaleString()}</span>
-                              PKR {Math.round(selectedFlight.pricePKR * 0.85).toLocaleString()}
+                              <span className="line-through text-[10px] text-slate-500">PKR {(selectedFlight.pricePKR || 0).toLocaleString()}</span>
+                              PKR {Math.round((selectedFlight.pricePKR || 0) * 0.85).toLocaleString()}
                             </span>
                           ) : (
-                            <span className="font-mono text-emerald-400 font-bold">PKR {selectedFlight.pricePKR.toLocaleString()}</span>
+                            <span className="font-mono text-emerald-400 font-bold">PKR {(selectedFlight.pricePKR || 0).toLocaleString()}</span>
                           )}
                         </div>
                       </div>
@@ -3495,42 +3495,42 @@ export default function App() {
       </footer>
 
       {/* FLOATING WHATSAPP BUTTON (Fixed on Right Side) */}
-      <div id="whatsapp-float-container" className="fixed bottom-24 right-6 z-50">
+      <div id="whatsapp-float-container" className="fixed bottom-20 right-3 sm:bottom-24 sm:right-6 z-40">
         <a 
           href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%2520services.`}
           target="_blank"
           rel="noopener noreferrer"
           id="whatsapp-floating-btn"
-          className="w-14 h-14 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-2xl hover:bg-emerald-400 hover:scale-110 transition-all duration-300 group relative"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-2xl hover:bg-emerald-400 hover:scale-110 transition-all duration-300 group relative"
           title="Chat with us on WhatsApp"
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-slate-950">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 sm:w-8 sm:h-8 text-slate-950">
             <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
           </svg>
-          <span className="absolute right-16 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap shadow-xl">
+          <span className="absolute right-14 sm:right-16 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap shadow-xl">
             Chat on WhatsApp (Online) 💬
           </span>
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-slate-950 animate-bounce">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full border border-slate-950 hidden sm:inline-block">
             Online
           </span>
         </a>
       </div>
 
       {/* FLOATING AI ASSISTANT PANEL */}
-      <div id="ai-chat-container" className="fixed bottom-6 right-6 z-50">
+      <div id="ai-chat-container" className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-40">
         
         {/* Toggle Button */}
         <button 
           id="chat-toggle-floating"
           onClick={() => setIsChatOpen(!isChatOpen)}
-          className="w-14 h-14 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 flex items-center justify-center shadow-2xl hover:scale-105 transition-transform group relative"
+          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 flex items-center justify-center shadow-2xl hover:scale-105 transition-transform group relative"
         >
           {isChatOpen ? (
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           ) : (
             <>
-              <MessageSquare className="w-6 h-6" />
-              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-slate-950 animate-pulse">
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
+              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full border border-slate-950 hidden sm:inline-block">
                 LIVE AI
               </span>
             </>
@@ -3539,7 +3539,7 @@ export default function App() {
 
         {/* Floating Chat Box Panel */}
         {isChatOpen && (
-          <div className="absolute bottom-16 right-0 w-80 sm:w-96 h-[480px] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200">
+          <div className="fixed sm:absolute inset-x-3 bottom-16 sm:inset-auto sm:bottom-16 sm:right-0 w-auto sm:w-96 h-[460px] max-h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 z-50">
             
             {/* Chat Box Header */}
             <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 text-slate-950 flex items-center justify-between">
@@ -3903,7 +3903,7 @@ export default function App() {
                 <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
                   <span className="text-xs text-slate-400">Step Fee Amount due:</span>
                   <span className="text-base font-extrabold text-amber-400 font-mono">
-                    PKR {trackData.steps[paymentStepIndex].fee.toLocaleString()}
+                    PKR {(trackData.steps[paymentStepIndex]?.fee || 0).toLocaleString()}
                   </span>
                 </div>
 

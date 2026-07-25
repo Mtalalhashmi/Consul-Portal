@@ -931,7 +931,7 @@ export default function AiEmployeesHub() {
                               <td className="p-3 font-semibold text-white">{item.clientName || item.name}</td>
                               <td className="p-3 text-slate-400 font-mono">{item.clientEmail || item.email}</td>
                               <td className="p-3 font-mono text-amber-400">
-                                {item.amountPKR ? `PKR ${item.amountPKR.toLocaleString()}` : item.expiry || "Pending"}
+                                {item.amountPKR ? (typeof item.amountPKR === "number" ? `PKR ${item.amountPKR.toLocaleString()}` : String(item.amountPKR)) : item.expiry || "Pending"}
                               </td>
                               <td className="p-3">
                                 <button

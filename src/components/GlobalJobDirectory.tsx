@@ -766,8 +766,9 @@ export default function GlobalJobDirectory({
     const companiesCount = new Set(filteredJobs.map(j => j.companyName)).size;
     
     let sumSalaries = 0;
-    filteredJobs.forEach(j => sumSalaries += j.numericSalary);
-    const avgSalary = totalCount > 0 ? Math.round(sumSalaries / totalCount) : 3450;
+    filteredJobs.forEach(j => sumSalaries += (Number(j.numericSalary) || 0));
+    const rawAvg = totalCount > 0 ? Math.round(sumSalaries / totalCount) : 3450;
+    const avgSalary = isNaN(rawAvg) ? 3450 : rawAvg;
 
     const sponsoredCount = filteredJobs.filter(j => j.visaSponsorship === "Yes").length;
 
@@ -872,21 +873,21 @@ export default function GlobalJobDirectory({
         <div className="flex items-center gap-1.5 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80 w-full sm:w-auto overflow-x-auto">
           <button
             onClick={() => setActiveTab("board")}
-            className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 justify-center whitespace-nowrap ${activeTab === "board" ? "bg-amber-500 text-slate-950 shadow-lg font-extrabold" : "text-slate-400 hover:text-white"}`}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 justify-center whitespace-nowrap ${activeTab === "board" ? "bg-amber-500 text-slate-950 shadow-lg font-extrabold" : "text-slate-400 hover:text-white"}`}
           >
             <Globe2 className="w-4 h-4" />
             <span>Worldwide Job Board</span>
           </button>
           <button
             onClick={() => setActiveTab("sponsorship")}
-            className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 justify-center whitespace-nowrap ${activeTab === "sponsorship" ? "bg-amber-500 text-slate-950 shadow-lg font-extrabold" : "text-slate-400 hover:text-white"}`}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 justify-center whitespace-nowrap ${activeTab === "sponsorship" ? "bg-amber-500 text-slate-950 shadow-lg font-extrabold" : "text-slate-400 hover:text-white"}`}
           >
             <ShieldCheck className="w-4 h-4" />
             <span>Sponsorship Pathways</span>
           </button>
           <button
             onClick={() => setActiveTab("portals")}
-            className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 justify-center whitespace-nowrap ${activeTab === "portals" ? "bg-amber-500 text-slate-950 shadow-lg font-extrabold" : "text-slate-400 hover:text-white"}`}
+            className={`flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center gap-2 justify-center whitespace-nowrap ${activeTab === "portals" ? "bg-amber-500 text-slate-950 shadow-lg font-extrabold" : "text-slate-400 hover:text-white"}`}
           >
             <Landmark className="w-4 h-4" />
             <span>Govt Legal Portals</span>
@@ -1534,6 +1535,8 @@ export default function GlobalJobDirectory({
           </div>
         </div>
       )}
+
+
 
       {/* ----------------- PROFESSIONAL JOB DETAILS MODAL (VIEW DETAILS) ----------------- */}
       <AnimatePresence>

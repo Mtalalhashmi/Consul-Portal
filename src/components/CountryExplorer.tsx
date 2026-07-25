@@ -1224,7 +1224,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                           )}
                           <div className="truncate min-w-0">
                             <p className="text-[10px] text-slate-300 font-medium truncate font-mono">{uploadedFile.name}</p>
-                            <p className="text-[8px] text-slate-500 font-mono">{(uploadedFile.size / 1024).toFixed(1)} KB</p>
+                            <p className="text-[8px] text-slate-500 font-mono">{((uploadedFile.size || 0) / 1024).toFixed(1)} KB</p>
                           </div>
                         </div>
                         <span className="text-[8px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono font-bold uppercase shrink-0">
@@ -1458,7 +1458,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                                   {uploadedFile.name}
                                 </p>
                                 <p className="text-[10px] text-slate-500 font-mono">
-                                  {(uploadedFile.size / 1024).toFixed(1)} KB • {uploadedFile.type.split("/")[1]?.toUpperCase() || "FILE"}
+                                  {((uploadedFile.size || 0) / 1024).toFixed(1)} KB • {uploadedFile.type.split("/")[1]?.toUpperCase() || "FILE"}
                                 </p>
                               </div>
                             </div>

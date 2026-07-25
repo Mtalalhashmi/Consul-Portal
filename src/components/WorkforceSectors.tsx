@@ -234,14 +234,14 @@ export default function WorkforceSectors({ onSelectSector }: WorkforceSectorsPro
         <div 
           className="flex flex-nowrap transition-transform duration-500 ease-out"
           style={{ 
-            transform: `translateX(-${activeIndex * (100 / itemsPerView)}%)`,
+            transform: `translateX(-${activeIndex * (100 / (itemsPerView || 1))}%)`,
           }}
         >
           {sectors.map((sector) => (
             <div 
               key={sector.id} 
               className="shrink-0 px-3 transition-all duration-350"
-              style={{ width: `${100 / itemsPerView}%` }}
+              style={{ width: `${100 / (itemsPerView || 1)}%` }}
             >
               <div className="group bg-slate-950/70 rounded-2xl border border-slate-800/80 overflow-hidden flex flex-col justify-between hover:border-amber-500/30 hover:-translate-y-1 transition-all duration-300 h-full">
                 {/* Sector Image Header */}

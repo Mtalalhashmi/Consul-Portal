@@ -1357,7 +1357,7 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
                     <div className="bg-slate-900 px-4 py-2.5 rounded-xl border border-slate-800 text-right">
                       <span className="text-[9px] text-slate-500 font-mono uppercase block">TOTAL ESCROW COMMITTED</span>
                       <strong className="text-amber-400 text-sm font-mono">
-                        PKR {linkedPassport?.totalPaid.toLocaleString()} / {linkedPassport?.totalFee.toLocaleString()} Paid
+                        PKR {(linkedPassport?.totalPaid || 0).toLocaleString()} / {(linkedPassport?.totalFee || 0).toLocaleString()} Paid
                       </strong>
                     </div>
                   </div>
@@ -1474,7 +1474,7 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
                             <div className="sm:text-right shrink-0 w-full sm:w-auto pt-2 sm:pt-0 pl-12 sm:pl-0 border-t sm:border-t-0 border-slate-900 flex sm:flex-col justify-between sm:justify-start items-center sm:items-end gap-2">
                               <div className="space-y-0.5">
                                 <span className="text-[9px] text-slate-500 font-mono uppercase block">MILESTONE FEE</span>
-                                <strong className="text-slate-300 text-xs font-mono">PKR {step.fee.toLocaleString()}</strong>
+                                <strong className="text-slate-300 text-xs font-mono">PKR {(step.fee || 0).toLocaleString()}</strong>
                               </div>
 
                               {step.feePaid ? (
@@ -1554,7 +1554,7 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
                                   <p>Account Number: <strong className="text-amber-400 select-all font-bold">{activeMethod.accountNum}</strong></p>
                                 </div>
                                 <p className="text-[9px] text-slate-500 leading-normal pt-1 italic">
-                                  *Transfer exactly PKR {linkedPassport?.steps[payStepIdx].fee.toLocaleString()} to this account and complete the validation below.
+                                  *Transfer exactly PKR {(linkedPassport?.steps?.[payStepIdx]?.fee || 0).toLocaleString()} to this account and complete the validation below.
                                 </p>
                               </div>
                             ) : null;
