@@ -187,6 +187,21 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Helper to calculate or get realistic remaining vacancy count
+  const getVacancyCount = (job: JobVacancy): number => {
+    if ((job as any).vacanciesLeft && typeof (job as any).vacanciesLeft === 'number') {
+      return (job as any).vacanciesLeft;
+    }
+    let hash = 0;
+    const str = (job.id || "") + (job.title || "") + (job.country || "");
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    const counts = [10, 12, 15, 18, 22, 25, 28, 30, 35, 40, 48];
+    return counts[Math.abs(hash) % counts.length];
+  };
+
   // Helper to get clean currency display prefix (e.g., "$ ", "€ ", "AED ", etc.)
   const getDisplayCurrencyPrefix = (symbol?: string, code?: string) => {
     if (symbol && symbol.trim() && symbol !== "؋" && symbol !== ".د.ب" && symbol !== "د.ج") {
@@ -623,8 +638,17 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
     <div className="space-y-12">
       {/* SECTION HEADER */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs font-mono font-bold text-rose-400 uppercase tracking-wider">
-          <Globe className="w-3.5 h-3.5 animate-spin-slow" /> Global Job Search Portal
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs font-mono font-bold text-rose-400 uppercase tracking-wider">
+            <Globe className="w-3.5 h-3.5 animate-spin-slow" /> Global Job Search Portal
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono font-bold text-emerald-400 shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span>LIVE RECRUITMENT ACTIVE</span>
+          </div>
         </div>
         <h2 className="text-3xl md:text-5xl font-display font-black text-white tracking-tight">
           Explore Live Vacancies &amp; Visa Placements
@@ -1192,11 +1216,24 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                         className="bg-slate-900/60 border border-slate-800/80 hover:border-rose-500/30 p-5 rounded-2xl flex flex-col justify-between transition-all duration-300 group shadow-lg text-left"
                       >
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between gap-2 text-[10px] font-mono">
-                            <span className="bg-rose-950 text-rose-300 border border-rose-500/20 px-2 py-0.5 rounded-md font-bold uppercase">
-                              {job.employmentType}
+                          <div className="flex items-center justify-between gap-2 text-[10px] font-mono flex-wrap">
+                            <div className="flex items-center gap-1.5">
+                              <span className="inline-flex items-center gap-1.5 bg-emerald-950/80 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-md font-bold uppercase shadow-sm">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span>LIVE JOB</span>
+                              </span>
+                              <span className="bg-rose-950 text-rose-300 border border-rose-500/20 px-2 py-0.5 rounded-md font-bold uppercase">
+                                {job.employmentType}
+                              </span>
+                            </div>
+                            
+                            <span className="bg-amber-950/80 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-sm">
+                              <Users className="w-3 h-3 text-amber-400" />
+                              <span>{getVacancyCount(job)} Vacancies Left</span>
                             </span>
-                            <span className="text-slate-500">{job.postedDate}</span>
                           </div>
 
                           <div className="flex items-start gap-3.5">
@@ -1478,8 +1515,21 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                   <>
                     {/* Header Details */}
                     <div className="space-y-3.5">
-                      <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-950 border border-rose-500/20 text-[9px] font-mono uppercase font-black text-rose-300">
-                        Embassy Verified Vacancy
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-950 border border-emerald-500/30 text-[9px] font-mono uppercase font-black text-emerald-400">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          LIVE JOB
+                        </div>
+                        <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-950 border border-amber-500/30 text-[9px] font-mono uppercase font-black text-amber-300">
+                          <Users className="w-3 h-3 text-amber-400" />
+                          {getVacancyCount(selectedJobForModal)} Vacancies Left
+                        </div>
+                        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-rose-950 border border-rose-500/20 text-[9px] font-mono uppercase font-black text-rose-300">
+                          Embassy Verified Vacancy
+                        </div>
                       </div>
                       
                       <div className="flex items-center gap-3">

@@ -29,7 +29,8 @@ import {
   Moon, 
   Sun,
   User,
-  Activity
+  Activity,
+  Users
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getJobImageByTitle } from "../utils/jobImages";
@@ -1265,9 +1266,17 @@ export default function GlobalJobDirectory({
                       )}
                     </div>
 
-                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
-                      <span className="text-[11px] text-white bg-slate-900/90 border border-slate-800/80 px-2.5 py-1 rounded-xl font-bold font-mono">
-                        {job.vacancies} Vacancies Open
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10 gap-2">
+                      <span className="text-[11px] text-emerald-300 bg-slate-950/90 border border-emerald-500/30 px-2.5 py-1 rounded-xl font-bold font-mono flex items-center gap-1.5 shadow-lg">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span>LIVE JOB</span>
+                      </span>
+                      <span className="text-[11px] text-amber-300 bg-slate-950/90 border border-amber-500/30 px-2.5 py-1 rounded-xl font-bold font-mono flex items-center gap-1 shadow-lg">
+                        <Users className="w-3.5 h-3.5 text-amber-400" />
+                        <span>{job.vacancies || 18} Vacancies Left</span>
                       </span>
                     </div>
                   </div>
