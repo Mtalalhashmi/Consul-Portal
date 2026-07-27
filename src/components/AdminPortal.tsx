@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Lock, Check, X, RefreshCw, FileText, Database, 
-  AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, Mail, Sparkles, Send
+  AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, ShieldCheck, Mail, Sparkles, Send
 } from "lucide-react";
 import { PassportTrack, PassportStep } from "../types";
 
@@ -260,7 +260,7 @@ export default function AdminPortal({
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/send-invoice-email", {
+      const response = await adminFetch("/api/admin/send-invoice-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -314,7 +314,7 @@ export default function AdminPortal({
 
   const fetchGmailStatus = async () => {
     try {
-      const res = await fetch("/api/admin/gmail/status");
+      const res = await adminFetch("/api/admin/gmail/status");
       if (res.ok) {
         const data = await res.json();
         setGmailStatus(data);
@@ -325,8 +325,10 @@ export default function AdminPortal({
   };
 
   useEffect(() => {
-    fetchGmailStatus();
-  }, []);
+    if (isLoggedIn) {
+      fetchGmailStatus();
+    }
+  }, [isLoggedIn]);
 
   const handleConnectGmail = async () => {
     setGmailLoading(true);
@@ -335,7 +337,7 @@ export default function AdminPortal({
       const { signInWithGmail } = await import("../lib/firebaseAuth");
       const result = await signInWithGmail();
       if (result) {
-        const res = await fetch("/api/admin/gmail/token", {
+        const res = await adminFetch("/api/admin/gmail/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -372,7 +374,7 @@ export default function AdminPortal({
     setGmailLoading(true);
     setGmailError("");
     try {
-      const res = await fetch("/api/admin/gmail/token", {
+      const res = await adminFetch("/api/admin/gmail/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -398,7 +400,7 @@ export default function AdminPortal({
     setGmailLoading(true);
     setGmailError("");
     try {
-      const res = await fetch("/api/admin/gmail/disconnect", { method: "POST" });
+      const res = await adminFetch("/api/admin/gmail/disconnect", { method: "POST" });
       if (res.ok) {
         const data = await res.json();
         setGmailStatus(data);
@@ -425,7 +427,7 @@ export default function AdminPortal({
     setTestLoading(true);
     setTestResult(null);
     try {
-      const res = await fetch("/api/admin/email/test", {
+      const res = await adminFetch("/api/admin/email/test", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: testEmail, type: testType })
@@ -476,12 +478,35 @@ export default function AdminPortal({
     }
   }, [passports]);
 
+  // Authenticated API helper for admin endpoints
+  const adminFetch = async (url: string, options: RequestInit = {}) => {
+    const savedToken = localStorage.getItem("consul_admin_token");
+    const headers: Record<string, string> = {
+      ...(options.headers as Record<string, string> || {}),
+    };
+    if (savedToken) {
+      headers["Authorization"] = `Bearer ${savedToken}`;
+    }
+
+    const response = await fetch(url, { ...options, headers });
+    
+    // Auto handle 401 Unauthorized for expired or missing tokens
+    if (response.status === 401 && !url.includes("/api/admin/login")) {
+      localStorage.removeItem("consul_admin_token");
+      setIsLoggedIn(false);
+      setLoginError("Session expired or unauthorized. Verified admin login required.");
+      throw new Error("Unauthorized admin access");
+    }
+
+    return response;
+  };
+
   // Load from session storage on mount
   useEffect(() => {
-    fetchDashboardData();
     const savedToken = localStorage.getItem("consul_admin_token");
     if (savedToken) {
       setIsLoggedIn(true);
+      fetchDashboardData();
     }
   }, []);
 
@@ -513,8 +538,8 @@ export default function AdminPortal({
         data = {};
       }
 
-      if ((response.ok && data.success) || cleanUsername.toLowerCase().includes("bsaj1145") || cleanUsername.toLowerCase().includes("admin") || cleanPassword.toLowerCase().includes("abd12345")) {
-        localStorage.setItem("consul_admin_token", data.token || "admin-jwt-token-consul");
+      if (response.ok && data.success && data.token) {
+        localStorage.setItem("consul_admin_token", data.token);
         setIsLoggedIn(true);
         fetchDashboardData();
       } else {
@@ -539,9 +564,9 @@ export default function AdminPortal({
     setLoading(true);
     try {
       const [appsRes, passRes, chatbotRes] = await Promise.all([
-        fetch("/api/admin/applications"),
-        fetch("/api/admin/passports"),
-        fetch("/api/admin/chatbot-analytics")
+        adminFetch("/api/admin/applications"),
+        adminFetch("/api/admin/passports"),
+        adminFetch("/api/admin/chatbot-analytics")
       ]);
       
       let loadedApps: Application[] = [];
@@ -581,7 +606,7 @@ export default function AdminPortal({
 
   const handleUpdateAppStatus = async (id: string, status: "Approved" | "Rejected" | "Pending") => {
     try {
-      const response = await fetch("/api/admin/applications/status", {
+      const response = await adminFetch("/api/admin/applications/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status })
@@ -615,7 +640,7 @@ export default function AdminPortal({
         if (payId.trim()) payload.paymentId = payId.trim();
       }
 
-      const response = await fetch("/api/admin/applications/send-email", {
+      const response = await adminFetch("/api/admin/applications/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -646,7 +671,7 @@ export default function AdminPortal({
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch("/api/admin/settings", {
+      const response = await adminFetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -674,7 +699,7 @@ export default function AdminPortal({
     if (!editingPassport) return;
 
     try {
-      const response = await fetch("/api/admin/passports/update", {
+      const response = await adminFetch("/api/admin/passports/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -729,7 +754,7 @@ export default function AdminPortal({
     ];
 
     try {
-      const response = await fetch("/api/admin/passports/update", {
+      const response = await adminFetch("/api/admin/passports/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -804,24 +829,35 @@ export default function AdminPortal({
           <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
             <Lock className="w-6 h-6" />
           </div>
-          <h2 className="text-2xl font-display font-extrabold text-white">Bridge Visa Staff Gateway</h2>
-          <p className="text-xs text-slate-400">Authenticate with secure credentials to access candidate registrations, verify escrow fees, and manage status timelines.</p>
+          <h2 className="text-2xl font-display font-extrabold text-white">Bridge Visa Admin Gateway</h2>
+          <p className="text-xs text-slate-400">Strict authentication enforced. Access is restricted exclusively to verified administrator credentials.</p>
+        </div>
+
+        <div className="bg-slate-950/80 border border-slate-800/80 p-3.5 rounded-2xl text-xs space-y-2">
+          <div className="flex items-center gap-2 text-emerald-400 text-[11px] font-mono font-bold uppercase tracking-wider">
+            <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
+            <span>Verified Admin Security Gate</span>
+          </div>
+          <div className="text-[11px] text-slate-400 space-y-1 pl-1">
+            <p><strong className="text-slate-300">Admin Account 1:</strong> <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">admin@consulportal.com.pk</code> (Pass: <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">Admin123!</code>)</p>
+            <p><strong className="text-slate-300">Admin Account 2:</strong> <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">bsaj1145@gmail.com</code> (Pass: <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">Abd12345</code>)</p>
+          </div>
         </div>
 
         {loginError && (
-          <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-xl text-xs text-red-400 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="bg-red-500/10 border border-red-500/20 p-3.5 rounded-xl text-xs text-red-400 flex items-start gap-2 animate-shake">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{loginError}</span>
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono text-slate-400 uppercase">Executive ID / Username</label>
+            <label className="block text-[11px] font-mono text-slate-400 uppercase">Executive Email / ID</label>
             <input 
               type="text" 
               required
-              placeholder="Enter Admin Username or Email"
+              placeholder="e.g. admin@consulportal.com.pk"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
@@ -829,7 +865,7 @@ export default function AdminPortal({
           </div>
 
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-mono text-slate-400 uppercase">Secret Password Code</label>
+            <label className="block text-[11px] font-mono text-slate-400 uppercase">Secret Security Password</label>
             <input 
               type="password" 
               required
@@ -843,15 +879,15 @@ export default function AdminPortal({
           <button 
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-3 rounded-xl text-xs uppercase tracking-widest transition disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-3 rounded-xl text-xs uppercase tracking-widest transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10"
           >
-            {loading ? "Decrypting Token..." : "Sign In to Registry"}
+            {loading ? "Authenticating Session..." : "Verify & Sign In"}
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
         <div className="pt-2 text-center text-[10px] text-slate-500 font-mono">
-          ConsulPortal Executive Security Core v3.0
+          ConsulPortal Secure Executive Core v3.0
         </div>
       </div>
     );

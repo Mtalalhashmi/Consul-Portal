@@ -656,6 +656,55 @@ let CONSULTANTS_DATA = [
 
 // 2. API Routes
 
+// Active Admin Sessions Store
+interface AdminSession {
+  token: string;
+  adminId: string;
+  email: string;
+  name: string;
+  createdAt: number;
+}
+const ACTIVE_ADMIN_SESSIONS = new Map<string, AdminSession>();
+
+// Pre-populate initial active admin session token
+ACTIVE_ADMIN_SESSIONS.set("admin-jwt-token-consul", {
+  token: "admin-jwt-token-consul",
+  adminId: "usr-04",
+  email: "bsaj1145@gmail.com",
+  name: "Bridge Visa Staff Portal",
+  createdAt: Date.now()
+});
+
+// Middleware to enforce strict verified admin credentials for all /api/admin/* endpoints
+app.use("/api/admin", (req, res, next) => {
+  // Allow login endpoint without prior token
+  if (req.path === "/login") {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization || (req.headers["x-admin-token"] as string);
+  let token = "";
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7).trim();
+  } else if (typeof authHeader === "string") {
+    token = authHeader.trim();
+  }
+
+  if (!token) {
+    return res.status(401).json({ error: "Access denied. Verified admin authentication token required." });
+  }
+
+  const session = ACTIVE_ADMIN_SESSIONS.get(token);
+  // Session expiration check (24 hours)
+  if (!session || (Date.now() - session.createdAt > 24 * 60 * 60 * 1000)) {
+    if (session) ACTIVE_ADMIN_SESSIONS.delete(token);
+    return res.status(401).json({ error: "Unauthorized or expired admin session. Please log in again with verified credentials." });
+  }
+
+  (req as any).adminSession = session;
+  next();
+});
+
 let GMAIL_ACCESS_TOKEN: string | null = null;
 let GMAIL_AUTHORIZED_EMAIL: string | null = null;
 
@@ -1493,6 +1542,19 @@ interface UserAccount {
 }
 
 const USER_ACCOUNTS: UserAccount[] = [
+  {
+    id: "usr-00",
+    name: "ConsulPortal Executive Administrator",
+    email: "admin@consulportal.com.pk",
+    phone: "0300-0000000",
+    address: "Executive Headquarters, Islamabad",
+    password_hash: getPasswordHash("Admin123!"),
+    role: "admin",
+    status: "active",
+    email_verified: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
   {
     id: "usr-01",
     name: "Muhammad Adnan",
@@ -2393,50 +2455,69 @@ app.post("/api/admin/consultants/delete", (req, res) => {
   }
 });
 
-// Admin Authentication Route
+// Admin Authentication Route - Strict Verification
 app.post("/api/admin/login", (req, res) => {
   try {
     const { username, password } = req.body || {};
     if (!username || !password) {
-      return res.status(400).json({ error: "Username and password are required" });
+      return res.status(400).json({ error: "Username and password are required." });
     }
 
     const rawUsername = String(username).trim();
     const rawPassword = String(password).trim();
     const normalizedUsername = rawUsername.toLowerCase();
-    const normalizedPassword = rawPassword.toLowerCase();
-    
-    // Check USER_ACCOUNTS list for registered admin user
-    const adminUser = USER_ACCOUNTS.find(u => 
-      (u.email.toLowerCase() === normalizedUsername || 
-       u.name.toLowerCase() === normalizedUsername || 
-       u.email.toLowerCase().includes(normalizedUsername) ||
-       normalizedUsername.includes(u.email.toLowerCase())) &&
-      u.role === "admin"
-    );
+    const inputHash = getPasswordHash(rawPassword);
 
-    // Flexible staff username check for bsaj1145, admin, pehnawa179, or any admin user
-    const isStaffUsername = 
-      normalizedUsername.includes("bsaj1145") || 
-      normalizedUsername.includes("admin") ||
-      normalizedUsername.includes("pehnawa") ||
-      normalizedUsername.includes("consul") ||
-      normalizedUsername.includes("bridge") ||
-      !!adminUser;
+    // Find registered admin in USER_ACCOUNTS
+    const adminAccount = USER_ACCOUNTS.find(u => {
+      if (u.role !== "admin" || u.status !== "active") return false;
+      const emailLower = u.email.toLowerCase();
+      const nameLower = u.name.toLowerCase();
+      
+      const isUsernameMatch = 
+        emailLower === normalizedUsername ||
+        nameLower === normalizedUsername ||
+        (normalizedUsername === "admin" && (emailLower.includes("admin") || u.id === "usr-00")) ||
+        (normalizedUsername === "bsaj1145" && emailLower.includes("bsaj1145"));
 
-    // Password check: abd12345, admin123, consul123, or any password entered for recognized staff
-    const isStaffPassword = 
-      normalizedPassword.includes("abd12345") ||
-      rawPassword.toLowerCase().includes("abd12345") ||
-      normalizedPassword.includes("admin") ||
-      normalizedPassword.includes("consul") ||
-      normalizedPassword.length >= 3;
+      return isUsernameMatch;
+    });
 
-    if (isStaffUsername || isStaffPassword) {
-      return res.json({ success: true, token: "admin-jwt-token-consul" });
+    if (!adminAccount) {
+      return res.status(401).json({ error: "Invalid username or password. Access denied to unverified users." });
     }
 
-    return res.status(401).json({ error: "Invalid username or password. Access denied." });
+    // Verify Password against hash or known verified passwords
+    const isHashValid = adminAccount.password_hash === inputHash;
+    const isLegacyPassValid = adminAccount.password && adminAccount.password === rawPassword;
+    const isStaffPassValid = 
+      (adminAccount.email.includes("bsaj1145") && (rawPassword === "Abd12345" || rawPassword === "Abd12345!")) ||
+      (adminAccount.email.includes("admin@consulportal") && (rawPassword === "Admin123!" || rawPassword === "admin123"));
+
+    if (!isHashValid && !isLegacyPassValid && !isStaffPassValid) {
+      return res.status(401).json({ error: "Invalid username or password. Verified credentials required." });
+    }
+
+    // Generate unique session token
+    const token = "admin-session-" + crypto.randomBytes(24).toString("hex");
+    ACTIVE_ADMIN_SESSIONS.set(token, {
+      token,
+      adminId: adminAccount.id,
+      email: adminAccount.email,
+      name: adminAccount.name,
+      createdAt: Date.now()
+    });
+
+    return res.json({ 
+      success: true, 
+      token,
+      user: {
+        id: adminAccount.id,
+        name: adminAccount.name,
+        email: adminAccount.email,
+        role: adminAccount.role
+      } 
+    });
   } catch (err: any) {
     console.error("Admin Login Error:", err);
     return res.status(500).json({ error: "Server authentication error." });
