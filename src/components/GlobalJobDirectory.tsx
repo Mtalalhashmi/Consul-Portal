@@ -405,7 +405,7 @@ const GOVERNMENT_PORTALS = [
 ];
 
 export default function GlobalJobDirectory({ 
-  whatsAppNum = "923002122123",
+  whatsAppNum = "16065154971",
   selectedCountry: parentSelectedCountry,
   setSelectedCountry: parentSetSelectedCountry
 }: GlobalJobDirectoryProps) {

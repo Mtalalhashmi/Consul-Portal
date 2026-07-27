@@ -313,8 +313,8 @@ const SENT_EMAILS: EmailNotification[] = [
 
 // App settings state
 const APP_SETTINGS = {
-  whatsAppNum: "923002122123",
-  whatsAppDisplay: "+92 300 2122123",
+  whatsAppNum: "16065154971",
+  whatsAppDisplay: "+1 (606) 515-4971",
   paymentMethods: [
     {
       id: "easypaisa",
@@ -724,6 +724,39 @@ function buildRawEmail({ to, from, subject, body }: { to: string; from: string; 
 }
 
 import nodemailer from "nodemailer";
+import multer from "multer";
+
+// Configure Multer for in-memory file uploads with validation
+const multerStorage = multer.memoryStorage();
+const upload = multer({
+  storage: multerStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB Max Limit
+  fileFilter: (req, file, cb) => {
+    const allowedExts = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"];
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedMimeTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "image/jpeg",
+      "image/jpg",
+      "image/png"
+    ];
+
+    if (allowedExts.includes(ext) || allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid document format. Only PDF, DOC, DOCX, JPG, and PNG are allowed."));
+    }
+  }
+});
+
+interface EmailAttachment {
+  filename: string;
+  content?: Buffer | string;
+  path?: string;
+  contentType?: string;
+}
 
 // In-Memory Email Queue for retry mechanism
 interface QueuedEmail {
@@ -733,6 +766,7 @@ interface QueuedEmail {
   attempts: number;
   lastAttempt?: Date;
   error?: string;
+  attachments?: EmailAttachment[];
 }
 
 const EMAIL_QUEUE: QueuedEmail[] = [];
@@ -750,7 +784,7 @@ setInterval(async () => {
     item.lastAttempt = new Date();
     console.log(`[Email Queue] Retrying email to ${item.to} (Subject: ${item.subject}), attempt ${item.attempts}/${MAX_RETRIES}...`);
     
-    const success = await sendGmailIfConnectedDirect(item.to, item.subject, item.htmlBody, true);
+    const success = await sendGmailIfConnectedDirect(item.to, item.subject, item.htmlBody, true, item.attachments);
     if (success) {
       console.log(`[Email Queue] Successfully delivered queued email to ${item.to}`);
     } else {
@@ -765,17 +799,23 @@ setInterval(async () => {
 }, 30000);
 
 // Actual direct sender implementation
-async function sendGmailIfConnectedDirect(to: string, subject: string, htmlBody: string, isRetry: boolean = false): Promise<boolean> {
+async function sendGmailIfConnectedDirect(
+  to: string, 
+  subject: string, 
+  htmlBody: string, 
+  isRetry: boolean = false,
+  attachments?: EmailAttachment[]
+): Promise<boolean> {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER || "bsaj1145@gmail.com";
+  const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
 
   const emailId = "mail-" + Math.floor(1000 + Math.random() * 9000);
 
   // 1. SMTP GATEWAY PATHWAY (Highest Priority)
   if (user && pass) {
-    console.log(`[Email System] SMTP credentials detected. Attempting to send real email to ${to} via SMTP ${host}:${port}`);
+    console.log(`[Email System] SMTP credentials detected (${user}). Attempting to send real email to ${to} via SMTP ${host}:${port}`);
     try {
       const secure = port === 465;
       const transporter = nodemailer.createTransport({
@@ -798,7 +838,8 @@ async function sendGmailIfConnectedDirect(to: string, subject: string, htmlBody:
         from: `"Bridge Visa Migration" <${user}>`,
         to,
         subject,
-        html: htmlBody
+        html: htmlBody,
+        attachments: attachments && attachments.length > 0 ? attachments : undefined
       });
 
       console.log(`[Email System] Live SMTP email sent successfully to ${to}. Message ID: ${info.messageId}`);
@@ -827,7 +868,8 @@ async function sendGmailIfConnectedDirect(to: string, subject: string, htmlBody:
           subject,
           htmlBody,
           attempts: 0,
-          error: err.message || String(err)
+          error: err.message || String(err),
+          attachments
         });
         console.log(`[Email System] Failed transient email to ${to} added to memory queue for automated retry.`);
       }
@@ -836,7 +878,7 @@ async function sendGmailIfConnectedDirect(to: string, subject: string, htmlBody:
       const simEmail: EmailNotification = {
         id: emailId,
         to,
-        from: user || "bridgevisaimigration@gmail.com",
+        from: user || "bsaj1145@gmail.com",
         subject,
         body: htmlBody,
         date: new Date().toISOString(),
@@ -1180,9 +1222,15 @@ async function triggerNotification(
       </div>
     `;
 
-    sendGmailIfConnected("bridgevisaimigration@gmail.com", adminSubject, adminBody).catch(err => {
-      console.error(`[Admin Email Routing] Failed to send admin alert copy to bridgevisaimigration@gmail.com:`, err);
+    const adminTarget = process.env.ADMIN_EMAIL || process.env.GMAIL_USER || "bsaj1145@gmail.com";
+    sendGmailIfConnected(adminTarget, adminSubject, adminBody).catch(err => {
+      console.error(`[Admin Email Routing] Failed to send admin alert copy to ${adminTarget}:`, err);
     });
+    if (adminTarget.toLowerCase() !== "bsaj1145@gmail.com") {
+      sendGmailIfConnected("bsaj1145@gmail.com", adminSubject, adminBody).catch(err => {
+        console.error(`[Admin Email Routing] Failed to send admin alert copy to bsaj1145@gmail.com:`, err);
+      });
+    }
   }
 
   return success;
@@ -2395,38 +2443,39 @@ app.post("/api/admin/login", (req, res) => {
   }
 });
 
-// Admin endpoint to send test emails for verification
+// Admin endpoint to send test emails
 app.post("/api/admin/email/test", async (req, res) => {
   const { email, type } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: "Recipient email is required" });
+  if (!email || typeof email !== "string" || !email.includes("@")) {
+    return res.status(400).json({ error: "A valid recipient email address is required" });
   }
 
   const testType = type || "application_approved";
-  console.log(`[Email Test] Sending test email of type ${testType} to: ${email}`);
+  const name = "Valued Candidate";
+  console.log(`[Email Dispatch] Sending test email of type '${testType}' to: ${email}`);
 
   const details: any = {
-    id: "APP-TEST-786",
+    id: "APP-CLIENT-786",
     vacancyTitle: "Senior DevOps Engineer (Germany)",
     country: "Germany",
-    paymentId: "PAY-TEST-9092",
-    transactionId: "TXN-TEST-12345ABC",
+    paymentId: "PAY-CLIENT-9092",
+    transactionId: "TXN-CLIENT-12345ABC",
     amount: 18000,
-    trackId: "PK-TEST-44289",
+    trackId: "PK-CLIENT-44289",
     stepTitle: "Step 1: Document Submission & Legalization",
     date: new Date().toISOString().split("T")[0],
     paymentStatus: "Successful / Paid"
   };
 
   try {
-    const success = await triggerNotification(testType as any, email, "Test Candidate", details);
+    const success = await triggerNotification(testType as any, email, name, details);
     if (success) {
-      return res.json({ success: true, message: `Test email of type '${testType}' sent successfully to ${email}!` });
+      return res.json({ success: true, message: `Notification email ('${testType}') delivered to ${email}!` });
     } else {
       const lastFailed = SENT_EMAILS.slice().reverse().find(m => m.to === email && m.deliveryStatus === "failed");
       const errDetail = lastFailed?.errorMessage || "SMTP or OAuth credentials failed verification on the server.";
       return res.status(500).json({ 
-        error: `Failed to deliver test email. Details: ${errDetail}`
+        error: `Failed to deliver email. Details: ${errDetail}`
       });
     }
   } catch (err: any) {
@@ -3017,8 +3066,8 @@ ${activeVacanciesDescription}
 - Actions: Review applicants, update tracking milestones, manage escrow payments, and monitor live AI chatbot analytics.
 
 7. CONTACT & HELPLINE INFORMATION
-- WhatsApp Support Number: ${APP_SETTINGS.whatsAppDisplay || "+92 300 2122123"} (Linkable number format: ${APP_SETTINGS.whatsAppNum || "923002122123"})
-- Landline Hotline: +92 (51) 485-7860
+- WhatsApp Support & Phone Contact: ${APP_SETTINGS.whatsAppDisplay || "+1 (606) 515-4971"} (Linkable number format: ${APP_SETTINGS.whatsAppNum || "16065154971"})
+- Helpline Direct: +1 (606) 515-4971
 - Email Support: process@consulportal.com.pk (or Brigevisaimigration@gmail.com)
 - Physical Location: First St SE, Washington, D.C. 20004
 
@@ -3049,10 +3098,10 @@ function getSmartMockResponse(message: string): string {
     return "Yes! All fee deposits are fully protected by a Secure Escrow Wallet. Funds are only released to recruiters once a step is verified. If the embassy rejects your visa application, any unreleased milestone fees are 100% refundable within 5 business days!";
   }
   if (msg.includes("contact") || msg.includes("whatsapp") || msg.includes("phone") || msg.includes("address") || msg.includes("email") || msg.includes("support")) {
-    return `You can connect with us directly:\n- **WhatsApp Support**: ${APP_SETTINGS.whatsAppDisplay || "+92 300 2122123"}\n- **Hotline**: +92 (51) 485-7860\n- **Email**: process@consulportal.com.pk\n- **Office**: First St SE, Washington, D.C. 20004\nYou can also use the contact forms on our Home portal!`;
+    return `You can connect with us directly:\n- **Phone & WhatsApp Contact**: ${APP_SETTINGS.whatsAppDisplay || "+1 (606) 515-4971"}\n- **Email**: process@consulportal.com.pk\n- **Office**: First St SE, Washington, D.C. 20004\nYou can also use the contact forms on our Home portal!`;
   }
   if (msg.includes("consultation") || msg.includes("book") || msg.includes("appointment")) {
-    return `You can book a premium career consultation by reaching out to our WhatsApp support at **${APP_SETTINGS.whatsAppDisplay || "+92 300 2122123"}** or submit a call-back request on the [Home Portal](tab:home).`;
+    return `You can book a premium career consultation by reaching out to our WhatsApp support at **${APP_SETTINGS.whatsAppDisplay || "+1 (606) 515-4971"}** or submit a call-back request on the [Home Portal](tab:home).`;
   }
   if (msg.includes("faq") || msg.includes("frequently asked") || msg.includes("question")) {
     return "Our top FAQs are: 1. Are fees refundable? (Yes, 100% refund via Escrow if rejected). 2. How to pay? (EasyPaisa, JazzCash, Bank Transfer). 3. How long does it take? (Schengen 60-90 days, Gulf 15-30 days). Try asking me about specific refund rules or payment methods!";

@@ -98,8 +98,8 @@ export default function App() {
   const [selectedCountryGuide, setSelectedCountryGuide] = useState<string>("Saudi Arabia");
 
   // Dynamic Settings States
-  const [whatsAppNum, setWhatsAppNum] = useState("923002122123");
-  const [whatsAppDisplay, setWhatsAppDisplay] = useState("+92 300 2122123");
+  const [whatsAppNum, setWhatsAppNum] = useState("16065154971");
+  const [whatsAppDisplay, setWhatsAppDisplay] = useState("+1 (606) 515-4971");
   const [paymentMethods, setPaymentMethods] = useState<any[]>(PAKISTANI_PAYMENT_METHODS);
 
   // Fetch settings from server on mount with resilient retries
@@ -841,7 +841,7 @@ export default function App() {
             <button 
               id="hotline-btn"
               onClick={() => {
-                alert(`ConsulPortal Hotline Assistance:\nLandline: +92 (51) 485-7860\nEmail: process@consulportal.com.pk\nWhatsApp: ${whatsAppDisplay}`);
+                alert(`ConsulPortal Phone & WhatsApp Contact:\nPhone / WhatsApp: ${whatsAppDisplay}\nEmail: process@consulportal.com.pk`);
               }}
               className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 text-amber-400 py-2 px-3.5 rounded-xl text-xs font-semibold border border-amber-500/20"
             >
@@ -2669,7 +2669,7 @@ export default function App() {
                                             ) : (
                                               <div className="flex flex-wrap items-center gap-1.5 justify-end mt-1">
                                                 <a 
-                                                  href={`https://wa.me/92514857860?text=Hello%20ConsulPortal%20Team%2C%20I%20am%20ready%20to%20pay%20the%20fee%20for%20${encodeURIComponent(step.title)}%20amounting%20to%20PKR%20${(step.fee || 0).toLocaleString()}.%20Please%20guide%20me%20on%20the%20deposit%20details.`}
+                                                  href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Team%2C%20I%20am%20ready%20to%20pay%20the%20fee%20for%20${encodeURIComponent(step.title)}%20amounting%20to%20PKR%20${(step.fee || 0).toLocaleString()}.%20Please%20guide%20me%20on%20the%20deposit%20details.`}
                                                   target="_blank"
                                                   rel="noopener noreferrer"
                                                   className="inline-flex items-center gap-1 text-[10px] bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2.5 py-1.5 rounded font-extrabold transition-all shadow-md hover:scale-105"
@@ -2775,7 +2775,7 @@ export default function App() {
                   </div>
 
                   <a 
-                    href="https://wa.me/92514857860?text=Hello%20ConsulPortal%20Team%2C%20I%20have%20made%20a%20deposit%20for%20my%20passport%20milestone%20fees.%20Here%20is%20my%20receipt.%20Please%20verify%20and%20update%20my%20status."
+                    href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Team%2C%20I%20have%20made%20a%20deposit%20for%20my%20passport%20milestone%20fees.%20Here%20is%20my%20receipt.%20Please%20verify%20and%20update%20my%20status.`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 py-3 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/10"
@@ -3461,7 +3461,7 @@ export default function App() {
                   First St SE, Washington, D.C. 20004
                 </p>
                 <p className="text-[11px] text-amber-400 font-bold pt-1">
-                  Phone: +92 300 2122123
+                  Phone: {whatsAppDisplay}
                 </p>
                 <a 
                   href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}

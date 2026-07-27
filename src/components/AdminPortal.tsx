@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Lock, Check, X, RefreshCw, FileText, Database, 
-  AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, Mail, Sparkles
+  AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, Mail, Sparkles, Send
 } from "lucide-react";
 import { PassportTrack, PassportStep } from "../types";
 
@@ -1681,12 +1681,12 @@ export default function AdminPortal({
                   <input 
                     type="text" 
                     required
-                    placeholder="e.g. 92514857860"
+                    placeholder="e.g. 16065154971"
                     value={localWhatsAppNum}
                     onChange={(e) => setLocalWhatsAppNum(e.target.value.replace(/\D/g, ''))}
                     className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
                   />
-                  <span className="text-[10px] text-slate-500 leading-normal block">Used for forming instant `wa.me` links without spaces or symbols (e.g. 92514857860).</span>
+                  <span className="text-[10px] text-slate-500 leading-normal block">Used for forming instant `wa.me` links without spaces or symbols (e.g. 16065154971).</span>
                 </div>
 
                 <div className="space-y-1.5">
@@ -1694,7 +1694,7 @@ export default function AdminPortal({
                   <input 
                     type="text" 
                     required
-                    placeholder="e.g. +92 51 485 7860"
+                    placeholder="e.g. +1 (606) 515-4971"
                     value={localWhatsAppDisplay}
                     onChange={(e) => setLocalWhatsAppDisplay(e.target.value)}
                     className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500"
@@ -1820,167 +1820,11 @@ export default function AdminPortal({
                             <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                             <span>Simulator Mode ⚡</span>
                           </button>
-
-                          <a
-                            href={typeof window !== "undefined" ? `${window.location.origin}/#admin` : "#"}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="bg-slate-900 hover:bg-slate-850 text-slate-200 hover:text-white border border-slate-800 hover:border-slate-700 font-bold px-4 py-2.5 rounded-xl text-[11px] transition uppercase tracking-wider text-center flex items-center justify-center gap-2"
-                          >
-                            <Globe className="w-3.5 h-3.5" />
-                            <span>Link Account (In New Tab ⚡)</span>
-                          </a>
                         </div>
-                        <span className="text-[10px] text-slate-500 italic font-sans text-right">
-                          * If Direct Link gets blocked by browser security, use the "In New Tab" button.
-                        </span>
                       </div>
                     )}
                   </div>
                 </div>
-
-                {typeof window !== "undefined" && window.self !== window.top && !gmailStatus.connected && (
-                  <div className="p-3.5 bg-blue-500/5 border border-blue-500/10 rounded-xl space-y-1">
-                    <div className="flex items-center gap-2 text-blue-400 font-mono text-[11px] font-bold uppercase">
-                      <ShieldAlert className="w-4 h-4" /> Iframe Sandbox Active
-                    </div>
-                    <p className="text-[10.5px] text-slate-400 leading-normal">
-                      You are viewing this app inside the AI Studio interactive preview iframe. To guarantee Google Sign-In popups bypass strict frame restrictions, we highly recommend clicking <strong>Link Account (In New Tab ⚡)</strong> above.
-                    </p>
-                  </div>
-                )}
-
-                {gmailError === "POPUP_BLOCKED" ? (
-                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl space-y-3">
-                    <div className="flex items-start gap-2.5">
-                      <ShieldAlert className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                      <div className="space-y-1">
-                        <h5 className="text-xs font-bold text-amber-500 uppercase font-mono tracking-wider">🔒 Browser Sandbox Popup Blocked</h5>
-                        <p className="text-[11px] text-slate-300 leading-normal">
-                          Because this preview container is running inside an <strong>iframe sandbox</strong>, modern browsers block Google Sign-In popups to protect your security.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="p-3.5 bg-slate-950 rounded-xl space-y-2.5 border border-slate-900">
-                      <p className="text-[10px] text-slate-400 leading-normal">
-                        To bypass iframe restrictions, click the button below to launch the application in a dedicated window. There, clicking the link button will connect your account instantly, saving it for both tabs.
-                      </p>
-                      <a
-                        href={typeof window !== "undefined" ? `${window.location.origin}/#admin` : "#"}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-xl text-[11px] uppercase tracking-wider transition text-center flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/5"
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                        <span>Open Application in New Tab & Connect</span>
-                      </a>
-                    </div>
-                  </div>
-                ) : gmailError === "CONFIGURATION_NOT_FOUND" ? (
-                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl space-y-3">
-                    <div className="flex items-start gap-2.5">
-                      <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                      <div className="space-y-1.5">
-                        <h5 className="text-xs font-bold text-rose-400 uppercase font-mono tracking-wider">🔒 Google Auth Provider Disabled</h5>
-                        <p className="text-[11px] text-rose-300 leading-normal">
-                          Google Sign-In is not yet enabled as an Authentication provider in your Firebase project (<strong>consul-c2705</strong>).
-                        </p>
-                        <div className="p-3 bg-slate-950/80 border border-slate-900 rounded-xl space-y-1 text-[10px] text-slate-400 leading-relaxed">
-                          <p className="font-semibold text-amber-500">How to fix this in your Firebase Console:</p>
-                          <ol className="list-decimal pl-4 space-y-1">
-                            <li>Go to the <a href="https://console.firebase.google.com/project/consul-c2705/authentication/providers" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline hover:text-amber-300">Firebase Authentication Console</a>.</li>
-                            <li>Click on the <strong>Sign-in method</strong> tab.</li>
-                            <li>Click <strong>Add new provider</strong>.</li>
-                            <li>Select <strong>Google</strong>, enable it, choose a project support email, and click <strong>Save</strong>.</li>
-                          </ol>
-                        </div>
-                        <p className="text-[10px] text-slate-400 leading-normal">
-                          After enabling, click <strong>Link Account</strong> again. Alternatively, you can activate the <strong>Virtual Gmail Simulator</strong> below to test fully-functional automated email logic!
-                        </p>
-                      </div>
-                    </div>
-                    <div className="pt-1.5 border-t border-rose-500/10 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleConnectGmailSimulated}
-                        className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10.5px] font-bold px-4 py-2 rounded-xl transition uppercase tracking-wider flex items-center gap-1.5 shadow"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Activate Virtual Gmail Simulator ⚡</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : gmailError === "UNAUTHORIZED_DOMAIN" ? (
-                  <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl space-y-3">
-                    <div className="flex items-start gap-2.5">
-                      <ShieldAlert className="w-4.5 h-4.5 text-rose-400 shrink-0 mt-0.5" />
-                      <div className="space-y-2">
-                        <h5 className="text-xs font-bold text-rose-400 uppercase font-mono tracking-wider">🔒 Firebase Authorized Domain Required</h5>
-                        <p className="text-[11px] text-rose-300 leading-normal">
-                          Firebase has blocked this login because this website's domain is not registered as an authorized domain in your Firebase project (<strong>consul-c2705</strong>).
-                        </p>
-                        
-                        <div className="p-3.5 bg-slate-950/80 border border-slate-900 rounded-xl space-y-2.5 text-[10.5px] text-slate-400 leading-relaxed">
-                          <p className="font-semibold text-amber-500">How to authorize this domain (takes 30 seconds):</p>
-                          <ol className="list-decimal pl-4 space-y-2">
-                            <li>
-                              Open the <a href="https://console.firebase.google.com/project/consul-c2705/authentication/settings" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline hover:text-amber-300 font-bold">Firebase Authentication Settings Console</a>.
-                            </li>
-                            <li>Scroll down to the <strong>Authorized domains</strong> section.</li>
-                            <li>Click <strong>Add domain</strong> and add this exact domain:
-                              <div className="mt-1 flex flex-col gap-1">
-                                <div className="font-mono text-[9.5px] bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-amber-400 select-all select-text break-all">
-                                  {typeof window !== "undefined" ? window.location.hostname : "ais-dev-e4jt2xot6cjqqtcap6m32i-184654866098.asia-east1.run.app"}
-                                </div>
-                              </div>
-                            </li>
-                            <li>Click <strong>Add</strong>, then return here and click <strong>Link Account</strong> again!</li>
-                          </ol>
-                        </div>
-                        
-                        <p className="text-[10px] text-slate-400 leading-normal">
-                          Once added, Google Sign-In popups will connect seamlessly. If you cannot access your Firebase Console, activate the <strong>Virtual Gmail Simulator</strong> below to bypass the domain authorization check and fully test all automated email dispatches!
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="pt-1.5 border-t border-rose-500/10 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleConnectGmailSimulated}
-                        className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10.5px] font-bold px-4 py-2 rounded-xl transition uppercase tracking-wider flex items-center gap-1.5 shadow"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Activate Virtual Gmail Simulator ⚡</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  gmailError && gmailError !== "POPUP_BLOCKED" && gmailError !== "CONFIGURATION_NOT_FOUND" && (
-                    <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl space-y-3">
-                      <div className="flex items-start gap-2.5">
-                        <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                          <h5 className="text-xs font-bold text-rose-400 uppercase font-mono tracking-wider">Authentication Connection Error</h5>
-                          <p className="text-[11px] text-rose-300 leading-normal">{gmailError}</p>
-                          <p className="text-[10px] text-slate-400 leading-normal mt-1">
-                            This typically happens because Google/Firebase Auth configuration is pending. To bypass this and fully test automated emails, you can launch the virtual simulation channel.
-                          </p>
-                        </div>
-                      </div>
-                      <div className="pt-1.5 border-t border-rose-500/10 flex justify-end">
-                        <button
-                          type="button"
-                          onClick={handleConnectGmailSimulated}
-                          className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10.5px] font-bold px-4 py-2 rounded-xl transition uppercase tracking-wider flex items-center gap-1.5 shadow"
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Activate Virtual Gmail Simulator ⚡</span>
-                        </button>
-                      </div>
-                    </div>
-                  )
-                )}
 
                 {gmailStatus.connected && (
                   <div className="p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl space-y-1.5">
@@ -1996,7 +1840,7 @@ export default function AdminPortal({
               </div>
             </div>
 
-            {/* SMTP configuration status and Live Testing panel */}
+            {/* Live SMTP & Email Tester */}
             <div className="bg-slate-950 p-6 rounded-3xl border border-slate-850 space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-900">
                 <div>
