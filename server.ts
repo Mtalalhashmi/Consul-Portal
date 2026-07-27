@@ -220,6 +220,7 @@ interface Application {
   email: string;
   status: "Pending" | "Approved" | "Rejected";
   date: string;
+  createdAt?: string;
   applyingFrom?: string;
   cvLink?: string;
   coverLetter?: string;
@@ -241,7 +242,9 @@ const APPLICATIONS: Application[] = [
     phone: "0300-1234567",
     email: "amjad.ali@gmail.com",
     status: "Pending",
-    date: "2026-06-28"
+    date: new Date().toISOString().split("T")[0],
+    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
+    applyingFrom: "Pakistan"
   },
   {
     id: "app-02",
@@ -252,7 +255,35 @@ const APPLICATIONS: Application[] = [
     phone: "0345-7654321",
     email: "kamran.shah@yahoo.com",
     status: "Approved",
-    date: "2026-06-29"
+    date: new Date().toISOString().split("T")[0],
+    createdAt: new Date(Date.now() - 42 * 60 * 1000).toISOString(), // 42 minutes ago
+    applyingFrom: "Pakistan"
+  },
+  {
+    id: "app-03",
+    vacancyId: "v-03",
+    vacancyTitle: "BIM Specialist & Revit Designer",
+    country: "Qatar",
+    name: "Tariq Mahmood",
+    phone: "0312-9876543",
+    email: "tariq.m@outlook.com",
+    status: "Pending",
+    date: new Date().toISOString().split("T")[0],
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
+    applyingFrom: "Pakistan"
+  },
+  {
+    id: "app-04",
+    vacancyId: "v-04",
+    vacancyTitle: "Heavy Equipment Maintenance Specialist",
+    country: "UAE",
+    name: "Bilal Rasheed",
+    phone: "0333-5551234",
+    email: "bilal.rasheed@gmail.com",
+    status: "Rejected",
+    date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(), // 35 days ago
+    applyingFrom: "Pakistan"
   }
 ];
 
@@ -2583,6 +2614,7 @@ app.post("/api/applications", async (req, res) => {
     email,
     status: "Pending",
     date: new Date().toISOString().split("T")[0],
+    createdAt: new Date().toISOString(),
     applyingFrom: applyingFrom || "Pakistan",
     cvLink,
     coverLetter,
@@ -2613,6 +2645,86 @@ app.post("/api/applications", async (req, res) => {
 // Admin endpoint to view all applications
 app.get("/api/admin/applications", (req, res) => {
   return res.json(APPLICATIONS);
+});
+
+// Admin endpoint to delete a single application by ID
+app.delete("/api/admin/applications/:id", (req, res) => {
+  const { id } = req.params;
+  const index = APPLICATIONS.findIndex(a => a.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Application not found" });
+  }
+  const deleted = APPLICATIONS.splice(index, 1)[0];
+  console.log(`[Admin] Deleted application ${id} (${deleted.name})`);
+  return res.json({ success: true, message: `Application ${id} deleted successfully`, deletedId: id });
+});
+
+app.post("/api/admin/applications/delete", (req, res) => {
+  const { id } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "Application ID is required" });
+  }
+  const index = APPLICATIONS.findIndex(a => a.id === id);
+  if (index === -1) {
+    return res.status(404).json({ error: "Application not found" });
+  }
+  const deleted = APPLICATIONS.splice(index, 1)[0];
+  console.log(`[Admin] Deleted application ${id} (${deleted.name})`);
+  return res.json({ success: true, message: `Application ${id} deleted successfully`, deletedId: id });
+});
+
+// Admin endpoint for bulk application deletion & purging old/rejected applications
+app.post("/api/admin/applications/bulk-delete", (req, res) => {
+  const { ids, target, olderThanDays } = req.body || {};
+
+  let deletedCount = 0;
+
+  if (Array.isArray(ids) && ids.length > 0) {
+    // Delete by explicit array of IDs
+    const idSet = new Set(ids);
+    const initialLen = APPLICATIONS.length;
+    for (let i = APPLICATIONS.length - 1; i >= 0; i--) {
+      if (idSet.has(APPLICATIONS[i].id)) {
+        APPLICATIONS.splice(i, 1);
+      }
+    }
+    deletedCount = initialLen - APPLICATIONS.length;
+  } else if (target === "rejected") {
+    // Delete all rejected applications
+    const initialLen = APPLICATIONS.length;
+    for (let i = APPLICATIONS.length - 1; i >= 0; i--) {
+      if (APPLICATIONS[i].status === "Rejected") {
+        APPLICATIONS.splice(i, 1);
+      }
+    }
+    deletedCount = initialLen - APPLICATIONS.length;
+  } else if (target === "older_than" && typeof olderThanDays === "number") {
+    // Delete applications created older than N days ago
+    const cutoffTime = Date.now() - (olderThanDays * 24 * 60 * 60 * 1000);
+    const initialLen = APPLICATIONS.length;
+    for (let i = APPLICATIONS.length - 1; i >= 0; i--) {
+      const appDateMs = APPLICATIONS[i].createdAt 
+        ? new Date(APPLICATIONS[i].createdAt!).getTime()
+        : new Date(APPLICATIONS[i].date).getTime();
+      if (!isNaN(appDateMs) && appDateMs < cutoffTime) {
+        APPLICATIONS.splice(i, 1);
+      }
+    }
+    deletedCount = initialLen - APPLICATIONS.length;
+  } else if (target === "all") {
+    // Delete all applications
+    deletedCount = APPLICATIONS.length;
+    APPLICATIONS.length = 0;
+  } else {
+    return res.status(400).json({ error: "Invalid delete criteria or parameters supplied." });
+  }
+
+  console.log(`[Admin] Bulk deleted ${deletedCount} applications.`);
+  return res.json({ 
+    success: true, 
+    message: `Successfully removed ${deletedCount} application(s).`,
+    deletedCount 
+  });
 });
 
 // Admin endpoint to update application status (approve / reject)

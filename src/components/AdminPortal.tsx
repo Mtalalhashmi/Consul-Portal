@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { 
   Lock, Check, X, RefreshCw, FileText, Database, 
-  AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, ShieldCheck, Mail, Sparkles, Send
+  AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, ShieldCheck, Mail, Sparkles, Send,
+  Trash2, Clock, CheckSquare, Square, Filter, Calendar, AlertTriangle, Layers, Search
 } from "lucide-react";
 import { PassportTrack, PassportStep } from "../types";
 
@@ -15,6 +16,7 @@ interface Application {
   email: string;
   status: "Pending" | "Approved" | "Rejected";
   date: string;
+  createdAt?: string;
   applyingFrom?: string;
   cvLink?: string;
   coverLetter?: string;
@@ -24,6 +26,55 @@ interface Application {
     type: string;
   };
   trackingNumber?: string;
+}
+
+// Live relative time calculation helper
+function getRelativeTimeString(dateInput?: string, createdAtInput?: string): { text: string; isRecent: boolean } {
+  const targetDateStr = createdAtInput || dateInput;
+  if (!targetDateStr) return { text: "Recently", isRecent: false };
+
+  const date = new Date(targetDateStr);
+  if (isNaN(date.getTime())) return { text: String(targetDateStr), isRecent: false };
+
+  const now = new Date();
+  const elapsedMs = now.getTime() - date.getTime();
+
+  if (elapsedMs < 0 || elapsedMs < 45000) {
+    return { text: "Just now", isRecent: true };
+  }
+
+  const seconds = Math.floor(elapsedMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return { 
+      text: `${minutes} min${minutes > 1 ? "s" : ""} ago`, 
+      isRecent: minutes <= 15 
+    };
+  }
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return { 
+      text: `${hours} hr${hours > 1 ? "s" : ""} ago`, 
+      isRecent: false 
+    };
+  }
+
+  const days = Math.floor(hours / 24);
+  if (days < 30) {
+    return { 
+      text: `${days} day${days > 1 ? "s" : ""} ago`, 
+      isRecent: false 
+    };
+  }
+
+  const months = Math.floor(days / 30);
+  if (months < 12) {
+    return { text: `${months} month${months > 1 ? "s" : ""} ago`, isRecent: false };
+  }
+
+  const years = Math.floor(months / 12);
+  return { text: `${years} yr${years > 1 ? "s" : ""} ago`, isRecent: false };
 }
 
 interface PassportAdminInfo extends PassportTrack {
@@ -166,6 +217,24 @@ export default function AdminPortal({
   const [courierChecked, setCourierChecked] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customPrice, setCustomPrice] = useState("");
+
+  // Application Management & Removal States
+  const [selectedAppIds, setSelectedAppIds] = useState<string[]>([]);
+  const [appSearchQuery, setAppSearchQuery] = useState("");
+  const [appStatusFilter, setAppStatusFilter] = useState<"All" | "Pending" | "Approved" | "Rejected">("All");
+  const [purgeModalOpen, setPurgeModalOpen] = useState(false);
+  const [purgeTarget, setPurgeTarget] = useState<"selected" | "rejected" | "older_7" | "older_30" | "all">("rejected");
+  const [purgeLoading, setPurgeLoading] = useState(false);
+  const [deletingAppId, setDeletingAppId] = useState<string | null>(null);
+  const [, setTimeTicker] = useState(0);
+
+  // Interval timer for live relative time calculation updates
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeTicker(prev => prev + 1);
+    }, 20000); // refresh relative time tags every 20s
+    return () => clearInterval(timer);
+  }, []);
 
   // Email Invoice Modal state
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
@@ -625,6 +694,100 @@ export default function AdminPortal({
     }
   };
 
+  // Handle Single Application Deletion
+  const handleDeleteApplication = async (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!confirm(`Are you sure you want to delete application file #${id}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setDeletingAppId(id);
+    try {
+      const response = await adminFetch(`/api/admin/applications/delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id })
+      });
+      if (response.ok) {
+        showSuccessMessage(`Application #${id} deleted successfully.`);
+        setApplications(prev => prev.filter(a => a.id !== id));
+        setSelectedAppIds(prev => prev.filter(appId => appId !== id));
+        if (selectedApplication?.id === id) {
+          const remaining = applications.filter(a => a.id !== id);
+          setSelectedApplication(remaining.length > 0 ? remaining[0] : null);
+        }
+      } else {
+        alert("Failed to delete application file.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting application file.");
+    } finally {
+      setDeletingAppId(null);
+    }
+  };
+
+  // Handle Bulk Delete / Purge Applications
+  const handleBulkPurge = async () => {
+    setPurgeLoading(true);
+    try {
+      let body: any = {};
+      if (purgeTarget === "selected") {
+        if (selectedAppIds.length === 0) {
+          alert("No applications selected for deletion.");
+          setPurgeLoading(false);
+          return;
+        }
+        body = { ids: selectedAppIds };
+      } else if (purgeTarget === "rejected") {
+        body = { target: "rejected" };
+      } else if (purgeTarget === "older_7") {
+        body = { target: "older_than", olderThanDays: 7 };
+      } else if (purgeTarget === "older_30") {
+        body = { target: "older_than", olderThanDays: 30 };
+      } else if (purgeTarget === "all") {
+        body = { target: "all" };
+      }
+
+      const response = await adminFetch("/api/admin/applications/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      const data = await response.json();
+      if (response.ok && data.success) {
+        showSuccessMessage(data.message || `Applications purged successfully.`);
+        setSelectedAppIds([]);
+        setPurgeModalOpen(false);
+        fetchDashboardData();
+      } else {
+        alert(data.error || "Failed to purge applications.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during bulk purge.");
+    } finally {
+      setPurgeLoading(false);
+    }
+  };
+
+  // Toggle selection for bulk actions
+  const toggleSelectApp = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedAppIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = (filteredApps: Application[]) => {
+    if (selectedAppIds.length === filteredApps.length && filteredApps.length > 0) {
+      setSelectedAppIds([]);
+    } else {
+      setSelectedAppIds(filteredApps.map(a => a.id));
+    }
+  };
+
   const handleSendManualEmail = async (type: "application_submitted" | "application_approved" | "payment_successful") => {
     if (!selectedApplication) return;
     setSendingEmailType(type);
@@ -1029,93 +1192,270 @@ export default function AdminPortal({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start w-full animate-fade-in">
           
           {/* Left Column: List of Direct Candidate Applications */}
-          <div className="lg:col-span-7 min-w-0 bg-slate-900/60 border border-slate-800 rounded-3xl p-6 space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-800/60 pb-3">
+          <div className="lg:col-span-7 min-w-0 bg-slate-900/60 border border-slate-800 rounded-3xl p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800/60 pb-3">
               <div>
                 <h3 className="font-display font-extrabold text-lg text-white">Direct Candidates Application Register</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Click any applicant to view uploaded documents & dispatch verified emails</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">Click any applicant to view uploaded documents, live time tags & dispatch emails</p>
               </div>
-              <span className="text-xs text-amber-500 font-mono font-bold">Select to view documents</span>
+              <span className="text-xs text-amber-500 font-mono font-bold shrink-0">{applications.length} Total Registered</span>
             </div>
 
-            {applications.length === 0 ? (
-              <div className="py-12 text-center text-slate-500 text-xs">
-                No applications currently registered on the server database.
+            {/* Search, Filter & Bulk Purge Toolbar */}
+            <div className="space-y-3 bg-slate-950/80 border border-slate-800/80 p-3.5 rounded-2xl">
+              <div className="flex flex-col sm:flex-row gap-2.5 justify-between items-stretch sm:items-center">
+                
+                {/* Search Input */}
+                <div className="relative flex-1 min-w-0">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input 
+                    type="text" 
+                    placeholder="Search candidate, role, email or phone..." 
+                    value={appSearchQuery}
+                    onChange={(e) => setAppSearchQuery(e.target.value)}
+                    className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                  {appSearchQuery && (
+                    <button 
+                      onClick={() => setAppSearchQuery("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Status Filters */}
+                <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 p-1 rounded-xl text-[10px] font-mono shrink-0">
+                  {(["All", "Pending", "Approved", "Rejected"] as const).map(st => (
+                    <button
+                      key={st}
+                      onClick={() => setAppStatusFilter(st)}
+                      className={`px-2 py-0.5 rounded-lg transition font-semibold ${
+                        appStatusFilter === st 
+                          ? "bg-amber-500 text-slate-950 font-bold" 
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-mono text-[10px] uppercase">
-                      <th className="py-3 px-2">Candidate & Contacts</th>
-                      <th className="py-3 px-2">Vacancy & Target</th>
-                      <th className="py-3 px-2">Current Status</th>
-                      <th className="py-3 px-2 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
-                    {applications.map((app) => (
-                      <tr 
-                        key={app.id} 
-                        onClick={() => {
-                          setSelectedApplication(app);
-                          setEmailSendStatus(null);
-                        }}
-                        className={`hover:bg-slate-800/60 cursor-pointer transition-all duration-200 ${
-                          selectedApplication?.id === app.id 
-                            ? "bg-amber-500/20 text-white font-semibold ring-1 ring-amber-500/30" 
-                            : "text-slate-300"
-                        }`}
-                      >
-                        <td className="py-3.5 px-2">
-                          <div className="font-bold text-white text-sm">{app.name}</div>
-                          <div className="text-[10px] text-slate-400 font-mono mt-0.5">{app.phone}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">{app.email}</div>
-                        </td>
-                        <td className="py-3.5 px-2">
-                          <div className="font-medium text-slate-200">{app.vacancyTitle}</div>
-                          <div className="text-[10px] text-amber-500 font-mono mt-0.5">{app.country} (From: {app.applyingFrom || "Pakistan"})</div>
-                        </td>
-                        <td className="py-3.5 px-2">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
-                            app.status === "Approved" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                            app.status === "Rejected" ? "bg-red-500/10 text-red-400 border border-red-500/20" :
-                            "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                          }`}>
-                            {app.status.toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-2 text-right space-x-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          {app.status === "Pending" ? (
-                            <div className="flex gap-1 justify-end">
-                              <button 
-                                onClick={() => handleUpdateAppStatus(app.id, "Approved")}
-                                className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded-md text-[9px] font-bold transition"
-                              >
-                                Approve
-                              </button>
-                              <button 
-                                onClick={() => handleUpdateAppStatus(app.id, "Rejected")}
-                                className="bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white px-2 py-1 rounded-md text-[9px] font-bold transition"
-                              >
-                                Reject
-                              </button>
-                            </div>
+
+              {/* Removal & Action Controls Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/60 text-xs">
+                
+                {/* Left: Selection Counter & Multi-Delete Button */}
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const filteredApps = applications.filter(app => {
+                      const matchesStatus = appStatusFilter === "All" || app.status === appStatusFilter;
+                      const q = appSearchQuery.trim().toLowerCase();
+                      const matchesSearch = !q || (
+                        app.name.toLowerCase().includes(q) ||
+                        app.email.toLowerCase().includes(q) ||
+                        app.phone.toLowerCase().includes(q) ||
+                        app.vacancyTitle.toLowerCase().includes(q) ||
+                        app.id.toLowerCase().includes(q) ||
+                        (app.country && app.country.toLowerCase().includes(q))
+                      );
+                      return matchesStatus && matchesSearch;
+                    });
+
+                    return (
+                      <>
+                        <button 
+                          onClick={() => toggleSelectAll(filteredApps)}
+                          className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400 hover:text-white px-2 py-1 rounded-lg border border-slate-800 hover:bg-slate-800/50 transition"
+                        >
+                          {selectedAppIds.length > 0 && selectedAppIds.length === filteredApps.length && filteredApps.length > 0 ? (
+                            <CheckSquare className="w-3.5 h-3.5 text-amber-500" />
                           ) : (
-                            <button 
-                              onClick={() => handleUpdateAppStatus(app.id, "Pending")}
-                              className="text-[10px] text-slate-500 hover:text-slate-300 font-semibold underline"
-                            >
-                              Reset
-                            </button>
+                            <Square className="w-3.5 h-3.5 text-slate-500" />
                           )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <span>{selectedAppIds.length > 0 ? `${selectedAppIds.length} Selected` : "Select All"}</span>
+                        </button>
+
+                        {selectedAppIds.length > 0 && (
+                          <button
+                            onClick={() => {
+                              setPurgeTarget("selected");
+                              setPurgeModalOpen(true);
+                            }}
+                            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 text-[11px] font-bold transition shadow-sm"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>Delete Selected ({selectedAppIds.length})</span>
+                          </button>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+
+                {/* Right: Purge & Removal Options Dropdown/Modal Trigger */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setPurgeTarget("rejected");
+                      setPurgeModalOpen(true);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 text-[11px] font-mono font-semibold transition"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    <span>Purge / Removal Options</span>
+                  </button>
+                </div>
               </div>
-            )}
+            </div>
+
+            {(() => {
+              const filteredApps = applications.filter(app => {
+                const matchesStatus = appStatusFilter === "All" || app.status === appStatusFilter;
+                const q = appSearchQuery.trim().toLowerCase();
+                const matchesSearch = !q || (
+                  app.name.toLowerCase().includes(q) ||
+                  app.email.toLowerCase().includes(q) ||
+                  app.phone.toLowerCase().includes(q) ||
+                  app.vacancyTitle.toLowerCase().includes(q) ||
+                  app.id.toLowerCase().includes(q) ||
+                  (app.country && app.country.toLowerCase().includes(q))
+                );
+                return matchesStatus && matchesSearch;
+              });
+
+              if (filteredApps.length === 0) {
+                return (
+                  <div className="py-12 text-center text-slate-500 text-xs">
+                    {applications.length === 0 
+                      ? "No applications currently registered on the server database."
+                      : "No candidate applications match the search/filter criteria."}
+                  </div>
+                );
+              }
+
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-slate-400 font-mono text-[10px] uppercase">
+                        <th className="py-3 px-2 w-7"></th>
+                        <th className="py-3 px-2">Candidate & Contacts</th>
+                        <th className="py-3 px-2">Vacancy & Target</th>
+                        <th className="py-3 px-2">Live Time Tag</th>
+                        <th className="py-3 px-2">Status</th>
+                        <th className="py-3 px-2 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {filteredApps.map((app) => {
+                        const isSelected = selectedAppIds.includes(app.id);
+                        const timeInfo = getRelativeTimeString(app.date, app.createdAt);
+
+                        return (
+                          <tr 
+                            key={app.id} 
+                            onClick={() => {
+                              setSelectedApplication(app);
+                              setEmailSendStatus(null);
+                            }}
+                            className={`hover:bg-slate-800/60 cursor-pointer transition-all duration-200 ${
+                              selectedApplication?.id === app.id 
+                                ? "bg-amber-500/20 text-white font-semibold ring-1 ring-amber-500/30" 
+                                : "text-slate-300"
+                            }`}
+                          >
+                            <td className="py-3.5 px-1 text-center" onClick={(e) => e.stopPropagation()}>
+                              <input 
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={(e) => toggleSelectApp(app.id, e as any)}
+                                className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-0 w-3.5 h-3.5 cursor-pointer"
+                              />
+                            </td>
+                            <td className="py-3.5 px-2">
+                              <div className="font-bold text-white text-sm flex items-center gap-1.5 flex-wrap">
+                                <span>{app.name}</span>
+                                {timeInfo.isRecent && (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[8px] font-mono bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse font-bold">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    NEW
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] text-slate-400 font-mono mt-0.5">{app.phone}</div>
+                              <div className="text-[10px] text-slate-400 font-mono">{app.email}</div>
+                            </td>
+                            <td className="py-3.5 px-2">
+                              <div className="font-medium text-slate-200">{app.vacancyTitle}</div>
+                              <div className="text-[10px] text-amber-500 font-mono mt-0.5">{app.country} (From: {app.applyingFrom || "Pakistan"})</div>
+                            </td>
+                            <td className="py-3.5 px-2 whitespace-nowrap">
+                              <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono font-bold border ${
+                                timeInfo.isRecent
+                                  ? "bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-sm"
+                                  : "bg-slate-950 text-slate-400 border-slate-800"
+                              }`}>
+                                <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+                                <span>{timeInfo.text}</span>
+                              </div>
+                              <div className="text-[9px] text-slate-500 font-mono mt-0.5">{app.date}</div>
+                            </td>
+                            <td className="py-3.5 px-2">
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-mono font-bold ${
+                                app.status === "Approved" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                                app.status === "Rejected" ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                                "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              }`}>
+                                {app.status.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex gap-1 justify-end items-center">
+                                {app.status === "Pending" ? (
+                                  <>
+                                    <button 
+                                      onClick={() => handleUpdateAppStatus(app.id, "Approved")}
+                                      className="bg-emerald-500 hover:bg-emerald-600 text-slate-950 px-2 py-1 rounded-md text-[9px] font-bold transition"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button 
+                                      onClick={() => handleUpdateAppStatus(app.id, "Rejected")}
+                                      className="bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white px-2 py-1 rounded-md text-[9px] font-bold transition"
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button 
+                                    onClick={() => handleUpdateAppStatus(app.id, "Pending")}
+                                    className="text-[10px] text-slate-500 hover:text-slate-300 font-semibold underline px-1"
+                                  >
+                                    Reset
+                                  </button>
+                                )}
+
+                                {/* Delete Single Application Button */}
+                                <button
+                                  onClick={(e) => handleDeleteApplication(app.id, e)}
+                                  disabled={deletingAppId === app.id}
+                                  title="Delete Application File"
+                                  className="p-1 rounded-md text-slate-500 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition disabled:opacity-50 ml-1"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </div>
 
           {/* Right Column: Candidate Documents & Mailer Hub */}
@@ -1155,6 +1495,22 @@ export default function AdminPortal({
                       <div className="text-slate-500 font-mono">TARGET:</div>
                       <div className="text-white font-semibold mt-0.5">{selectedApplication.country}</div>
                     </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/60">
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
+                      <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span>Submitted: <strong className="text-amber-400 font-bold">{getRelativeTimeString(selectedApplication.date, selectedApplication.createdAt).text}</strong></span>
+                    </div>
+
+                    <button
+                      onClick={() => handleDeleteApplication(selectedApplication.id)}
+                      disabled={deletingAppId === selectedApplication.id}
+                      className="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/20 text-[10px] font-mono font-bold flex items-center gap-1 transition"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>Delete File</span>
+                    </button>
                   </div>
                 </div>
 
@@ -2326,6 +2682,137 @@ export default function AdminPortal({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Purge & Removal Options Modal */}
+      {purgeModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl relative animate-fade-in">
+            <button 
+              onClick={() => setPurgeModalOpen(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-display font-extrabold text-white">Application Database Purge Options</h3>
+                <p className="text-xs text-slate-400">Select criterion to safely clean up or remove applications from server</p>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <label className="block text-[10px] font-mono uppercase text-slate-400">Select Removal Target</label>
+              
+              <div className="space-y-2">
+                {selectedAppIds.length > 0 && (
+                  <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                    purgeTarget === "selected" ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-slate-950 border-slate-800 text-slate-300"
+                  }`}>
+                    <input 
+                      type="radio" 
+                      name="purgeTarget" 
+                      checked={purgeTarget === "selected"} 
+                      onChange={() => setPurgeTarget("selected")}
+                      className="mt-0.5 text-amber-500" 
+                    />
+                    <div>
+                      <div className="font-bold text-xs text-amber-400">Selected Applications ({selectedAppIds.length})</div>
+                      <div className="text-[11px] text-slate-400">Remove only the candidate files currently checked in table.</div>
+                    </div>
+                  </label>
+                )}
+
+                <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                  purgeTarget === "rejected" ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-slate-950 border-slate-800 text-slate-300"
+                }`}>
+                  <input 
+                    type="radio" 
+                    name="purgeTarget" 
+                    checked={purgeTarget === "rejected"} 
+                    onChange={() => setPurgeTarget("rejected")}
+                    className="mt-0.5 text-amber-500" 
+                  />
+                  <div>
+                    <div className="font-bold text-xs text-red-400">All Rejected Applications ({applications.filter(a => a.status === "Rejected").length})</div>
+                    <div className="text-[11px] text-slate-400">Clean up non-qualifying rejected candidate submissions.</div>
+                  </div>
+                </label>
+
+                <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                  purgeTarget === "older_7" ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-slate-950 border-slate-800 text-slate-300"
+                }`}>
+                  <input 
+                    type="radio" 
+                    name="purgeTarget" 
+                    checked={purgeTarget === "older_7"} 
+                    onChange={() => setPurgeTarget("older_7")}
+                    className="mt-0.5 text-amber-500" 
+                  />
+                  <div>
+                    <div className="font-bold text-xs text-slate-200">Applications Older Than 7 Days</div>
+                    <div className="text-[11px] text-slate-400">Purge submissions received over 1 week ago.</div>
+                  </div>
+                </label>
+
+                <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                  purgeTarget === "older_30" ? "bg-amber-500/10 border-amber-500/40 text-white" : "bg-slate-950 border-slate-800 text-slate-300"
+                }`}>
+                  <input 
+                    type="radio" 
+                    name="purgeTarget" 
+                    checked={purgeTarget === "older_30"} 
+                    onChange={() => setPurgeTarget("older_30")}
+                    className="mt-0.5 text-amber-500" 
+                  />
+                  <div>
+                    <div className="font-bold text-xs text-slate-200">Applications Older Than 30 Days</div>
+                    <div className="text-[11px] text-slate-400">Purge archived candidate submissions received over a month ago.</div>
+                  </div>
+                </label>
+
+                <label className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                  purgeTarget === "all" ? "bg-red-500/10 border-red-500/40 text-white" : "bg-slate-950 border-slate-800 text-slate-300"
+                }`}>
+                  <input 
+                    type="radio" 
+                    name="purgeTarget" 
+                    checked={purgeTarget === "all"} 
+                    onChange={() => setPurgeTarget("all")}
+                    className="mt-0.5 text-red-500" 
+                  />
+                  <div>
+                    <div className="font-bold text-xs text-red-500">Purge Entire Application Register ({applications.length})</div>
+                    <div className="text-[11px] text-slate-400">Wipe all application files from current server registry.</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setPurgeModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkPurge}
+                disabled={purgeLoading}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-red-600/20"
+              >
+                {purgeLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                <span>{purgeLoading ? "Purging Registry..." : "Confirm & Remove"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
