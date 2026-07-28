@@ -609,6 +609,7 @@ export default function AdminPortal({
   const [newPassportNum, setNewPassportNum] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [newCountry, setNewCountry] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   // Auto-select initial item whenever lists populate and none is selected
   useEffect(() => {
@@ -944,6 +945,7 @@ export default function AdminPortal({
         body: JSON.stringify({
           trackId: editingPassport.trackId,
           name: editingPassport.name,
+          email: editingPassport.email,
           category: editingPassport.category,
           country: editingPassport.country,
           steps: editingPassport.steps
@@ -999,6 +1001,7 @@ export default function AdminPortal({
         body: JSON.stringify({
           trackId: newTrackId,
           name: newClientName,
+          email: newEmail,
           passportNum: newPassportNum,
           category: newCategory || "Work Visa Professional",
           country: newCountry,
@@ -1009,12 +1012,13 @@ export default function AdminPortal({
       const resData = await response.json().catch(() => ({}));
 
       if (response.ok && resData.success) {
-        showSuccessMessage(`New passport track file ${newTrackId} generated successfully!`);
+        showSuccessMessage(`New passport track file ${newTrackId} generated successfully! ${newEmail ? `Notification email dispatched to ${newEmail}` : ""}`);
         setNewTrackId("");
         setNewClientName("");
         setNewPassportNum("");
         setNewCategory("");
         setNewCountry("");
+        setNewEmail("");
         fetchDashboardData();
       } else {
         alert(resData.error || "Failed to create passport tracking file.");
@@ -2047,6 +2051,20 @@ export default function AdminPortal({
                   />
                 </div>
 
+                <div className="col-span-2 space-y-1">
+                  <label className="block text-[9px] font-mono text-slate-400 uppercase flex items-center gap-1">
+                    <Mail className="w-2.5 h-2.5 text-amber-400" />
+                    <span>Candidate Gmail / Email Address (Auto-Dispatches Updates)</span>
+                  </label>
+                  <input 
+                    type="email" 
+                    placeholder="candidate.email@gmail.com"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+
                 <button 
                   type="submit"
                   className="col-span-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-xl transition text-xs mt-2"
@@ -2106,6 +2124,20 @@ export default function AdminPortal({
                       value={editingPassport.country}
                       onChange={(e) => setEditingPassport({ ...editingPassport, country: e.target.value })}
                       className="bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-white w-full focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-mono text-slate-400 uppercase flex items-center gap-1">
+                      <Mail className="w-2.5 h-2.5 text-amber-400" />
+                      <span>Candidate Gmail / Email Address</span>
+                    </label>
+                    <input 
+                      type="email"
+                      placeholder="candidate.email@gmail.com"
+                      value={editingPassport.email || ""}
+                      onChange={(e) => setEditingPassport({ ...editingPassport, email: e.target.value })}
+                      className="bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-white w-full focus:outline-none focus:border-amber-500 font-mono"
                     />
                   </div>
                 </div>

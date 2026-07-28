@@ -85,6 +85,7 @@ const PREDEFINED_PASSPORTS: Record<string, {
   passportNum: string;
   country: string;
   category: string;
+  email?: string;
   steps: { title: string; desc: string; status: "completed" | "current" | "pending"; fee: number; feePaid: boolean }[];
   totalFee: number;
   totalPaid: number;
@@ -191,7 +192,17 @@ function getDeterministicPassport(trackId: string) {
   const totalFee = steps.reduce((sum, s) => sum + s.fee, 0);
   const totalPaid = steps.filter(s => s.feePaid).reduce((sum, s) => sum + s.fee, 0);
 
-  const passportObj = {
+  const passportObj: {
+    name: string;
+    passportNum: string;
+    country: string;
+    category: string;
+    email?: string;
+    steps: { title: string; desc: string; status: "completed" | "current" | "pending"; fee: number; feePaid: boolean }[];
+    totalFee: number;
+    totalPaid: number;
+    isPremium: boolean;
+  } = {
     name: clientName,
     passportNum,
     country,
@@ -2950,7 +2961,7 @@ app.get("/api/admin/passports", (req, res) => {
 // Admin endpoint to update passport step status and fees
 app.post("/api/admin/passports/update", (req, res) => {
   try {
-    const { trackId, steps, name, category, country, passportNum, cnic, isPremium } = req.body || {};
+    const { trackId, steps, name, category, country, passportNum, email, cnic, isPremium } = req.body || {};
     if (!trackId) {
       return res.status(400).json({ error: "Reference Track ID is required." });
     }
@@ -2963,6 +2974,7 @@ app.post("/api/admin/passports/update", (req, res) => {
     if (passportNum) passport.passportNum = passportNum;
     if (category) passport.category = category;
     if (country) passport.country = country;
+    if (email) passport.email = String(email).toLowerCase().trim();
     if (cnic !== undefined) (passport as any).cnic = cnic;
     if (isPremium !== undefined) passport.isPremium = isPremium;
 
@@ -2986,6 +2998,18 @@ app.post("/api/admin/passports/update", (req, res) => {
 
     PREDEFINED_PASSPORTS[upperId] = passport;
     TRACKED_IDS.add(upperId);
+
+    // If an email address is associated, dispatch automated confirmation email to Gmail
+    if (email) {
+      triggerNotification("application_submitted", String(email).toLowerCase().trim(), passport.name, {
+        id: upperId,
+        vacancyTitle: passport.category,
+        country: passport.country,
+        phone: "",
+        applyingFrom: "Admin Direct File Generation",
+        trackingNumber: upperId
+      }).catch(err => console.error("Failed to trigger tracking confirmation email:", err));
+    }
 
     return res.json({ success: true, passport });
   } catch (err: any) {

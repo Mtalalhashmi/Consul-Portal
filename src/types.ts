@@ -26,9 +26,12 @@ export interface PassportTrack {
   passportNum: string;
   country: string;
   category: string;
+  email?: string;
+  trackId?: string;
   steps: PassportStep[];
   totalFee: number;
   totalPaid: number;
+  isPremium?: boolean;
 }
 
 export interface Partner {
