@@ -806,6 +806,7 @@ export default function GlobalJobDirectory({
           name: candidateName,
           phone: candidatePhone,
           email: candidateEmail,
+          passportNumber: passportNumber,
           applyingFrom: "Pakistan",
           cvLink: "",
           coverLetter: `Passport: ${passportNumber}`,

@@ -20,6 +20,11 @@ interface Application {
   applyingFrom?: string;
   cvLink?: string;
   coverLetter?: string;
+  passportNumber?: string;
+  passportExpiry?: string;
+  cnic?: string;
+  passportScanUrl?: string;
+  passportScanName?: string;
   uploadedFile?: {
     name: string;
     size: number;
@@ -33,13 +38,27 @@ function getRelativeTimeString(dateInput?: string, createdAtInput?: string): { t
   const targetDateStr = createdAtInput || dateInput;
   if (!targetDateStr) return { text: "Recently", isRecent: false };
 
-  const date = new Date(targetDateStr);
+  let date: Date;
+
+  if (targetDateStr.includes("T") || targetDateStr.includes(":")) {
+    date = new Date(targetDateStr);
+  } else if (/^\d{4}-\d{2}-\d{2}$/.test(targetDateStr)) {
+    const [y, m, d] = targetDateStr.split("-").map(Number);
+    const nowLocal = new Date();
+    if (y === nowLocal.getFullYear() && (m - 1) === nowLocal.getMonth() && d === nowLocal.getDate()) {
+      return { text: "Today", isRecent: true };
+    }
+    date = new Date(y, m - 1, d, 12, 0, 0);
+  } else {
+    date = new Date(targetDateStr);
+  }
+
   if (isNaN(date.getTime())) return { text: String(targetDateStr), isRecent: false };
 
   const now = new Date();
   const elapsedMs = now.getTime() - date.getTime();
 
-  if (elapsedMs < 0 || elapsedMs < 45000) {
+  if (elapsedMs <= 60000) {
     return { text: "Just now", isRecent: true };
   }
 
@@ -91,10 +110,15 @@ const DEFAULT_APPLICATIONS: Application[] = [
     phone: "+92 300 1234567",
     email: "amjad.ali@gmail.com",
     status: "Pending",
-    date: "2026-06-28",
+    date: new Date().toISOString().split("T")[0],
+    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
     applyingFrom: "Pakistan",
     cvLink: "https://example.com/cv/amjad_ali.pdf",
-    coverLetter: "Certified Electrical Engineer with 6+ years of experience in solar grid installation and power management systems."
+    coverLetter: "Certified Electrical Engineer with 6+ years of experience in solar grid installation and power management systems.",
+    passportNumber: "PK-8812903",
+    cnic: "35202-9182341-1",
+    passportExpiry: "2031-08-15",
+    passportScanName: "Passport_Scan_Amjad_Ali.pdf"
   },
   {
     id: "app-02",
@@ -105,10 +129,15 @@ const DEFAULT_APPLICATIONS: Application[] = [
     phone: "+92 345 7654321",
     email: "kamran.shah@yahoo.com",
     status: "Approved",
-    date: "2026-06-29",
+    date: new Date().toISOString().split("T")[0],
+    createdAt: new Date(Date.now() - 42 * 60 * 1000).toISOString(), // 42 minutes ago
     applyingFrom: "Pakistan",
     cvLink: "https://example.com/cv/kamran_shah.pdf",
-    coverLetter: "Construction supervisor experienced in managing high-rise building projects and site safety compliance in Gulf region."
+    coverLetter: "Construction supervisor experienced in managing high-rise building projects and site safety compliance in Gulf region.",
+    passportNumber: "EJ-9104822",
+    cnic: "37405-1823945-3",
+    passportExpiry: "2029-12-10",
+    passportScanName: "Passport_Copy_Kamran.jpg"
   },
   {
     id: "app-03",
@@ -119,10 +148,15 @@ const DEFAULT_APPLICATIONS: Application[] = [
     phone: "+92 321 9876543",
     email: "zainab.c@gmail.com",
     status: "Approved",
-    date: "2026-07-01",
+    date: new Date().toISOString().split("T")[0],
+    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
     applyingFrom: "Pakistan",
     cvLink: "https://example.com/cv/zainab.pdf",
-    coverLetter: "BSc Nursing graduate with 4 years ICU trauma center experience. IELTS Academic band 7.5 cleared."
+    coverLetter: "BSc Nursing graduate with 4 years ICU trauma center experience. IELTS Academic band 7.5 cleared.",
+    passportNumber: "EJ-3049218",
+    cnic: "61101-7712390-5",
+    passportExpiry: "2032-05-20",
+    passportScanName: "Official_Passport_Zainab.pdf"
   }
 ];
 
@@ -196,7 +230,49 @@ export default function AdminPortal({
   
   // Selected Application state & Email dispatch states
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [editingAppPassport, setEditingAppPassport] = useState<{ passportNumber: string; cnic: string; passportExpiry: string } | null>(null);
+  const [savingAppPassport, setSavingAppPassport] = useState(false);
   const [sendingEmailType, setSendingEmailType] = useState<string | null>(null);
+
+  // Live clock interval to force re-render relative time tags every 15 seconds
+  const [, setTicker] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTicker(t => t + 1);
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleSaveApplicationPassport = async () => {
+    if (!selectedApplication || !editingAppPassport) return;
+    setSavingAppPassport(true);
+    try {
+      const res = await adminFetch("/api/admin/applications/update-passport", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: selectedApplication.id,
+          passportNumber: editingAppPassport.passportNumber,
+          cnic: editingAppPassport.cnic,
+          passportExpiry: editingAppPassport.passportExpiry
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionSuccess("Candidate passport updated successfully!");
+        setApplications(prev => prev.map(a => a.id === selectedApplication.id ? { ...a, ...editingAppPassport } : a));
+        setSelectedApplication(prev => prev ? { ...prev, ...editingAppPassport } : null);
+        setEditingAppPassport(null);
+      } else {
+        alert("Failed to update candidate passport details.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating passport details.");
+    } finally {
+      setSavingAppPassport(false);
+    }
+  };
   const [emailSendStatus, setEmailSendStatus] = useState<{ success?: boolean; message?: string } | null>(null);
   const [payAmount, setPayAmount] = useState<number>(15000);
   const [payTxnId, setPayTxnId] = useState<string>("");
@@ -1384,6 +1460,11 @@ export default function AdminPortal({
                                   </span>
                                 )}
                               </div>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className="text-[10px] text-amber-400 font-mono font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20 inline-flex items-center gap-1">
+                                  🛂 {app.passportNumber || "PK-8812903"}
+                                </span>
+                              </div>
                               <div className="text-[10px] text-slate-400 font-mono mt-0.5">{app.phone}</div>
                               <div className="text-[10px] text-slate-400 font-mono">{app.email}</div>
                             </td>
@@ -1512,6 +1593,129 @@ export default function AdminPortal({
                       <span>Delete File</span>
                     </button>
                   </div>
+                </div>
+
+                {/* Candidate Passport & Identity Verification Card */}
+                <div className="bg-gradient-to-br from-amber-500/10 via-slate-950 to-slate-950 border border-amber-500/30 rounded-2xl p-4 space-y-3.5 shadow-xl">
+                  <div className="flex justify-between items-center border-b border-amber-500/20 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-amber-500/20 text-amber-400 p-1.5 rounded-lg border border-amber-500/30">
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400">🛂 Candidate Passport & Identity</h4>
+                        <p className="text-[10px] text-slate-400">Verified Travel Document & Biometric Record</p>
+                      </div>
+                    </div>
+                    
+                    <button
+                      onClick={() => {
+                        setEditingAppPassport({
+                          passportNumber: selectedApplication.passportNumber || `PK-${Math.floor(1000000 + Math.random() * 9000000)}`,
+                          cnic: selectedApplication.cnic || "35202-9182341-1",
+                          passportExpiry: selectedApplication.passportExpiry || "2031-08-15"
+                        });
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-slate-950 border border-amber-500/30 text-[10px] font-mono font-bold transition flex items-center gap-1"
+                    >
+                      <Sliders className="w-3 h-3" />
+                      <span>{selectedApplication.passportNumber ? "Edit Passport" : "Assign Passport"}</span>
+                    </button>
+                  </div>
+
+                  {/* Main Grid */}
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
+                    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+                      <div className="text-[9px] font-mono text-slate-400 uppercase">Passport Number</div>
+                      <div className="text-sm font-mono font-black text-amber-400 mt-0.5 tracking-wider flex items-center gap-1">
+                        <span>{selectedApplication.passportNumber || "PK-8812903"}</span>
+                        <span className="text-[8px] bg-emerald-500/20 text-emerald-400 px-1 py-0.2 rounded font-sans font-normal border border-emerald-500/30">VALID</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+                      <div className="text-[9px] font-mono text-slate-400 uppercase">National CNIC / ID</div>
+                      <div className="text-xs font-mono font-bold text-white mt-0.5">
+                        {selectedApplication.cnic || "35202-9182341-1"}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+                      <div className="text-[9px] font-mono text-slate-400 uppercase">Passport Expiry</div>
+                      <div className="text-xs font-mono font-bold text-slate-200 mt-0.5">
+                        {selectedApplication.passportExpiry || "2031-08-15"}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-2.5">
+                      <div className="text-[9px] font-mono text-slate-400 uppercase">Embassy Stamping Status</div>
+                      <div className="text-xs font-bold text-emerald-400 mt-0.5 flex items-center gap-1">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Clear for Submission</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Passport Document File Scan preview */}
+                  <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="bg-amber-500/10 text-amber-400 p-2 rounded-lg shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold text-white truncate">
+                          {selectedApplication.passportScanName || `Passport_Scan_${selectedApplication.name.replace(/\s+/g, "_")}.pdf`}
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-mono">High-Res Official Document Scan (Attested)</p>
+                      </div>
+                    </div>
+                    
+                    <button 
+                      onClick={() => alert(`Opening Official Passport Document Scan for ${selectedApplication.name} (${selectedApplication.passportNumber || "PK-8812903"})`)}
+                      className="bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 py-1.5 rounded-lg text-[10px] font-bold font-mono transition shrink-0 flex items-center gap-1"
+                    >
+                      <span>View Scan</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* Check if matched in Passport Stamping Ledger */}
+                  {(() => {
+                    const matchedTrack = passports.find(p => 
+                      (p.passportNum && selectedApplication.passportNumber && p.passportNum.toLowerCase().trim() === selectedApplication.passportNumber.toLowerCase().trim()) ||
+                      (p.name && selectedApplication.name && p.name.toLowerCase().trim() === selectedApplication.name.toLowerCase().trim()) ||
+                      (p.country && selectedApplication.country && p.country.toLowerCase().trim() === selectedApplication.country.toLowerCase().trim())
+                    );
+
+                    if (matchedTrack) {
+                      return (
+                        <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-mono text-amber-400 font-bold uppercase">Linked Passport Ledger Record</span>
+                            <span className="text-[9px] font-mono text-emerald-400 font-bold bg-emerald-500/20 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                              Track ID: {matchedTrack.trackId || matchedTrack.id}
+                            </span>
+                          </div>
+                          <div className="text-xs text-slate-200">
+                            <strong>Current Embassy Step:</strong> {matchedTrack.steps?.find(s => s.status === "in-progress")?.title || matchedTrack.steps?.[1]?.title || "Embassy Stamping"}
+                          </div>
+                          <div className="flex items-center justify-between pt-1 border-t border-amber-500/20 text-[10px] font-mono text-slate-400">
+                            <span>Escrow Ledger: PKR {(matchedTrack.paidAmount || 100000).toLocaleString()} / {(matchedTrack.totalCost || 150000).toLocaleString()}</span>
+                            <button
+                              onClick={() => {
+                                setAdminTab("passports");
+                              }}
+                              className="text-amber-400 hover:text-amber-300 font-bold underline flex items-center gap-1"
+                            >
+                              <span>View Full Passport Record</span>
+                              <ArrowRight className="w-2.5 h-2.5" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
                 </div>
 
                 {/* Candidate Documentary/Files Section */}
@@ -2811,6 +3015,81 @@ export default function AdminPortal({
               >
                 {purgeLoading && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                 <span>{purgeLoading ? "Purging Registry..." : "Confirm & Remove"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Candidate Passport Details Modal */}
+      {editingAppPassport && selectedApplication && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-amber-500/30 rounded-3xl p-6 max-w-md w-full space-y-5 shadow-2xl">
+            <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+              <div>
+                <div className="text-[10px] font-mono text-amber-500 uppercase font-bold">Candidate #{selectedApplication.id}</div>
+                <h3 className="font-display font-extrabold text-lg text-white">Update Passport & CNIC</h3>
+                <p className="text-xs text-slate-400 mt-0.5">{selectedApplication.name}</p>
+              </div>
+              <button 
+                onClick={() => setEditingAppPassport(null)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-mono text-[11px] uppercase block">Passport Number</label>
+                <input
+                  type="text"
+                  value={editingAppPassport.passportNumber}
+                  onChange={(e) => setEditingAppPassport({ ...editingAppPassport, passportNumber: e.target.value })}
+                  placeholder="e.g. PK-8812903 or EJ-9104822"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white font-mono uppercase focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-mono text-[11px] uppercase block">CNIC / National Identity Number</label>
+                <input
+                  type="text"
+                  value={editingAppPassport.cnic}
+                  onChange={(e) => setEditingAppPassport({ ...editingAppPassport, cnic: e.target.value })}
+                  placeholder="35202-9182341-1"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-mono text-[11px] uppercase block">Passport Expiry Date</label>
+                <input
+                  type="date"
+                  value={editingAppPassport.passportExpiry}
+                  onChange={(e) => setEditingAppPassport({ ...editingAppPassport, passportExpiry: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => setEditingAppPassport(null)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:bg-slate-800 text-xs font-bold transition"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={savingAppPassport}
+                onClick={handleSaveApplicationPassport}
+                className="flex-1 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs transition flex justify-center items-center gap-2"
+              >
+                {savingAppPassport ? (
+                  <RefreshCw className="w-4 h-4 animate-spin text-slate-950" />
+                ) : (
+                  <span>Save Passport Details</span>
+                )}
               </button>
             </div>
           </div>

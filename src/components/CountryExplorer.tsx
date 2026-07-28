@@ -144,6 +144,8 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
     name: "",
     email: "",
     phone: "",
+    passportNumber: "",
+    cnic: "",
     cvLink: "",
     coverLetter: "",
     departureDate: "",
@@ -615,6 +617,8 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
           name: applyForm.name,
           phone: applyForm.phone,
           email: applyForm.email,
+          passportNumber: applyForm.passportNumber,
+          cnic: applyForm.cnic,
           applyingFrom: "Pakistan",
           cvLink: applyForm.cvLink,
           coverLetter: applyForm.coverLetter,
@@ -1628,6 +1632,29 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                             onChange={(e) => setApplyForm({ ...applyForm, email: e.target.value })}
                             placeholder="ahmad@domain.com"
                             className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 focus:outline-none focus:border-rose-500 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-slate-500 block font-mono text-[9px] uppercase">Passport Number</label>
+                          <input
+                            type="text"
+                            value={applyForm.passportNumber}
+                            onChange={(e) => setApplyForm({ ...applyForm, passportNumber: e.target.value })}
+                            placeholder="e.g. PK-8812903 or EJ-9104822"
+                            className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 focus:outline-none focus:border-rose-500 text-xs text-white uppercase font-mono"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-slate-500 block font-mono text-[9px] uppercase">CNIC / National ID</label>
+                          <input
+                            type="text"
+                            value={applyForm.cnic}
+                            onChange={(e) => setApplyForm({ ...applyForm, cnic: e.target.value })}
+                            placeholder="35202-9182341-1"
+                            className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 focus:outline-none focus:border-rose-500 text-xs text-white font-mono"
                           />
                         </div>
                       </div>

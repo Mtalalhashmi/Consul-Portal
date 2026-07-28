@@ -224,6 +224,11 @@ interface Application {
   applyingFrom?: string;
   cvLink?: string;
   coverLetter?: string;
+  passportNumber?: string;
+  passportExpiry?: string;
+  cnic?: string;
+  passportScanUrl?: string;
+  passportScanName?: string;
   uploadedFile?: {
     name: string;
     size: number;
@@ -244,7 +249,11 @@ const APPLICATIONS: Application[] = [
     status: "Pending",
     date: new Date().toISOString().split("T")[0],
     createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-    applyingFrom: "Pakistan"
+    applyingFrom: "Pakistan",
+    passportNumber: "PK-8812903",
+    cnic: "35202-9182341-1",
+    passportExpiry: "2031-08-15",
+    passportScanName: "Passport_Scan_Amjad_Ali.pdf"
   },
   {
     id: "app-02",
@@ -257,7 +266,11 @@ const APPLICATIONS: Application[] = [
     status: "Approved",
     date: new Date().toISOString().split("T")[0],
     createdAt: new Date(Date.now() - 42 * 60 * 1000).toISOString(), // 42 minutes ago
-    applyingFrom: "Pakistan"
+    applyingFrom: "Pakistan",
+    passportNumber: "EJ-9104822",
+    cnic: "37405-1823945-3",
+    passportExpiry: "2029-12-10",
+    passportScanName: "Passport_Copy_Kamran.jpg"
   },
   {
     id: "app-03",
@@ -270,7 +283,11 @@ const APPLICATIONS: Application[] = [
     status: "Pending",
     date: new Date().toISOString().split("T")[0],
     createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-    applyingFrom: "Pakistan"
+    applyingFrom: "Pakistan",
+    passportNumber: "EJ-3049218",
+    cnic: "61101-7712390-5",
+    passportExpiry: "2032-05-20",
+    passportScanName: "Official_Passport_Tariq.pdf"
   },
   {
     id: "app-04",
@@ -283,7 +300,11 @@ const APPLICATIONS: Application[] = [
     status: "Rejected",
     date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(), // 35 days ago
-    applyingFrom: "Pakistan"
+    applyingFrom: "Pakistan",
+    passportNumber: "PK-4429102",
+    cnic: "31303-4412890-7",
+    passportExpiry: "2028-02-18",
+    passportScanName: "Passport_Bilal.pdf"
   }
 ];
 
@@ -2598,48 +2619,124 @@ app.post("/api/admin/email/test", async (req, res) => {
 
 // Create application endpoint
 app.post("/api/applications", async (req, res) => {
-  const { vacancyId, vacancyTitle, country, name, phone, email, applyingFrom, cvLink, coverLetter, uploadedFile, trackingNumber } = req.body;
-  if (!name || !phone || !email || !vacancyId) {
-    return res.status(400).json({ error: "Please fill out all required fields" });
+  try {
+    const { 
+      vacancyId, 
+      vacancyTitle, 
+      country, 
+      name, 
+      phone, 
+      email, 
+      applyingFrom, 
+      cvLink, 
+      coverLetter, 
+      uploadedFile, 
+      trackingNumber, 
+      passportNumber, 
+      passportExpiry, 
+      cnic, 
+      passportScanUrl, 
+      passportScanName 
+    } = req.body || {};
+
+    if (!name || !phone || !email) {
+      return res.status(400).json({ error: "Please fill out all required contact fields (Name, Phone, and Email)." });
+    }
+
+    const cleanEmail = String(email).toLowerCase().trim();
+    const cleanName = String(name).trim();
+    const cleanPhone = String(phone).trim();
+
+    const effectiveVacancyId = vacancyId || ("vacancy-" + Math.floor(1000 + Math.random() * 9000));
+    const effectiveVacancyTitle = vacancyTitle || "General Visa & Employment Placement";
+    const effectiveCountry = country || "Schengen Area";
+
+    const generatedId = trackingNumber || ("app-" + Math.floor(1000 + Math.random() * 9000));
+    const newApp: Application = {
+      id: generatedId,
+      vacancyId: effectiveVacancyId,
+      vacancyTitle: effectiveVacancyTitle,
+      country: effectiveCountry,
+      name: cleanName,
+      phone: cleanPhone,
+      email: cleanEmail,
+      status: "Pending",
+      date: new Date().toISOString().split("T")[0],
+      createdAt: new Date().toISOString(),
+      applyingFrom: applyingFrom || "Pakistan",
+      cvLink: cvLink || "",
+      coverLetter: coverLetter || "",
+      uploadedFile,
+      trackingNumber: generatedId,
+      passportNumber: passportNumber || `PK-${Math.floor(1000000 + Math.random() * 9000000)}`,
+      passportExpiry: passportExpiry || "2031-12-31",
+      cnic: cnic || "",
+      passportScanUrl: passportScanUrl || "",
+      passportScanName: passportScanName || (uploadedFile?.name ? uploadedFile.name : undefined)
+    };
+
+    APPLICATIONS.push(newApp);
+
+    // Sync with PREDEFINED_PASSPORTS tracking dictionary so candidate can track their status instantly
+    const upperId = generatedId.toUpperCase().trim();
+    if (!PREDEFINED_PASSPORTS[upperId]) {
+      PREDEFINED_PASSPORTS[upperId] = {
+        name: cleanName,
+        passportNum: newApp.passportNumber!,
+        country: effectiveCountry,
+        category: effectiveVacancyTitle,
+        steps: [
+          { title: "Step 1: Application & Document Verification", desc: "Verification of HEC/MOFA credentials, employment contract, and CNIC records.", status: "completed", fee: 15000, feePaid: true },
+          { title: "Step 2: Embassy Visa Stamping & Medical Clearance", desc: "Embassy appointment, GAMCA medical fit verification, and biometric capture.", status: "current", fee: 35000, feePaid: false },
+          { title: "Step 3: Work Permit & Flight Ticket Dispatch", desc: "Protector stamp endorsement and flight booking dispatch.", status: "pending", fee: 25000, feePaid: false }
+        ],
+        totalFee: 75000,
+        totalPaid: 15000,
+        isPremium: false
+      };
+    }
+
+    // Trigger automated confirmation email safely
+    try {
+      triggerNotification("application_submitted", cleanEmail, cleanName, {
+        id: newApp.id,
+        vacancyTitle: effectiveVacancyTitle,
+        country: effectiveCountry,
+        phone: cleanPhone,
+        applyingFrom: newApp.applyingFrom,
+        cvLink: newApp.cvLink,
+        coverLetter: newApp.coverLetter,
+        uploadedFile,
+        trackingNumber: newApp.trackingNumber
+      }).catch(err => {
+        console.error("Failed to process submission email notification:", err);
+      });
+    } catch (e) {
+      console.error("Trigger notification exception:", e);
+    }
+
+    return res.json({ success: true, application: newApp, trackingNumber: newApp.trackingNumber });
+  } catch (err: any) {
+    console.error("Error handling POST /api/applications:", err);
+    return res.status(500).json({ error: "Failed to submit application: " + (err?.message || String(err)) });
   }
+});
 
-  const generatedId = "app-" + Math.floor(1000 + Math.random() * 9000);
-  const newApp: Application = {
-    id: generatedId,
-    vacancyId,
-    vacancyTitle,
-    country,
-    name,
-    phone,
-    email,
-    status: "Pending",
-    date: new Date().toISOString().split("T")[0],
-    createdAt: new Date().toISOString(),
-    applyingFrom: applyingFrom || "Pakistan",
-    cvLink,
-    coverLetter,
-    uploadedFile,
-    trackingNumber: trackingNumber || generatedId
-  };
-
-  APPLICATIONS.push(newApp);
-
-  // Generate automated confirmation email using our unified system
-  triggerNotification("application_submitted", email.toLowerCase().trim(), name, {
-    id: newApp.id,
-    vacancyTitle,
-    country,
-    phone,
-    applyingFrom: newApp.applyingFrom,
-    cvLink,
-    coverLetter,
-    uploadedFile,
-    trackingNumber: newApp.trackingNumber
-  }).catch(err => {
-    console.error("Failed to process submission email:", err);
-  });
-
-  return res.json({ success: true, application: newApp });
+// Admin endpoint to update passport details for an application
+app.post("/api/admin/applications/update-passport", (req, res) => {
+  const { id, passportNumber, cnic, passportExpiry } = req.body;
+  if (!id) {
+    return res.status(400).json({ error: "Application ID is required" });
+  }
+  const appItem = APPLICATIONS.find(a => a.id === id);
+  if (!appItem) {
+    return res.status(404).json({ error: "Application not found" });
+  }
+  if (passportNumber !== undefined) appItem.passportNumber = passportNumber;
+  if (cnic !== undefined) appItem.cnic = cnic;
+  if (passportExpiry !== undefined) appItem.passportExpiry = passportExpiry;
+  console.log(`[Admin] Updated passport details for application ${id}`);
+  return res.json({ success: true, application: appItem });
 });
 
 // Admin endpoint to view all applications
