@@ -999,13 +999,16 @@ export default function AdminPortal({
         body: JSON.stringify({
           trackId: newTrackId,
           name: newClientName,
+          passportNum: newPassportNum,
           category: newCategory || "Work Visa Professional",
           country: newCountry,
           steps: defaultSteps
         })
       });
 
-      if (response.ok) {
+      const resData = await response.json().catch(() => ({}));
+
+      if (response.ok && resData.success) {
         showSuccessMessage(`New passport track file ${newTrackId} generated successfully!`);
         setNewTrackId("");
         setNewClientName("");
@@ -1014,10 +1017,11 @@ export default function AdminPortal({
         setNewCountry("");
         fetchDashboardData();
       } else {
-        alert("Failed to create file");
+        alert(resData.error || "Failed to create passport tracking file.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error("Error creating file:", err);
+      alert(err.message || "Network error while generating passport tracking file.");
     }
   };
 

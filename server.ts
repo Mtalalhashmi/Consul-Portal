@@ -2949,37 +2949,49 @@ app.get("/api/admin/passports", (req, res) => {
 
 // Admin endpoint to update passport step status and fees
 app.post("/api/admin/passports/update", (req, res) => {
-  const { trackId, steps, name, category, country } = req.body;
-  const upperId = trackId.toUpperCase().trim();
+  try {
+    const { trackId, steps, name, category, country, passportNum, cnic, isPremium } = req.body || {};
+    if (!trackId) {
+      return res.status(400).json({ error: "Reference Track ID is required." });
+    }
+    const upperId = String(trackId).toUpperCase().trim();
 
-  // Load existing or generate
-  const passport = getDeterministicPassport(upperId);
+    // Load existing or generate
+    const passport = getDeterministicPassport(upperId);
 
-  if (name) passport.name = name;
-  if (category) passport.category = category;
-  if (country) passport.country = country;
-  if (steps && Array.isArray(steps)) {
-    // Update individual steps
-    passport.steps = steps.map((s: any, idx: number) => {
-      const origStep = passport.steps[idx] as any;
-      return {
-        title: s.title || (origStep ? origStep.title : "") || `Step ${idx + 1}`,
-        desc: s.desc || (origStep ? origStep.desc : "") || "",
-        status: s.status || (origStep ? origStep.status : "pending"),
-        fee: s.fee !== undefined ? Number(s.fee) : (origStep ? origStep.fee : 0),
-        feePaid: s.feePaid !== undefined ? Boolean(s.feePaid) : (origStep ? origStep.feePaid : false)
-      };
-    });
+    if (name) passport.name = name;
+    if (passportNum) passport.passportNum = passportNum;
+    if (category) passport.category = category;
+    if (country) passport.country = country;
+    if (cnic !== undefined) (passport as any).cnic = cnic;
+    if (isPremium !== undefined) passport.isPremium = isPremium;
 
-    // Recalculate totals
-    passport.totalFee = passport.steps.reduce((sum, s) => sum + s.fee, 0);
-    passport.totalPaid = passport.steps.filter(s => s.feePaid).reduce((sum, s) => sum + s.fee, 0);
+    if (steps && Array.isArray(steps)) {
+      // Update individual steps
+      passport.steps = steps.map((s: any, idx: number) => {
+        const origStep = passport.steps[idx] as any;
+        return {
+          title: s.title || (origStep ? origStep.title : "") || `Step ${idx + 1}`,
+          desc: s.desc || (origStep ? origStep.desc : "") || "",
+          status: s.status || (origStep ? origStep.status : "pending"),
+          fee: s.fee !== undefined ? Number(s.fee) : (origStep ? origStep.fee : 0),
+          feePaid: s.feePaid !== undefined ? Boolean(s.feePaid) : (origStep ? origStep.feePaid : false)
+        };
+      });
+
+      // Recalculate totals
+      passport.totalFee = passport.steps.reduce((sum, s) => sum + s.fee, 0);
+      passport.totalPaid = passport.steps.filter(s => s.feePaid).reduce((sum, s) => sum + s.fee, 0);
+    }
+
+    PREDEFINED_PASSPORTS[upperId] = passport;
+    TRACKED_IDS.add(upperId);
+
+    return res.json({ success: true, passport });
+  } catch (err: any) {
+    console.error("Error updating passport file record:", err);
+    return res.status(500).json({ error: "Failed to update passport record: " + (err?.message || String(err)) });
   }
-
-  PREDEFINED_PASSPORTS[upperId] = passport;
-  TRACKED_IDS.add(upperId);
-
-  return res.json({ success: true, passport });
 });
 
 // Passport tracking status endpoint

@@ -607,7 +607,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
     const code = `CP-${prefix}-${randomDigits}`;
 
     try {
-      await fetch("/api/applications", {
+      const response = await fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -630,6 +630,11 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
           trackingNumber: code
         })
       });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        console.warn("Application submission warning:", errData.error);
+      }
     } catch (err) {
       console.error("Failed to post application to the server:", err);
     }
