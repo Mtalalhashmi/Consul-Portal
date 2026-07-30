@@ -2,7 +2,6 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import crypto from "crypto";
-import { createServer as createViteServer } from "vite";
 import { RAW_COUNTRIES } from "./src/utils/countriesData";
 import { getCountry, getLiveJobs } from "./src/utils/countryDb";
 
@@ -4693,6 +4692,7 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== "production") {
     console.log("Starting server in DEVELOPMENT mode with Vite middleware...");
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
