@@ -1087,7 +1087,7 @@ export default function AdminPortal({
           </div>
           <div className="text-[11px] text-slate-400 space-y-1 pl-1">
             <p><strong className="text-slate-300">Admin Account 1:</strong> <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">admin@consulportal.com.pk</code> (Pass: <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">Admin123!</code>)</p>
-            <p><strong className="text-slate-300">Admin Account 2:</strong> <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">bsaj1145@gmail.com</code> (Pass: <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">Abd12345</code>)</p>
+            <p><strong className="text-slate-300">Admin Account 2:</strong> <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">consulportall@gmail.com</code> (Pass: <code className="text-amber-300 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">Abd12345</code>)</p>
           </div>
         </div>
 

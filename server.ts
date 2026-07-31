@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import { createServer as createViteServer } from "vite";
 import { RAW_COUNTRIES } from "./src/utils/countriesData";
 import { getCountry, getLiveJobs } from "./src/utils/countryDb";
 
@@ -228,7 +229,7 @@ interface Application {
   name: string;
   phone: string;
   email: string;
-  status: "Pending" | "Approved" | "Rejected";
+  status: "Pending" | "Approved" | "Rejected" | "Under Review" | string;
   date: string;
   createdAt?: string;
   applyingFrom?: string;
@@ -329,8 +330,10 @@ interface EmailNotification {
   subject: string;
   body: string;
   date: string;
-  type: "application" | "payment" | "general";
+  type: string;
   deliveryStatus?: "delivered" | "failed";
+  status?: "delivered" | "failed" | "sent" | string;
+  htmlBody?: string;
   errorMessage?: string;
 }
 
@@ -732,7 +735,7 @@ const ACTIVE_ADMIN_SESSIONS = new Map<string, AdminSession>();
 ACTIVE_ADMIN_SESSIONS.set("admin-jwt-token-consul", {
   token: "admin-jwt-token-consul",
   adminId: "usr-04",
-  email: "bsaj1145@gmail.com",
+  email: "consulportall@gmail.com",
   name: "Bridge Visa Staff Portal",
   createdAt: Date.now()
 });
@@ -919,7 +922,7 @@ async function sendGmailIfConnectedDirect(
 ): Promise<boolean> {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.SMTP_PORT || "587", 10);
-  const user = process.env.SMTP_USER || process.env.GMAIL_USER || "bsaj1145@gmail.com";
+  const user = process.env.SMTP_USER || process.env.GMAIL_USER || "consulportall@gmail.com";
   const pass = process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
 
   const emailId = "mail-" + Math.floor(1000 + Math.random() * 9000);
@@ -989,7 +992,7 @@ async function sendGmailIfConnectedDirect(
       const simEmail: EmailNotification = {
         id: emailId,
         to,
-        from: user || "bsaj1145@gmail.com",
+        from: user || "consulportall@gmail.com",
         subject,
         body: htmlBody,
         date: new Date().toISOString(),
@@ -1131,221 +1134,650 @@ async function sendGmailIfConnectedDirect(
   return true;
 }
 
-// Unified export function matching existing references
-async function sendGmailIfConnected(to: string, subject: string, htmlBody: string): Promise<boolean> {
-  return sendGmailIfConnectedDirect(to, subject, htmlBody, false);
+// Comprehensive SmtpConfiguration & Reminder Job Queue structures
+interface SmtpConfiguration {
+  provider: "smtp" | "gmail_api" | "sendgrid" | "resend" | "simulated";
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  fromName: string;
+  fromEmail: string;
+  adminNotificationEmail: string;
+  remindersEnabled: boolean;
+  reminderIntervalHours: number;
 }
 
-// Unified function to trigger specific styled email notifications
-async function triggerNotification(
-  type: "application_submitted" | "application_approved" | "application_rejected" | "payment_successful" | "payment_pending" | "payment_failed",
-  recipientEmail: string,
-  recipientName: string,
-  details: any
-): Promise<boolean> {
-  let subject = "";
-  let body = "";
-  const websiteName = "Bridge Visa Migration";
-  const dateStr = new Date().toISOString().split("T")[0];
+const SMTP_CONFIG: SmtpConfiguration = {
+  provider: process.env.SMTP_HOST ? "smtp" : (GMAIL_ACCESS_TOKEN ? "gmail_api" : "simulated"),
+  host: process.env.SMTP_HOST || "smtp.gmail.com",
+  port: parseInt(process.env.SMTP_PORT || "587", 10),
+  secure: process.env.SMTP_PORT === "465",
+  user: process.env.SMTP_USER || process.env.GMAIL_USER || "consulportall@gmail.com",
+  pass: process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD || "",
+  fromName: "Bridge Visa Migration",
+  fromEmail: process.env.SMTP_USER || "consulportall@gmail.com",
+  adminNotificationEmail: process.env.ADMIN_EMAIL || "consulportall@gmail.com",
+  remindersEnabled: true,
+  reminderIntervalHours: 2
+};
 
-  switch (type) {
-    case "application_submitted":
-      subject = `🎉 Job Application Submitted Successfully - ${details.vacancyTitle || ""}`;
-      body = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
-          <h2 style="color: #f59e0b; margin-top: 0;">Job Application Submitted</h2>
-          <p>Hello <strong>${recipientName}</strong>,</p>
-          <p>Thank you for submitting your application to <strong>${websiteName}</strong>.</p>
-          <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin: 15px 0;">
-            <p style="margin: 5px 0;"><strong>Application ID:</strong> ${details.id || "N/A"}</p>
-            <p style="margin: 5px 0;"><strong>Vacancy:</strong> ${details.vacancyTitle || "N/A"}</p>
-            <p style="margin: 5px 0;"><strong>Country:</strong> ${details.country || "N/A"}</p>
-            <p style="margin: 5px 0;"><strong>Submission Date:</strong> ${dateStr}</p>
-          </div>
-          <p>We are currently reviewing your qualifications and will update you as soon as the review is complete.</p>
-          <p>Best regards,<br/><strong>${websiteName}</strong></p>
-        </div>
-      `;
-      break;
+// 2-Hour Action Reminder Job Structure
+interface ReminderJob {
+  id: string;
+  clientEmail: string;
+  clientName: string;
+  type: "missing_documents" | "pending_payment" | "application_action";
+  referenceId: string;
+  details: any;
+  createdAt: string;
+  lastSentAt?: string;
+  nextRunAt: string;
+  status: "active" | "completed" | "cancelled";
+  reminderCount: number;
+}
 
-    case "application_approved":
-      subject = "🎉 Your Application Has Been Approved";
-      body = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
-          <p>Hello ${recipientName},</p>
-          <p>Congratulations!</p>
-          <p>We are pleased to inform you that your application has been approved.</p>
-          <p>Application ID: ${details.id || "N/A"}<br/>
-          Approval Date: ${dateStr}</p>
-          <p>You can now log in to your account to view your application and continue with the next steps.</p>
-          <p>Thank you for choosing ${websiteName}.</p>
-          <p>Best regards,<br/>
-          ${websiteName}</p>
-        </div>
-      `;
-      break;
-
-    case "application_rejected":
-      subject = "Application Status Update - Bridge Visa Migration";
-      body = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
-          <h2 style="color: #dc2626; margin-top: 0;">Application Update</h2>
-          <p>Hello <strong>${recipientName}</strong>,</p>
-          <p>Thank you for your interest in <strong>${websiteName}</strong>.</p>
-          <p>We have carefully reviewed your application (ID: ${details.id || "N/A"}). Unfortunately, we are unable to approve your application at this time.</p>
-          <p>We wish you the very best in your career search. You can log in to your account to explore other available vacancies or track remaining options.</p>
-          <p>Best regards,<br/><strong>${websiteName}</strong></p>
-        </div>
-      `;
-      break;
-
-    case "payment_successful":
-      subject = "Payment Successful";
-      body = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
-          <h2 style="color: #16a34a; margin-top: 0;">Payment Confirmation</h2>
-          <p>Hello <strong>${recipientName}</strong>,</p>
-          <p>Your escrow milestone payment has been received and processed successfully.</p>
-          <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin: 15px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 6px 0; color: #475569;"><strong>Name:</strong></td>
-                <td style="padding: 6px 0; font-weight: bold;">${recipientName}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #475569;"><strong>Payment ID:</strong></td>
-                <td style="padding: 6px 0; font-family: monospace;">${details.paymentId || "N/A"}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #475569;"><strong>Transaction ID:</strong></td>
-                <td style="padding: 6px 0; font-family: monospace;">${details.transactionId || "N/A"}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #475569;"><strong>Amount:</strong></td>
-                <td style="padding: 6px 0; font-weight: bold; color: #16a34a;">PKR ${(details.amount || 0).toLocaleString()}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #475569;"><strong>Date:</strong></td>
-                <td style="padding: 6px 0;">${details.date || dateStr}</td>
-              </tr>
-              <tr>
-                <td style="padding: 6px 0; color: #475569;"><strong>Payment Status:</strong></td>
-                <td style="padding: 6px 0; font-weight: bold; color: #16a34a;">${details.paymentStatus || "Successful / Paid"}</td>
-              </tr>
-            </table>
-          </div>
-          <p>Your funds are held securely in our milestone Escrow Wallet and will be released to processing partners only upon verification of the respective milestone step.</p>
-          <p style="color: #475569; font-size: 11px;">Thank you for your trusted visa sourcing with ${websiteName}.</p>
-          <p>Best regards,<br/><strong>${websiteName}</strong></p>
-        </div>
-      `;
-      break;
-
-    case "payment_pending":
-      subject = "⏳ Payment Pending Notice - Bridge Visa Migration";
-      body = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
-          <h2 style="color: #ea580c; margin-top: 0;">Escrow Milestone Payment Pending</h2>
-          <p>Hello <strong>${recipientName}</strong>,</p>
-          <p>This is a notice that a processing milestone fee of <strong>PKR ${(details.amount || 0).toLocaleString()}</strong> is currently pending for your visa file (ID: ${details.trackId || "N/A"}).</p>
-          <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin: 15px 0;">
-            <p style="margin: 5px 0;"><strong>Milestone Step:</strong> ${details.stepTitle || "N/A"}</p>
-            <p style="margin: 5px 0;"><strong>Pending Fee Amount:</strong> PKR ${(details.amount || 0).toLocaleString()}</p>
-            <p style="margin: 5px 0;"><strong>Status:</strong> Pending Escrow Deposit</p>
-          </div>
-          <p>Please log in to your Candidate Dashboard to complete the payment via EasyPaisa, JazzCash, NayaPay, or direct Bank Transfer to keep your processing active.</p>
-          <p>Best regards,<br/><strong>${websiteName}</strong></p>
-        </div>
-      `;
-      break;
-
-    case "payment_failed":
-      subject = "⚠️ Payment Transaction Failed - Action Required";
-      body = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8fafc;">
-          <h2 style="color: #dc2626; margin-top: 0;">Payment Transaction Failed</h2>
-          <p>Hello <strong>${recipientName}</strong>,</p>
-          <p>We were unable to process your milestone fee payment of <strong>PKR ${(details.amount || 0).toLocaleString()}</strong> for your tracking ID <strong>${details.trackId || "N/A"}</strong>.</p>
-          <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #cbd5e1; margin: 15px 0;">
-            <p style="margin: 5px 0;"><strong>Milestone Step:</strong> ${details.stepTitle || "N/A"}</p>
-            <p style="margin: 5px 0;"><strong>Attempted Amount:</strong> PKR ${(details.amount || 0).toLocaleString()}</p>
-            <p style="margin: 5px 0;"><strong>Transaction Status:</strong> Failed / Unpaid</p>
-            <p style="margin: 5px 0; color: #dc2626;"><strong>Reason:</strong> Standard processing timeout or invalid credentials.</p>
-          </div>
-          <p>Please log in to your Candidate Dashboard, verify your billing details, and attempt the transaction again.</p>
-          <p>Best regards,<br/><strong>${websiteName}</strong></p>
-        </div>
-      `;
-      break;
+const REMINDER_JOBS: ReminderJob[] = [
+  {
+    id: "rem-101",
+    clientEmail: "adnan@gmail.com",
+    clientName: "Muhammad Adnan",
+    type: "missing_documents",
+    referenceId: "app-01",
+    details: { docList: ["Attested HEC Degree", "MOFA Verification Seal"], deadline: "2026-08-05" },
+    createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
+    lastSentAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    nextRunAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    status: "active",
+    reminderCount: 1
   }
+];
 
-  const success = await sendGmailIfConnected(recipientEmail, subject, body);
+// Editable Email Template definition structure
+interface EmailTemplateDef {
+  id: string;
+  name: string;
+  subject: string;
+  htmlBody: string;
+  enabled: boolean;
+  category: "client" | "admin" | "reminder";
+}
 
-  // Send admin notification copy to bridgevisaimigration@gmail.com for job applications and payments
-  if (type === "application_submitted" || type === "payment_successful") {
-    const adminSubject = `[PORTAL INQUIRY / RECEIPT] - New ${type === "application_submitted" ? "Job Application" : "Payment Deposit"} from ${recipientName}`;
-    let adminBody = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #ea580c; border-radius: 12px; background-color: #fafaf9;">
-        <div style="background-color: #ea580c; color: white; padding: 12px 20px; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px; text-align: center;">
-          <h2 style="margin: 0; font-size: 20px;">Bridge Visa Migration - Admin Alert</h2>
-        </div>
-        <p>Dear Administrator,</p>
-        <p>A new activity requiring your attention has been logged on the portal.</p>
-        
-        <div style="background-color: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #e7e5e4; margin: 15px 0;">
-          <h3 style="margin-top: 0; color: #ea580c; border-bottom: 1px solid #e7e5e4; padding-bottom: 8px;">Activity Details</h3>
-          <p style="margin: 5px 0;"><strong>Event Type:</strong> ${type === "application_submitted" ? "Job Application Sourced" : "Payment Milestone Cleared (Escrow)"}</p>
-          <p style="margin: 5px 0;"><strong>Candidate Name:</strong> ${recipientName}</p>
-          <p style="margin: 5px 0;"><strong>Candidate Email:</strong> ${recipientEmail}</p>
-          <p style="margin: 5px 0;"><strong>Timestamp:</strong> ${new Date().toLocaleString()}</p>
-        </div>
-    `;
+const EMAIL_TEMPLATES: Record<string, EmailTemplateDef> = {
+  welcome_email: {
+    id: "welcome_email",
+    name: "Registration Welcome Email",
+    category: "client",
+    enabled: true,
+    subject: "Welcome to {{websiteName}}, {{recipientName}}!",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>Welcome to <strong>{{websiteName}}</strong>! Your user account has been successfully created and secured.</p>
+      <p>You can now log in to your Client Portal to explore available visa vacancies, submit applications, track consular step progression, and manage your documents safely.</p>
+    `
+  },
+  application_submitted: {
+    id: "application_submitted",
+    name: "Application Submitted Confirmation",
+    category: "client",
+    enabled: true,
+    subject: "🎉 Application Received - Ref: {{id}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>Thank you for submitting your application for <strong>{{vacancyTitle}}</strong> ({{country}}) via {{websiteName}}.</p>
+      <p>Your application has been logged into our central consular registry under Reference ID: <strong>{{id}}</strong> on <strong>{{submissionDate}}</strong>.</p>
+      <p>Our processing team is currently auditing your qualifications and credentials.</p>
+    `
+  },
+  application_under_review: {
+    id: "application_under_review",
+    name: "Application Under Review Notice",
+    category: "client",
+    enabled: true,
+    subject: "🔍 Application Under Review - Ref: {{id}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>Your application <strong>#{{id}}</strong> is currently undergoing formal consular review by our trade recruitment advisors.</p>
+      <p>No further action is required from you at this time unless additional documents are requested. We will notify you as soon as the evaluation is finalized.</p>
+    `
+  },
+  application_approved: {
+    id: "application_approved",
+    name: "Application Approved Congratulation",
+    category: "client",
+    enabled: true,
+    subject: "🎉 Congratulations! Your Application Has Been Approved - Ref: {{id}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>Great news! We are delighted to inform you that your application <strong>#{{id}}</strong> for <strong>{{vacancyTitle}}</strong> has been <strong>APPROVED</strong>!</p>
+      <p>Please log in to your Candidate Portal immediately to view your next steps, including biometric scheduling and physical dossier verification.</p>
+    `
+  },
+  application_rejected: {
+    id: "application_rejected",
+    name: "Application Rejected Notice",
+    category: "client",
+    enabled: true,
+    subject: "Application Status Update - {{websiteName}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>Thank you for your interest in <strong>{{websiteName}}</strong>. We have carefully reviewed your application <strong>#{{id}}</strong>.</p>
+      <p>Regrettably, we are unable to approve your application at this time.</p>
+      <p style="background:#fee2e2; border-left:4px solid #ef4444; padding:12px; border-radius:4px; color:#991b1b;"><strong>Reason for decision:</strong> {{rejectionReason}}</p>
+      <p>You remain eligible to re-apply for other available vacancies once credentials or prerequisites are updated.</p>
+    `
+  },
+  documents_required: {
+    id: "documents_required",
+    name: "Additional Documents Required",
+    category: "client",
+    enabled: true,
+    subject: "📄 Action Required: Additional Documents Needed for Ref: {{id}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>To proceed with your application <strong>#{{id}}</strong>, our consular verification department requires the following additional documents:</p>
+      <p style="background:#f1f5f9; padding:12px; border-radius:6px; font-weight:bold; color:#0f172a;">{{docList}}</p>
+      <p>Please upload these documents prior to the submission deadline: <strong>{{deadline}}</strong>.</p>
+    `
+  },
+  payment_requested: {
+    id: "payment_requested",
+    name: "Invoice & Payment Request",
+    category: "client",
+    enabled: true,
+    subject: "💳 Escrow Invoice & Payment Request - Ref: {{paymentRef}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>An invoice has been generated for your visa file milestone processing.</p>
+      <p><strong>Amount Due:</strong> {{currency}} {{amount}}<br/><strong>Payment Reference:</strong> {{paymentRef}}<br/><strong>Due Date:</strong> {{dueDate}}</p>
+      <p>Your payment will be held safely in Escrow and released only upon verification of the milestone step.</p>
+    `
+  },
+  payment_successful: {
+    id: "payment_successful",
+    name: "Payment Received Confirmation",
+    category: "client",
+    enabled: true,
+    subject: "✅ Payment Received Confirmation - Ref: {{paymentId}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>Your payment of <strong>{{currency}} {{amount}}</strong> has been successfully received and verified!</p>
+      <p><strong>Receipt Number:</strong> {{paymentId}}<br/><strong>Transaction ID:</strong> {{transactionId}}<br/><strong>Date:</strong> {{date}}</p>
+      <p>Your file has been advanced to the next consular processing stage.</p>
+    `
+  },
+  payment_failed: {
+    id: "payment_failed",
+    name: "Payment Failed Notice",
+    category: "client",
+    enabled: true,
+    subject: "⚠️ Payment Transaction Failed - Action Required",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>We were unable to process your milestone fee payment of <strong>{{currency}} {{amount}}</strong> for reference <strong>{{paymentRef}}</strong>.</p>
+      <p>Please log in to your Candidate Dashboard to retry payment or contact support if assistance is required.</p>
+    `
+  },
+  payment_pending: {
+    id: "payment_pending",
+    name: "Payment Pending Verification",
+    category: "client",
+    enabled: true,
+    subject: "⏳ Escrow Payment Deposit Pending Verification",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>Your milestone fee payment deposit of <strong>{{currency}} {{amount}}</strong> is currently awaiting verification by our billing department.</p>
+      <p>Verification normally takes 1-2 business hours. You will receive an official confirmation receipt once cleared.</p>
+    `
+  },
+  reminder_job: {
+    id: "reminder_job",
+    name: "2-Hour Automated Action Reminder",
+    category: "reminder",
+    enabled: true,
+    subject: "{{subject}}",
+    htmlBody: `
+      <p>Hello <strong>{{recipientName}}</strong>,</p>
+      <p>{{mainText}}</p>
+      <p style="color:#64748b; font-size:12px;">This is an automated 2-hour reminder sent to keep your consular processing on track. Reminders will stop automatically once the required action is completed.</p>
+    `
+  },
+  admin_notification: {
+    id: "admin_notification",
+    name: "Admin Event Notification Alert",
+    category: "admin",
+    enabled: true,
+    subject: "🚨 [ADMIN ALERT] {{event}} - {{clientName}}",
+    htmlBody: `
+      <p>Dear Administrator,</p>
+      <p>A new client event requiring your review has occurred on the portal:</p>
+      <p><strong>Event Type:</strong> {{event}}<br/><strong>Client Name:</strong> {{clientName}}<br/><strong>Client Email:</strong> {{clientEmail}}<br/><strong>Timestamp:</strong> {{date}}</p>
+      <p><strong>Details:</strong> {{details}}</p>
+    `
+  }
+};
 
-    if (type === "application_submitted") {
-      adminBody += `
-        <div style="background-color: #f5f5f4; padding: 15px; border-radius: 8px; border: 1px solid #e7e5e4; margin: 15px 0;">
-          <h4 style="margin-top: 0; color: #1c1917;">Application Details</h4>
-          <p style="margin: 5px 0;"><strong>Vacancy Title:</strong> ${details.vacancyTitle || "N/A"}</p>
-          <p style="margin: 5px 0;"><strong>Country:</strong> ${details.country || "N/A"}</p>
-          <p style="margin: 5px 0;"><strong>Application ID:</strong> ${details.id || "N/A"}</p>
-          <p style="margin: 5px 0;"><strong>Candidate Phone/WhatsApp:</strong> ${details.phone || "N/A"}</p>
-          <p style="margin: 5px 0;"><strong>Applying From:</strong> ${details.applyingFrom || "Pakistan"}</p>
-          ${details.cvLink ? `<p style="margin: 5px 0;"><strong>CV / Resume Link:</strong> <a href="${details.cvLink}" target="_blank">${details.cvLink}</a></p>` : ""}
-          ${details.coverLetter ? `<p style="margin: 5px 0;"><strong>Cover Letter:</strong> ${details.coverLetter}</p>` : ""}
-        </div>
-      `;
-    } else if (type === "payment_successful") {
-      adminBody += `
-        <div style="background-color: #f5f5f4; padding: 15px; border-radius: 8px; border: 1px solid #e7e5e4; margin: 15px 0;">
-          <h4 style="margin-top: 0; color: #1c1917;">Milestone Payment Details</h4>
-          <p style="margin: 5px 0;"><strong>Payment ID:</strong> ${details.paymentId || "N/A"}</p>
-          <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${details.transactionId || "N/A"}</p>
-          <p style="margin: 5px 0;"><strong>Amount:</strong> PKR ${(details.amount || 0).toLocaleString()}</p>
-          <p style="margin: 5px 0;"><strong>Payment Date:</strong> ${details.date || new Date().toISOString().split("T")[0]}</p>
-          <p style="margin: 5px 0;"><strong>Status:</strong> ${details.paymentStatus || "Cleared / Escrow Deposited"}</p>
-        </div>
-      `;
-    }
+// Anti-Duplicate Prevention Cache
+const RECENT_NOTIFICATIONS_CACHE = new Map<string, { timestamp: number; result: boolean }>();
 
-    adminBody += `
-        <p>Please log in to your Admin Dashboard to manage this file and process the corresponding documentation.</p>
-        <p>Best regards,<br/><strong>Bridge Visa Migration Automated Notification Engine</strong></p>
+// Universal Branded Responsive Email HTML Builder
+function renderBrandedEmailHtml(opts: {
+  title: string;
+  subtitle?: string;
+  badgeText?: string;
+  badgeColor?: string;
+  recipientName: string;
+  mainText?: string;
+  contentHtml?: string;
+  detailsTable?: { label: string; value: string }[];
+  ctaText?: string;
+  ctaUrl?: string;
+  customFooterNotice?: string;
+}): string {
+  const websiteName = "Bridge Visa Migration";
+  const supportEmail = "consulportall@gmail.com";
+  const supportPhone = "+1 (555) 019-2834";
+  const companyAddress = "First St SE, Washington, D.C. 20004 | Overseas Sourcing Division";
+  const officialUrl = "https://consulportal.tech";
+
+  const badgeBg = opts.badgeColor || "#f59e0b";
+
+  let tableHtml = "";
+  if (opts.detailsTable && opts.detailsTable.length > 0) {
+    tableHtml = `
+      <div style="background-color: #ffffff; padding: 16px; border-radius: 8px; border: 1px solid #cbd5e1; margin: 18px 0;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          ${opts.detailsTable.map(row => `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 0; color: #475569; font-weight: 600; width: 40%;">${row.label}:</td>
+              <td style="padding: 8px 0; color: #0f172a; font-weight: bold;">${row.value}</td>
+            </tr>
+          `).join("")}
+        </table>
       </div>
     `;
+  }
 
-    const adminTarget = process.env.ADMIN_EMAIL || process.env.GMAIL_USER || "bsaj1145@gmail.com";
-    sendGmailIfConnected(adminTarget, adminSubject, adminBody).catch(err => {
-      console.error(`[Admin Email Routing] Failed to send admin alert copy to ${adminTarget}:`, err);
+  let ctaHtml = "";
+  if (opts.ctaText && opts.ctaUrl) {
+    ctaHtml = `
+      <div style="text-align: center; margin: 26px 0;">
+        <a href="${opts.ctaUrl}" target="_blank" style="background-color: #f59e0b; color: #0f172a; font-weight: bold; text-decoration: none; padding: 13px 32px; border-radius: 8px; font-size: 14px; display: inline-block; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.3);">
+          ${opts.ctaText}
+        </a>
+      </div>
+    `;
+  }
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>${opts.title}</title>
+    </head>
+    <body style="font-family: Arial, sans-serif; background-color: #0f172a; color: #334155; margin: 0; padding: 24px 12px;">
+      <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); border: 1px solid #334155;">
+        
+        <!-- Header Banner -->
+        <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 28px 24px; text-align: center; border-bottom: 3px solid #f59e0b;">
+          <div style="display: inline-block; background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; border-radius: 50%; width: 48px; height: 48px; line-height: 48px; text-align: center; color: #f59e0b; font-size: 22px; font-weight: bold; margin-bottom: 8px;">
+            🛂
+          </div>
+          <h1 style="color: #ffffff; margin: 4px 0 0 0; font-size: 20px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">${websiteName}</h1>
+          <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 11px; font-family: monospace; letter-spacing: 1.5px; text-transform: uppercase;">Consular Sourcing & Immigration Authority</p>
+        </div>
+
+        <!-- Body Content -->
+        <div style="padding: 28px 24px; background-color: #f8fafc;">
+          ${opts.badgeText ? `<div style="display: inline-block; background-color: ${badgeBg}; color: #ffffff; font-size: 10px; font-weight: bold; padding: 4px 10px; border-radius: 20px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">${opts.badgeText}</div>` : ""}
+          <h2 style="color: #0f172a; font-size: 18px; margin-top: 0; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">${opts.title}</h2>
+          
+          ${opts.mainText ? `<p style="font-size: 14px; line-height: 1.6; color: #334155;">${opts.mainText}</p>` : ""}
+          ${opts.contentHtml ? opts.contentHtml : ""}
+          ${tableHtml}
+          ${ctaHtml}
+
+          ${opts.customFooterNotice ? `<p style="font-size: 12px; color: #64748b; background: #f1f5f9; padding: 10px 14px; border-radius: 6px; margin-top: 20px;">${opts.customFooterNotice}</p>` : ""}
+        </div>
+
+        <!-- Official Footer -->
+        <div style="background-color: #0f172a; padding: 24px; text-align: center; color: #94a3b8; font-size: 11px; line-height: 1.6; border-top: 1px solid #334155;">
+          <p style="margin: 0 0 6px 0; color: #cbd5e1; font-weight: bold; font-size: 12px;">${websiteName}</p>
+          <p style="margin: 0 0 10px 0;">📍 ${companyAddress}</p>
+          <p style="margin: 0 0 12px 0;">
+            ✉️ <a href="mailto:${supportEmail}" style="color: #f59e0b; text-decoration: none;">${supportEmail}</a> | 
+            📞 <a href="tel:${supportPhone}" style="color: #f59e0b; text-decoration: none;">${supportPhone}</a> | 
+            🌐 <a href="${officialUrl}" target="_blank" style="color: #f59e0b; text-decoration: none;">consulportal.tech</a>
+          </p>
+          <p style="margin: 0 0 12px 0;">
+            <a href="${officialUrl}/privacy" target="_blank" style="color: #64748b; text-decoration: underline; margin: 0 6px;">Privacy Policy</a> • 
+            <a href="${officialUrl}/terms" target="_blank" style="color: #64748b; text-decoration: underline; margin: 0 6px;">Terms & Conditions</a>
+          </p>
+          <p style="margin: 0; color: #64748b; font-size: 10px;">
+            © ${new Date().getFullYear()} ${websiteName} Authority. All rights reserved.<br/>
+            Security Encryption: DKIM, SPF & DMARC Verified Dispatch Gateway
+          </p>
+        </div>
+
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+// Helper to replace mustache template placeholders {{key}} with actual values
+function renderTemplateHtml(templateStr: string, data: Record<string, any>): string {
+  if (!templateStr) return "";
+  return templateStr.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key) => {
+    if (data[key] !== undefined && data[key] !== null) {
+      if (Array.isArray(data[key])) {
+        return data[key].join(", ");
+      }
+      return String(data[key]);
+    }
+    return "";
+  });
+}
+
+// Master Unified Function to trigger specific styled email notifications
+async function triggerNotification(
+  type: string,
+  recipientEmail: string,
+  recipientName: string,
+  details: any = {}
+): Promise<boolean> {
+  const cleanEmail = String(recipientEmail || "").toLowerCase().trim();
+  const cleanName = recipientName || "Valued Candidate";
+  if (!cleanEmail || !cleanEmail.includes("@")) {
+    console.warn(`[Email Trigger] Invalid recipient email passed: '${recipientEmail}'`);
+    return false;
+  }
+
+  // Anti-Duplicate Prevention (30 seconds window)
+  const refKey = `${cleanEmail}:${type}:${details.id || details.referenceId || details.paymentRef || ""}`;
+  const nowMs = Date.now();
+  const cached = RECENT_NOTIFICATIONS_CACHE.get(refKey);
+  if (cached && (nowMs - cached.timestamp < 30000)) {
+    console.log(`[Email Trigger Anti-Duplicate] Skipping duplicate email trigger '${type}' for ${cleanEmail} within 30s window.`);
+    return cached.result;
+  }
+
+  const websiteName = "Bridge Visa Migration";
+  const dateStr = new Date().toISOString().split("T")[0];
+  const fullDetails = {
+    recipientName: cleanName,
+    websiteName,
+    submissionDate: dateStr,
+    date: dateStr,
+    id: details.id || "APP-" + Math.floor(10000 + Math.random() * 90000),
+    vacancyTitle: details.vacancyTitle || "Visa Application File",
+    country: details.country || "Schengen Division",
+    amount: details.amount ? Number(details.amount).toLocaleString() : "0",
+    currency: details.currency || "PKR",
+    paymentRef: details.paymentRef || details.paymentId || "INV-" + Math.floor(100000 + Math.random() * 900000),
+    paymentId: details.paymentId || "PAY-" + Math.floor(100000 + Math.random() * 900000),
+    transactionId: details.transactionId || "TXN-" + Math.floor(100000 + Math.random() * 900000),
+    rejectionReason: details.rejectionReason || "Qualifications do not fulfill current consular trade criteria.",
+    docList: Array.isArray(details.requiredDocs) ? details.requiredDocs.join(", ") : (details.docList || "Attested HEC Degree, MOFA Verification Seal"),
+    deadline: details.deadline || new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split("T")[0],
+    dueDate: details.dueDate || new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split("T")[0],
+    event: details.event || type,
+    clientName: details.clientName || cleanName,
+    clientEmail: details.clientEmail || cleanEmail,
+    details: details.details || "Consular file update.",
+    mainText: details.mainText || "",
+    subject: details.subject || ""
+  };
+
+  let subject = "";
+  let bodyHtml = "";
+  let badgeText = "NOTIFICATION";
+  let badgeColor = "#3b82f6";
+  let ctaText = "Log In to Client Portal";
+  let ctaUrl = "https://consulportal.tech/portal";
+
+  // Check if dynamic custom template exists in EMAIL_TEMPLATES
+  const templateDef = EMAIL_TEMPLATES[type];
+  if (templateDef && templateDef.enabled) {
+    subject = renderTemplateHtml(templateDef.subject, fullDetails);
+    const renderedBody = renderTemplateHtml(templateDef.htmlBody, fullDetails);
+
+    switch (type) {
+      case "welcome_email":
+        badgeText = "WELCOME";
+        badgeColor = "#10b981";
+        ctaText = "Log In to Portal";
+        break;
+      case "application_submitted":
+        badgeText = "SUBMITTED";
+        badgeColor = "#3b82f6";
+        ctaText = "View Application Status";
+        break;
+      case "application_under_review":
+        badgeText = "UNDER REVIEW";
+        badgeColor = "#f59e0b";
+        ctaText = "Track File Progression";
+        break;
+      case "application_approved":
+        badgeText = "APPROVED";
+        badgeColor = "#10b981";
+        ctaText = "View Approval & Next Steps";
+        break;
+      case "application_rejected":
+        badgeText = "APPLICATION UPDATE";
+        badgeColor = "#ef4444";
+        ctaText = "View Account Options";
+        break;
+      case "documents_required":
+        badgeText = "ACTION REQUIRED";
+        badgeColor = "#ec4899";
+        ctaText = "Upload Requested Documents";
+        break;
+      case "payment_requested":
+        badgeText = "INVOICE DUE";
+        badgeColor = "#8b5cf6";
+        ctaText = "Pay Invoice Now";
+        ctaUrl = details.paymentLink || "https://consulportal.tech/pay";
+        break;
+      case "payment_successful":
+        badgeText = "PAYMENT CONFIRMED";
+        badgeColor = "#10b981";
+        ctaText = "Download Official Receipt";
+        break;
+      case "payment_failed":
+        badgeText = "PAYMENT FAILED";
+        badgeColor = "#ef4444";
+        ctaText = "Retry Payment Transaction";
+        break;
+      case "payment_pending":
+        badgeText = "PAYMENT PENDING";
+        badgeColor = "#f59e0b";
+        ctaText = "Check Verification Status";
+        break;
+      case "reminder_job":
+        badgeText = "2-HOUR REMINDER";
+        badgeColor = "#eab308";
+        ctaText = details.ctaText || "Complete Required Action";
+        ctaUrl = details.ctaUrl || "https://consulportal.tech/portal";
+        break;
+      case "admin_notification":
+        badgeText = "ADMIN ALERT";
+        badgeColor = "#dc2626";
+        ctaText = "Open Admin Console";
+        ctaUrl = "https://consulportal.tech/admin";
+        break;
+    }
+
+    bodyHtml = renderBrandedEmailHtml({
+      title: subject,
+      badgeText,
+      badgeColor,
+      recipientName: cleanName,
+      contentHtml: renderedBody,
+      ctaText,
+      ctaUrl
     });
-    if (adminTarget.toLowerCase() !== "bsaj1145@gmail.com") {
-      sendGmailIfConnected("bsaj1145@gmail.com", adminSubject, adminBody).catch(err => {
-        console.error(`[Admin Email Routing] Failed to send admin alert copy to bsaj1145@gmail.com:`, err);
+  } else {
+    // Default Fallback Renderer
+    subject = `${websiteName} - Consular Notification`;
+    bodyHtml = renderBrandedEmailHtml({
+      title: "Consular System Notification",
+      recipientName: cleanName,
+      mainText: `An update has occurred on your consular file (Ref: ${fullDetails.id}). Please log in to your Client Portal to review the details.`
+    });
+  }
+
+  const success = await sendGmailIfConnectedDirect(cleanEmail, subject, bodyHtml, false);
+  RECENT_NOTIFICATIONS_CACHE.set(refKey, { timestamp: nowMs, result: success });
+
+  // Forward Admin Alert Copy to consulportall@gmail.com for Application Receive & Payment Receipt events
+  const adminTargetEmail = "consulportall@gmail.com";
+  if (cleanEmail.toLowerCase() !== adminTargetEmail && (type.includes("application") || type.includes("payment"))) {
+    const adminSubject = `🚨 [ADMIN COPY] ${subject} - ${cleanName}`;
+    const adminBodyHtml = renderBrandedEmailHtml({
+      title: `Consular Event Alert: ${type.replace('_', ' ').toUpperCase()}`,
+      badgeText: "ADMIN NOTIFICATION",
+      badgeColor: "#dc2626",
+      recipientName: "Consular Management Team",
+      mainText: `A new client activity event has been logged on the portal. Below is a copy of the notification sent to <strong>${cleanName}</strong> (${cleanEmail}):`,
+      detailsTable: [
+        { label: "Client Name", value: cleanName },
+        { label: "Client Email", value: cleanEmail },
+        { label: "Reference ID", value: fullDetails.id || fullDetails.paymentId || fullDetails.paymentRef },
+        { label: "Vacancy / Step", value: fullDetails.vacancyTitle || fullDetails.event },
+        { label: "Amount / Status", value: fullDetails.amount ? `${fullDetails.currency} ${fullDetails.amount}` : fullDetails.event },
+        { label: "Logged Date", value: new Date().toLocaleString() }
+      ],
+      contentHtml: bodyHtml,
+      ctaText: "Open Admin Console",
+      ctaUrl: "https://consulportal.tech/admin"
+    });
+
+    sendGmailIfConnectedDirect(adminTargetEmail, adminSubject, adminBodyHtml, false).catch(err => {
+      console.error(`[Admin Copy Email] Failed to dispatch copy to ${adminTargetEmail}:`, err);
+    });
+
+    if (SMTP_CONFIG.adminNotificationEmail && SMTP_CONFIG.adminNotificationEmail.toLowerCase() !== adminTargetEmail) {
+      sendGmailIfConnectedDirect(SMTP_CONFIG.adminNotificationEmail, adminSubject, adminBodyHtml, false).catch(err => {
+        console.error(`[Admin Copy Email] Failed to dispatch copy to ${SMTP_CONFIG.adminNotificationEmail}:`, err);
       });
     }
   }
 
   return success;
 }
+
+// Schedule 2-Hour Automated Reminder Job
+function scheduleReminderJob(opts: {
+  clientEmail: string;
+  clientName: string;
+  type: "missing_documents" | "pending_payment" | "application_action";
+  referenceId: string;
+  details?: any;
+}) {
+  const cleanEmail = opts.clientEmail.toLowerCase().trim();
+  
+  // Cancel any existing active reminder job for this reference ID
+  for (const job of REMINDER_JOBS) {
+    if (job.clientEmail === cleanEmail && job.referenceId === opts.referenceId && job.status === "active") {
+      job.status = "cancelled";
+    }
+  }
+
+  const newJob: ReminderJob = {
+    id: "rem-" + Math.floor(1000 + Math.random() * 9000),
+    clientEmail: cleanEmail,
+    clientName: opts.clientName || "Valued Client",
+    type: opts.type,
+    referenceId: opts.referenceId,
+    details: opts.details || {},
+    createdAt: new Date().toISOString(),
+    nextRunAt: new Date(Date.now() + (2 * 3600 * 1000)).toISOString(), // 2 hours
+    status: "active",
+    reminderCount: 0
+  };
+  REMINDER_JOBS.push(newJob);
+  console.log(`[Reminder Scheduler] Scheduled 2-hour reminder job ${newJob.id} for ${cleanEmail} (${opts.type} / Ref: ${opts.referenceId})`);
+}
+
+// Complete & Stop Reminder Job
+function completeReminderJob(clientEmail: string, referenceId?: string): number {
+  const cleanEmail = String(clientEmail || "").toLowerCase().trim();
+  let completed = 0;
+  for (const job of REMINDER_JOBS) {
+    if (job.clientEmail === cleanEmail && (job.referenceId === referenceId || !referenceId) && job.status === "active") {
+      job.status = "completed";
+      completed++;
+      console.log(`[Reminder Scheduler] Completed and stopped 2-hour reminder job ${job.id} for ${cleanEmail}`);
+    }
+  }
+  return completed;
+}
+
+// Background Pass Worker for 2-Hour Action Reminders
+async function processReminderJobsPass(forceRun: boolean = false): Promise<number> {
+  if (!SMTP_CONFIG.remindersEnabled && !forceRun) return 0;
+  const now = new Date();
+  let sentCount = 0;
+
+  for (const job of REMINDER_JOBS) {
+    if (job.status !== "active") continue;
+    const nextDue = new Date(job.nextRunAt);
+
+    if (forceRun || nextDue <= now) {
+      console.log(`[Reminder Scheduler] Dispatching 2-hour reminder pass to ${job.clientEmail} (${job.type})`);
+      
+      let subject = "⏰ Action Required on Your Visa Application File";
+      let mainText = "This is a 2-hour automated reminder regarding your pending consular application file.";
+      let ctaText = "Complete Required Step";
+      let ctaUrl = "https://consulportal.tech/portal";
+
+      if (job.type === "missing_documents") {
+        subject = "⏰ Reminder: Additional Documents Required for Your Visa File";
+        mainText = `Our verification department is awaiting your uploaded documents: ${job.details.docList || "Requested Credentials"}. Please upload them before the deadline (${job.details.deadline || "ASAP"}).`;
+        ctaText = "Upload Documents Now";
+      } else if (job.type === "pending_payment") {
+        subject = "⏳ Reminder: Milestone Escrow Fee Payment Pending";
+        mainText = `Your processing milestone fee of ${job.details.currency || "PKR"} ${(job.details.amount || 0).toLocaleString()} (Ref: ${job.referenceId}) is currently pending. Please deposit the fee to keep your processing active.`;
+        ctaText = "Pay Invoice Now";
+      }
+
+      const ok = await triggerNotification("reminder_job", job.clientEmail, job.clientName, {
+        subject,
+        mainText,
+        ctaText,
+        ctaUrl,
+        type: job.type,
+        referenceId: job.referenceId,
+        reminderNumber: job.reminderCount + 1
+      });
+
+      if (ok) {
+        job.lastSentAt = now.toISOString();
+        job.nextRunAt = new Date(now.getTime() + (SMTP_CONFIG.reminderIntervalHours * 3600 * 1000)).toISOString();
+        job.reminderCount += 1;
+        sentCount++;
+      }
+    }
+  }
+  return sentCount;
+}
+
+// Run 2-Hour Reminder Scheduler Worker every 5 minutes in background
+setInterval(() => {
+  processReminderJobsPass(false).catch(err => {
+    console.error("[Reminder Scheduler Exception]:", err);
+  });
+}, 5 * 60 * 1000);
+
+// Exported wrapper function matching existing code calls
+async function sendGmailIfConnected(to: string, subject: string, htmlBody: string): Promise<boolean> {
+  return sendGmailIfConnectedDirect(to, subject, htmlBody, false);
+}
+
 
 // Fallback email generator if Gemini AI is offline/unconfigured
 function getFallbackEmail(type: "application" | "payment" | "premium", name: string, details: any): { subject: string; body: string } {
@@ -1665,7 +2097,7 @@ const USER_ACCOUNTS: UserAccount[] = [
   {
     id: "usr-04",
     name: "Bridge Visa Staff Portal",
-    email: "bsaj1145@gmail.com",
+    email: "consulportall@gmail.com",
     phone: "0300-1122335",
     address: "Executive Staff Quarters, Rawalpindi",
     password_hash: getPasswordHash("Abd12345"),
@@ -2517,6 +2949,377 @@ app.post("/api/admin/consultants/delete", (req, res) => {
   }
 });
 
+// ==========================================
+// ADMIN EMAIL NOTIFICATION SYSTEM API ROUTES
+// ==========================================
+
+// 1. Get Sent Email Logs
+app.get("/api/admin/emails/logs", (req, res) => {
+  try {
+    const search = String(req.query.search || "").toLowerCase().trim();
+    const status = String(req.query.status || "all").toLowerCase().trim();
+    
+    let filtered = [...SENT_EMAILS].reverse(); // latest first
+
+    if (status !== "all") {
+      filtered = filtered.filter(l => l.status === status);
+    }
+
+    if (search) {
+      filtered = filtered.filter(l => 
+        l.to.toLowerCase().includes(search) ||
+        l.subject.toLowerCase().includes(search) ||
+        (l.type && l.type.toLowerCase().includes(search))
+      );
+    }
+
+    return res.json({
+      success: true,
+      logs: filtered,
+      totalCount: SENT_EMAILS.length,
+      filteredCount: filtered.length
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to fetch email logs" });
+  }
+});
+
+// 2. Resend Email Log Entry
+app.post("/api/admin/emails/resend", async (req, res) => {
+  try {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ error: "Email log ID is required" });
+
+    const existingLog = SENT_EMAILS.find(l => l.id === id);
+    if (!existingLog) return res.status(404).json({ error: "Email log entry not found" });
+
+    console.log(`[Admin Email Resend] Resending log ID ${id} to ${existingLog.to}`);
+    const success = await sendGmailIfConnectedDirect(existingLog.to, `[RESENT] ${existingLog.subject}`, existingLog.htmlBody, false);
+
+    return res.json({
+      success,
+      message: success ? `Email successfully resent to ${existingLog.to}` : `Failed to resend email to ${existingLog.to}. Check SMTP configuration.`
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to resend email" });
+  }
+});
+
+// 3. Get Email Templates
+app.get("/api/admin/emails/templates", (req, res) => {
+  try {
+    const list = Object.values(EMAIL_TEMPLATES);
+    return res.json({ success: true, templates: list });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to fetch templates" });
+  }
+});
+
+// 4. Update / Save Email Template
+app.post("/api/admin/emails/templates", (req, res) => {
+  try {
+    const { id, subject, htmlBody, enabled } = req.body || {};
+    if (!id || !EMAIL_TEMPLATES[id]) {
+      return res.status(404).json({ error: "Template ID not found" });
+    }
+
+    if (subject !== undefined) EMAIL_TEMPLATES[id].subject = subject;
+    if (htmlBody !== undefined) EMAIL_TEMPLATES[id].htmlBody = htmlBody;
+    if (enabled !== undefined) EMAIL_TEMPLATES[id].enabled = Boolean(enabled);
+
+    return res.json({
+      success: true,
+      message: `Template '${EMAIL_TEMPLATES[id].name}' updated successfully!`,
+      template: EMAIL_TEMPLATES[id]
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to update template" });
+  }
+});
+
+// 5. Preview Email Template
+app.post("/api/admin/emails/templates/preview", (req, res) => {
+  try {
+    const { subject, htmlBody, sampleData } = req.body || {};
+    const testDetails = sampleData || {
+      recipientName: "Muhammad Adnan",
+      websiteName: "Bridge Visa Migration",
+      id: "APP-88492",
+      vacancyTitle: "Senior Mechanical Welder",
+      country: "Germany",
+      submissionDate: new Date().toISOString().split("T")[0],
+      amount: "150,000",
+      currency: "PKR",
+      paymentRef: "INV-99201",
+      paymentId: "PAY-30192",
+      transactionId: "TXN-77301",
+      rejectionReason: "Credential attestation pending MOFA seal.",
+      docList: "Attested Degree, MOFA Verification, Police Clearance",
+      deadline: "2026-08-15"
+    };
+
+    const renderedSubject = renderTemplateHtml(subject || "Sample Subject", testDetails);
+    const renderedBody = renderTemplateHtml(htmlBody || "<p>Sample Body</p>", testDetails);
+
+    const fullHtml = renderBrandedEmailHtml({
+      title: renderedSubject,
+      badgeText: "PREVIEW MODE",
+      badgeColor: "#6366f1",
+      recipientName: testDetails.recipientName,
+      contentHtml: renderedBody,
+      ctaText: "Log In to Candidate Portal",
+      ctaUrl: "https://consulportal.tech/portal"
+    });
+
+    return res.json({
+      success: true,
+      renderedSubject,
+      renderedHtml: fullHtml
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to preview template" });
+  }
+});
+
+// 6. Test Email Dispatch
+app.post("/api/admin/emails/test", async (req, res) => {
+  try {
+    const { recipientEmail, templateId } = req.body || {};
+    if (!recipientEmail || !recipientEmail.includes("@")) {
+      return res.status(400).json({ error: "Valid recipient email address is required" });
+    }
+
+    const typeToTrigger = templateId || "welcome_email";
+    console.log(`[Admin Test Email] Sending test '${typeToTrigger}' to ${recipientEmail}`);
+
+    const success = await triggerNotification(typeToTrigger, recipientEmail, "Admin Test User", {
+      id: "TEST-APP-101",
+      vacancyTitle: "Test Consular Vacancy",
+      country: "Germany",
+      amount: "50,000",
+      docList: "Passport Copy, Educational Degrees",
+      deadline: "2026-08-10"
+    });
+
+    return res.json({
+      success,
+      message: success 
+        ? `Test email '${typeToTrigger}' sent successfully to ${recipientEmail}!` 
+        : `Failed to dispatch test email. Please check your SMTP / Gmail credentials.`
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to send test email" });
+  }
+});
+
+// 7. Get 2-Hour Reminder Jobs & Scheduler Status
+app.get("/api/admin/reminders/status", (req, res) => {
+  try {
+    return res.json({
+      success: true,
+      remindersEnabled: SMTP_CONFIG.remindersEnabled,
+      reminderIntervalHours: SMTP_CONFIG.reminderIntervalHours,
+      activeJobsCount: REMINDER_JOBS.filter(j => j.status === "active").length,
+      jobs: REMINDER_JOBS
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to fetch reminder status" });
+  }
+});
+
+// 8. Toggle / Update Reminder Settings
+app.post("/api/admin/reminders/toggle", (req, res) => {
+  try {
+    const { enabled, intervalHours } = req.body || {};
+    if (enabled !== undefined) SMTP_CONFIG.remindersEnabled = Boolean(enabled);
+    if (intervalHours !== undefined && Number(intervalHours) > 0) {
+      SMTP_CONFIG.reminderIntervalHours = Number(intervalHours);
+    }
+
+    return res.json({
+      success: true,
+      message: `Reminder settings updated. Active: ${SMTP_CONFIG.remindersEnabled}, Interval: ${SMTP_CONFIG.reminderIntervalHours}h`,
+      remindersEnabled: SMTP_CONFIG.remindersEnabled,
+      reminderIntervalHours: SMTP_CONFIG.reminderIntervalHours
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to update reminder settings" });
+  }
+});
+
+// 9. Manually Trigger 2-Hour Reminder Job Execution
+app.post("/api/admin/reminders/trigger", async (req, res) => {
+  try {
+    const { jobId } = req.body || {};
+    if (jobId) {
+      const targetJob = REMINDER_JOBS.find(j => j.id === jobId);
+      if (!targetJob) return res.status(404).json({ error: "Reminder job not found" });
+
+      targetJob.nextRunAt = new Date().toISOString(); // force run
+    }
+
+    const sentCount = await processReminderJobsPass(true);
+    return res.json({
+      success: true,
+      sentCount,
+      message: `Dispatched ${sentCount} reminder email(s) successfully.`
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to trigger reminders" });
+  }
+});
+
+// 10. Cancel Reminder Job
+app.post("/api/admin/reminders/cancel", (req, res) => {
+  try {
+    const { jobId } = req.body || {};
+    const target = REMINDER_JOBS.find(j => j.id === jobId);
+    if (!target) return res.status(404).json({ error: "Reminder job not found" });
+
+    target.status = "cancelled";
+    return res.json({
+      success: true,
+      message: `Reminder job ${jobId} has been cancelled.`,
+      job: target
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to cancel reminder job" });
+  }
+});
+
+// 11. Get SMTP & Dispatcher Config
+app.get("/api/admin/smtp/config", (req, res) => {
+  try {
+    const safeConfig = { ...SMTP_CONFIG, pass: SMTP_CONFIG.pass ? "••••••••••••" : "" };
+    return res.json({ success: true, config: safeConfig });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to fetch SMTP config" });
+  }
+});
+
+// 12. Save / Update SMTP Config
+app.post("/api/admin/smtp/config", (req, res) => {
+  try {
+    const { provider, host, port, secure, user, pass, fromName, fromEmail, adminNotificationEmail } = req.body || {};
+    
+    if (provider) SMTP_CONFIG.provider = provider;
+    if (host) SMTP_CONFIG.host = host;
+    if (port) SMTP_CONFIG.port = Number(port);
+    if (secure !== undefined) SMTP_CONFIG.secure = Boolean(secure);
+    if (user) SMTP_CONFIG.user = user;
+    if (pass && pass !== "••••••••••••") SMTP_CONFIG.pass = pass;
+    if (fromName) SMTP_CONFIG.fromName = fromName;
+    if (fromEmail) SMTP_CONFIG.fromEmail = fromEmail;
+    if (adminNotificationEmail) SMTP_CONFIG.adminNotificationEmail = adminNotificationEmail;
+
+    return res.json({
+      success: true,
+      message: "SMTP Configuration updated successfully!",
+      config: { ...SMTP_CONFIG, pass: SMTP_CONFIG.pass ? "••••••••••••" : "" }
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to update SMTP config" });
+  }
+});
+
+// 13. Test SMTP Connection
+app.post("/api/admin/smtp/test", async (req, res) => {
+  try {
+    const target = req.body?.testEmail || SMTP_CONFIG.adminNotificationEmail || "consulportall@gmail.com";
+    const ok = await sendGmailIfConnectedDirect(target, "🔒 Bridge Visa Migration - SMTP Gateway Test", `
+      <h3>SMTP Gateway Diagnostics Passed</h3>
+      <p>Your SMTP / Email Dispatch Gateway is configured and operational.</p>
+      <p>Provider: ${SMTP_CONFIG.provider}<br/>Timestamp: ${new Date().toLocaleString()}</p>
+    `, false);
+
+    return res.json({
+      success: ok,
+      message: ok ? `SMTP Diagnostic test passed! Test email sent to ${target}` : `SMTP Diagnostic failed. Verify host, port, credentials or Gmail OAuth token.`
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "SMTP test failed" });
+  }
+});
+
+// 14. Admin Action: Request Additional Documents from Client
+app.post("/api/admin/applications/request-documents", async (req, res) => {
+  try {
+    const { clientEmail, clientName, applicationId, docList, deadline } = req.body || {};
+    if (!clientEmail || !docList) {
+      return res.status(400).json({ error: "Client Email and list of required documents are required" });
+    }
+
+    const appRef = applicationId || "APP-" + Math.floor(1000 + Math.random() * 9000);
+    const docsStr = Array.isArray(docList) ? docList.join(", ") : docList;
+    const deadlineStr = deadline || new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split("T")[0];
+
+    // Trigger Email Notice immediately
+    const ok = await triggerNotification("documents_required", clientEmail, clientName || "Valued Client", {
+      id: appRef,
+      requiredDocs: docsStr,
+      deadline: deadlineStr
+    });
+
+    // Schedule 2-Hour Automated Reminder until uploaded
+    scheduleReminderJob({
+      clientEmail,
+      clientName: clientName || "Valued Client",
+      type: "missing_documents",
+      referenceId: appRef,
+      details: { docList: docsStr, deadline: deadlineStr }
+    });
+
+    return res.json({
+      success: ok,
+      message: ok 
+        ? `Document request email sent to ${clientEmail} and 2-hour reminder timer scheduled!`
+        : `Scheduled document request, but email dispatch failed. Verify SMTP settings.`
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to request documents" });
+  }
+});
+
+// 15. Admin Action: Issue Invoice / Request Milestone Payment from Client
+app.post("/api/admin/applications/request-payment", async (req, res) => {
+  try {
+    const { clientEmail, clientName, amount, currency, paymentRef, stepTitle, dueDate } = req.body || {};
+    if (!clientEmail || !amount) {
+      return res.status(400).json({ error: "Client Email and payment amount are required" });
+    }
+
+    const invRef = paymentRef || "INV-" + Math.floor(10000 + Math.random() * 90000);
+    const amountVal = Number(amount);
+    const dueDateStr = dueDate || new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split("T")[0];
+
+    // Trigger Invoice Email
+    const ok = await triggerNotification("payment_requested", clientEmail, clientName || "Valued Client", {
+      paymentRef: invRef,
+      amount: amountVal,
+      currency: currency || "PKR",
+      dueDate: dueDateStr
+    });
+
+    // Schedule 2-Hour Automated Reminder until paid
+    scheduleReminderJob({
+      clientEmail,
+      clientName: clientName || "Valued Client",
+      type: "pending_payment",
+      referenceId: invRef,
+      details: { amount: amountVal, currency: currency || "PKR", stepTitle: stepTitle || "Milestone Processing Fee" }
+    });
+
+    return res.json({
+      success: ok,
+      message: ok 
+        ? `Invoice & Payment Request email sent to ${clientEmail} and 2-hour reminder timer active!`
+        : `Scheduled payment request, but email dispatch failed. Verify SMTP settings.`
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || "Failed to request payment" });
+  }
+});
+
 // Admin Authentication Route - Strict Verification
 app.post("/api/admin/login", (req, res) => {
   try {
@@ -2834,31 +3637,40 @@ app.post("/api/admin/applications/bulk-delete", (req, res) => {
   });
 });
 
-// Admin endpoint to update application status (approve / reject)
+// Admin endpoint to update application status (under review / approve / reject)
 app.post("/api/admin/applications/status", async (req, res) => {
-  const { id, status } = req.body;
+  const { id, status, rejectionReason } = req.body;
   const application = APPLICATIONS.find(a => a.id === id);
   if (!application) {
     return res.status(404).json({ error: "Application not found" });
   }
-  if (status !== "Pending" && status !== "Approved" && status !== "Rejected") {
-    return res.status(400).json({ error: "Invalid status value" });
-  }
 
+  const normalizedStatus = String(status || "").trim();
   const oldStatus = application.status;
-  application.status = status;
+  application.status = normalizedStatus;
 
-  // Trigger emails exactly once on transition
-  if (oldStatus !== "Approved" && status === "Approved") {
+  // Trigger emails on transition
+  if (normalizedStatus === "Under Review" && oldStatus !== "Under Review") {
+    console.log(`[Email Trigger] Application ${id} set to Under Review. Triggering email to ${application.email}`);
+    triggerNotification("application_under_review", application.email, application.name, {
+      id: application.id,
+      vacancyTitle: application.vacancyTitle,
+      country: application.country
+    }).catch(err => console.error("[Email Trigger Error]:", err));
+  } else if (normalizedStatus === "Approved" && oldStatus !== "Approved") {
     console.log(`[Email Trigger] Application ${id} approved. Triggering approval email to ${application.email}`);
-    triggerNotification("application_approved", application.email, application.name, { id: application.id }).catch(err => {
-      console.error(`[Email Trigger] Failed to send approval email to ${application.email}:`, err);
-    });
-  } else if (oldStatus !== "Rejected" && status === "Rejected") {
+    triggerNotification("application_approved", application.email, application.name, {
+      id: application.id,
+      vacancyTitle: application.vacancyTitle
+    }).catch(err => console.error("[Email Trigger Error]:", err));
+    completeReminderJob(application.email, application.id);
+  } else if (normalizedStatus === "Rejected" && oldStatus !== "Rejected") {
     console.log(`[Email Trigger] Application ${id} rejected. Triggering rejection email to ${application.email}`);
-    triggerNotification("application_rejected", application.email, application.name, { id: application.id }).catch(err => {
-      console.error(`[Email Trigger] Failed to send rejection email to ${application.email}:`, err);
-    });
+    triggerNotification("application_rejected", application.email, application.name, {
+      id: application.id,
+      rejectionReason: rejectionReason || "Qualifications do not fulfill current trade criteria."
+    }).catch(err => console.error("[Email Trigger Error]:", err));
+    completeReminderJob(application.email, application.id);
   }
 
   return res.json({ success: true, application });
@@ -4692,7 +5504,6 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== "production") {
     console.log("Starting server in DEVELOPMENT mode with Vite middleware...");
-    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -4712,10 +5523,4 @@ async function startServer() {
   });
 }
 
-if (process.env.VERCEL) {
-  initializeGeminiClient();
-} else {
-  startServer();
-}
-
-export default app;
+startServer();
