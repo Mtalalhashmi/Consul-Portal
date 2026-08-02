@@ -16,11 +16,16 @@ delete process.env.GCLOUD_PROJECT;
 delete process.env.GCP_PROJECT;
 
 const app = express();
-app.use(express.json());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use((err: any, req: any, res: any, next: any) => {
-  if (err instanceof SyntaxError && 'status' in err && err.status === 400) {
-    console.error('[JSON Parse Error] Bad request body:', err);
-    return res.status(400).json({ error: "Invalid JSON payload" });
+  if (err) {
+    console.error('[Express Middleware Error]:', err);
+    return res.status(err.status || 400).json({ 
+      error: err.type === 'entity.too.large' 
+        ? 'File payload too large. Maximum size allowed is 50MB.' 
+        : (err.message || "Invalid JSON or body payload") 
+    });
   }
   next();
 });
