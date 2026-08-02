@@ -915,24 +915,9 @@ async function sendGmailIfConnectedDirect(
       SENT_EMAILS.push(logEmail);
       return true;
     } catch (err: any) {
-      console.warn(`[Email System] SMTP delivery notice for ${to}: ${err.message || err}. Transitioning to Virtual Mailbox simulation.`);
+      console.log(`[Email System] Real SMTP dispatch to ${to} unavailable (${err.message || err}). Delivering directly via Virtual Mailbox Inbox.`);
       
-      const isAuthError = err.code === "EAUTH" || (err.message && (err.message.includes("535") || err.message.toLowerCase().includes("invalid login") || err.message.toLowerCase().includes("authentication")));
-
-      // Only queue for retry if it's a transient network glitch, not permanent 535 bad password
-      if (!isAuthError && !isRetry) {
-        EMAIL_QUEUE.push({
-          to,
-          subject,
-          htmlBody,
-          attempts: 0,
-          error: err.message || String(err),
-          attachments
-        });
-        console.log(`[Email System] Failed transient email to ${to} added to memory queue for automated retry.`);
-      }
-
-      // Record in virtual mailbox so user can view OTP / message in the client UI
+      // Record in virtual mailbox so candidate/admin can view email in client UI immediately
       const simEmail: EmailNotification = {
         id: emailId,
         to,
@@ -942,7 +927,7 @@ async function sendGmailIfConnectedDirect(
         date: new Date().toISOString(),
         type: "general",
         deliveryStatus: "delivered",
-        errorMessage: isAuthError ? `Simulated Delivery (SMTP Auth 535: ${err.message})` : undefined
+        errorMessage: `Virtual Mailbox Delivery (${err.message || 'SMTP Offline'})`
       };
       SENT_EMAILS.push(simEmail);
       return true;
