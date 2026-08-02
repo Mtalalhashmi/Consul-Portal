@@ -130,110 +130,8 @@ interface PassportAdminInfo extends PassportTrack {
   trackId: string;
 }
 
-const DEFAULT_APPLICATIONS: Application[] = [
-  {
-    id: "app-01",
-    vacancyId: "v-01",
-    vacancyTitle: "Senior Electrical & Solar Engineer",
-    country: "Germany",
-    name: "Amjad Ali",
-    phone: "+92 300 1234567",
-    email: "amjad.ali@gmail.com",
-    status: "Pending",
-    date: new Date().toISOString().split("T")[0],
-    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-    applyingFrom: "Pakistan",
-    cvLink: "https://example.com/cv/amjad_ali.pdf",
-    coverLetter: "Certified Electrical Engineer with 6+ years of experience in solar grid installation and power management systems.",
-    passportNumber: "PK-8812903",
-    cnic: "35202-9182341-1",
-    passportExpiry: "2031-08-15",
-    passportScanName: "Passport_Scan_Amjad_Ali.pdf"
-  },
-  {
-    id: "app-02",
-    vacancyId: "v-02",
-    vacancyTitle: "Industrial Construction Supervisor",
-    country: "Saudi Arabia",
-    name: "Kamran Shah",
-    phone: "+92 345 7654321",
-    email: "kamran.shah@yahoo.com",
-    status: "Approved",
-    date: new Date().toISOString().split("T")[0],
-    createdAt: new Date(Date.now() - 42 * 60 * 1000).toISOString(), // 42 minutes ago
-    applyingFrom: "Pakistan",
-    cvLink: "https://example.com/cv/kamran_shah.pdf",
-    coverLetter: "Construction supervisor experienced in managing high-rise building projects and site safety compliance in Gulf region.",
-    passportNumber: "EJ-9104822",
-    cnic: "37405-1823945-3",
-    passportExpiry: "2029-12-10",
-    passportScanName: "Passport_Copy_Kamran.jpg"
-  },
-  {
-    id: "app-03",
-    vacancyId: "v-03",
-    vacancyTitle: "Clinical ICU Nurse Practitioner",
-    country: "United Kingdom",
-    name: "Zainab Chaudhry",
-    phone: "+92 321 9876543",
-    email: "zainab.c@gmail.com",
-    status: "Approved",
-    date: new Date().toISOString().split("T")[0],
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-    applyingFrom: "Pakistan",
-    cvLink: "https://example.com/cv/zainab.pdf",
-    coverLetter: "BSc Nursing graduate with 4 years ICU trauma center experience. IELTS Academic band 7.5 cleared.",
-    passportNumber: "EJ-3049218",
-    cnic: "61101-7712390-5",
-    passportExpiry: "2032-05-20",
-    passportScanName: "Official_Passport_Zainab.pdf"
-  }
-];
-
-const DEFAULT_PASSPORTS: PassportAdminInfo[] = [
-  {
-    trackId: "PK-78601",
-    name: "Adnan Khan",
-    passportNum: "EJ8812903",
-    country: "Germany",
-    category: "Work Visa - Tech Specialist",
-    totalFee: 150000,
-    totalPaid: 100000,
-    steps: [
-      { title: "HEC & MOFA Document Attestation", desc: "Verification of degrees and birth certificate from Ministry of Foreign Affairs", status: "completed", fee: 25000, feePaid: true },
-      { title: "German Embassy Appointment & Biometrics", desc: "Consular file submission and biometric scan verification", status: "current", fee: 75000, feePaid: true },
-      { title: "Visa Stamping & Ticket Issuance", desc: "Passport stamping and flight reservation confirmation", status: "pending", fee: 50000, feePaid: false }
-    ]
-  },
-  {
-    trackId: "PK-92144",
-    name: "Zara Malik",
-    passportNum: "EJ9104822",
-    country: "Saudi Arabia",
-    category: "Medical Visa - Registered Nurse",
-    totalFee: 120000,
-    totalPaid: 120000,
-    steps: [
-      { title: "HEC & MOFA Document Attestation", desc: "Saudi Embassy attestation & degree verification", status: "completed", fee: 30000, feePaid: true },
-      { title: "GAMCA Medical & Enjaz Portal Fee", desc: "GAMCA medical fitness certificate and visa slip", status: "completed", fee: 40000, feePaid: true },
-      { title: "Saudi Consulate Passport Stamping", desc: "Final passport visa endorsement", status: "completed", fee: 50000, feePaid: true }
-    ]
-  },
-  {
-    trackId: "PK-44289",
-    name: "Tariq Mahmood",
-    passportNum: "EJ3049218",
-    country: "United Arab Emirates",
-    category: "Executive Employment Residence Visa",
-    totalFee: 180000,
-    totalPaid: 90000,
-    steps: [
-      { title: "HEC & MOFA Document Attestation", desc: "Attestation of Master's Degree from HEC and MOFA Islamabad", status: "completed", fee: 35000, feePaid: true },
-      { title: "UAE Embassy Attestation & Medical", desc: "UAE Embassy attestation and GAMCA medical test clearance", status: "completed", fee: 55000, feePaid: true },
-      { title: "MOHRE Entry Permit & Visa Stamping", desc: "Ministry of Human Resources entry permit and passport visa stamping", status: "current", fee: 90000, feePaid: false }
-    ]
-  }
-];
+const DEFAULT_APPLICATIONS: Application[] = [];
+const DEFAULT_PASSPORTS: PassportAdminInfo[] = [];
 
 interface AdminPortalProps {
   whatsAppNum: string;
@@ -761,21 +659,23 @@ export default function AdminPortal({
       if (appsRes.ok) {
         loadedApps = await appsRes.json();
       }
-      if (!loadedApps || loadedApps.length === 0) {
-        loadedApps = DEFAULT_APPLICATIONS;
-      }
-      setApplications(loadedApps);
-      setSelectedApplication(prev => prev || loadedApps[0] || null);
+      setApplications(loadedApps || []);
+      setSelectedApplication(prev => {
+        if (!loadedApps || loadedApps.length === 0) return null;
+        if (prev && loadedApps.some(a => a.id === prev.id)) return prev;
+        return loadedApps[0];
+      });
 
       let loadedPasses: PassportAdminInfo[] = [];
       if (passRes.ok) {
         loadedPasses = await passRes.json();
       }
-      if (!loadedPasses || loadedPasses.length === 0) {
-        loadedPasses = DEFAULT_PASSPORTS;
-      }
-      setPassports(loadedPasses);
-      setEditingPassport(prev => prev || (loadedPasses[0] ? JSON.parse(JSON.stringify(loadedPasses[0])) : null));
+      setPassports(loadedPasses || []);
+      setEditingPassport(prev => {
+        if (!loadedPasses || loadedPasses.length === 0) return null;
+        if (prev && loadedPasses.some(p => p.trackId === prev.trackId)) return prev;
+        return JSON.parse(JSON.stringify(loadedPasses[0]));
+      });
 
       if (chatbotRes.ok) {
         const chatbot = await chatbotRes.json();
@@ -798,10 +698,10 @@ export default function AdminPortal({
       }
     } catch (err) {
       console.error("Error loading dashboard data", err);
-      setApplications(DEFAULT_APPLICATIONS);
-      setSelectedApplication(DEFAULT_APPLICATIONS[0]);
-      setPassports(DEFAULT_PASSPORTS);
-      setEditingPassport(JSON.parse(JSON.stringify(DEFAULT_PASSPORTS[0])));
+      setApplications([]);
+      setSelectedApplication(null);
+      setPassports([]);
+      setEditingPassport(null);
     } finally {
       setLoading(false);
     }
@@ -2080,6 +1980,13 @@ export default function AdminPortal({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/40">
+                   {passports.length === 0 && (
+                     <tr>
+                       <td colSpan={5} className="py-8 text-center text-slate-500 italic text-xs">
+                         No active tracking files currently in system. Real candidate applications or new passport records generated below will appear here automatically.
+                       </td>
+                     </tr>
+                   )}
                    {passports.map((pass) => (
                      <tr 
                        key={pass.trackId} 

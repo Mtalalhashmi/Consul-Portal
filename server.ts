@@ -90,50 +90,7 @@ const PREDEFINED_PASSPORTS: Record<string, {
   totalFee: number;
   totalPaid: number;
   isPremium?: boolean;
-}> = {
-  "PK-78601": {
-    name: "Muhammad Adnan",
-    passportNum: "EJ8421094",
-    country: "Germany (Schengen)",
-    category: "Work Visa - IT Specialist",
-    steps: [
-      { title: "Step 1: Document Submission & Legalization", desc: "Verification of credentials, employment contract, and academic records.", status: "completed", fee: 18000, feePaid: true },
-      { title: "Step 2: Embassy Appointment & Bio-metrics", desc: "Schengen visa appointment scheduled at German Consulate, Islamabad.", status: "current", fee: 45000, feePaid: false },
-      { title: "Step 3: Passport Stamping & Visa Delivery", desc: "Embassy processing completion and passport courier dispatch.", status: "pending", fee: 25000, feePaid: false }
-    ],
-    totalFee: 88000,
-    totalPaid: 18000,
-    isPremium: false
-  },
-  "PK-92144": {
-    name: "Ali Raza",
-    passportNum: "DG7432091",
-    country: "Saudi Arabia (Gulf)",
-    category: "Employment Visa - Construction Supervisor",
-    steps: [
-      { title: "Step 1: Medical Fitness & GAMCA Clearance", desc: "GAMCA authorized medical center check-up and fit report submission.", status: "completed", fee: 12000, feePaid: true },
-      { title: "Step 2: MOFA Stamping & Cultural Attache Verification", desc: "Sponsorship approval check and Ministry of Foreign Affairs attestation.", status: "completed", fee: 32000, feePaid: true },
-      { title: "Step 3: Visa Endorsement & Flight Booking", desc: "Final passport visa stamping and travel booking arrangements.", status: "current", fee: 15000, feePaid: false }
-    ],
-    totalFee: 59000,
-    totalPaid: 44000,
-    isPremium: false
-  },
-  "PK-44289": {
-    name: "Bridge Visa Migration Support",
-    passportNum: "BV9081242",
-    country: "Germany (Schengen)",
-    category: "Corporate Recruitment Coordination",
-    steps: [
-      { title: "Step 1: Document Submission & Legalization", desc: "Corporate verification of candidate profiles, licenses, and MOFA attestation.", status: "completed", fee: 15000, feePaid: true },
-      { title: "Step 2: Embassy Processing & Security Screening", desc: "Embassy review of interview documents, biometric capture, and security profiling.", status: "current", fee: 35000, feePaid: false },
-      { title: "Step 3: Passport Stamping & Dispatch", desc: "Visa vignette endorsement and safe hand-over to secure courier for client delivery.", status: "pending", fee: 15000, feePaid: false }
-    ],
-    totalFee: 65000,
-    totalPaid: 15000,
-    isPremium: false
-  }
-};
+}> = {};
 
 // Seed-based random passport generator to support any tracking ID
 function getDeterministicPassport(trackId: string) {
@@ -248,79 +205,10 @@ interface Application {
   trackingNumber?: string;
 }
 
-const APPLICATIONS: Application[] = [
-  {
-    id: "app-01",
-    vacancyId: "v-01",
-    vacancyTitle: "Senior Electrical & Solar Engineer",
-    country: "Germany",
-    name: "Amjad Ali",
-    phone: "0300-1234567",
-    email: "amjad.ali@gmail.com",
-    status: "Pending",
-    date: new Date().toISOString().split("T")[0],
-    createdAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-    applyingFrom: "Pakistan",
-    passportNumber: "PK-8812903",
-    cnic: "35202-9182341-1",
-    passportExpiry: "2031-08-15",
-    passportScanName: "Passport_Scan_Amjad_Ali.pdf"
-  },
-  {
-    id: "app-02",
-    vacancyId: "v-02",
-    vacancyTitle: "Industrial Construction Supervisor",
-    country: "Saudi Arabia",
-    name: "Kamran Shah",
-    phone: "0345-7654321",
-    email: "kamran.shah@yahoo.com",
-    status: "Approved",
-    date: new Date().toISOString().split("T")[0],
-    createdAt: new Date(Date.now() - 42 * 60 * 1000).toISOString(), // 42 minutes ago
-    applyingFrom: "Pakistan",
-    passportNumber: "EJ-9104822",
-    cnic: "37405-1823945-3",
-    passportExpiry: "2029-12-10",
-    passportScanName: "Passport_Copy_Kamran.jpg"
-  },
-  {
-    id: "app-03",
-    vacancyId: "v-03",
-    vacancyTitle: "BIM Specialist & Revit Designer",
-    country: "Qatar",
-    name: "Tariq Mahmood",
-    phone: "0312-9876543",
-    email: "tariq.m@outlook.com",
-    status: "Pending",
-    date: new Date().toISOString().split("T")[0],
-    createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), // 3 hours ago
-    applyingFrom: "Pakistan",
-    passportNumber: "EJ-3049218",
-    cnic: "61101-7712390-5",
-    passportExpiry: "2032-05-20",
-    passportScanName: "Official_Passport_Tariq.pdf"
-  },
-  {
-    id: "app-04",
-    vacancyId: "v-04",
-    vacancyTitle: "Heavy Equipment Maintenance Specialist",
-    country: "UAE",
-    name: "Bilal Rasheed",
-    phone: "0333-5551234",
-    email: "bilal.rasheed@gmail.com",
-    status: "Rejected",
-    date: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-    createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(), // 35 days ago
-    applyingFrom: "Pakistan",
-    passportNumber: "PK-4429102",
-    cnic: "31303-4412890-7",
-    passportExpiry: "2028-02-18",
-    passportScanName: "Passport_Bilal.pdf"
-  }
-];
+const APPLICATIONS: Application[] = [];
 
 // Track all passport IDs searched/used
-const TRACKED_IDS = new Set<string>(["PK-78601", "PK-92144", "PK-44289"]);
+const TRACKED_IDS = new Set<string>();
 
 export interface PaymentReceipt {
   id: string;
@@ -351,101 +239,9 @@ export interface ActivityLog {
   data?: any;
 }
 
-const PAYMENT_RECEIPTS: PaymentReceipt[] = [
-  {
-    id: "PAY-90821",
-    transactionId: "TXN-88A9F1",
-    trackId: "PK-78601",
-    clientName: "Muhammad Adnan",
-    clientEmail: "adnan.k@gmail.com",
-    stepTitle: "Step 1: Application & Document Verification",
-    stepIndex: 0,
-    amount: 15000,
-    currency: "PKR",
-    method: "EasyPaisa",
-    accountNumber: "0300-1234567",
-    accountName: "Muhammad Adnan",
-    status: "Verified",
-    date: new Date(Date.now() - 2 * 3600 * 1000).toISOString().split("T")[0],
-    timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    receiptNotes: "EasyPaisa instant transfer confirmed"
-  },
-  {
-    id: "PAY-90822",
-    transactionId: "TXN-77B2C4",
-    trackId: "PK-92144",
-    clientName: "Zara Malik",
-    clientEmail: "zara.malik@outlook.com",
-    stepTitle: "Step 1: Document Submission & Legalization",
-    stepIndex: 0,
-    amount: 25000,
-    currency: "PKR",
-    method: "JazzCash",
-    accountNumber: "0345-9876543",
-    accountName: "Zara Malik",
-    status: "Verified",
-    date: new Date(Date.now() - 5 * 3600 * 1000).toISOString().split("T")[0],
-    timestamp: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    receiptNotes: "JazzCash wallet payment verified"
-  },
-  {
-    id: "PAY-90823",
-    transactionId: "TXN-55D1E8",
-    trackId: "PK-44289",
-    clientName: "Amjad Ali",
-    clientEmail: "amjad.ali@gmail.com",
-    stepTitle: "Step 2: Embassy Visa Stamping & Medical Clearance",
-    stepIndex: 1,
-    amount: 35000,
-    currency: "PKR",
-    method: "Bank Transfer",
-    accountNumber: "Meezan Bank - 0102938481",
-    accountName: "Amjad Ali",
-    status: "Pending",
-    date: new Date(Date.now() - 20 * 60 * 1000).toISOString().split("T")[0],
-    timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    receiptNotes: "Awaiting bank statement confirmation"
-  }
-];
+const PAYMENT_RECEIPTS: PaymentReceipt[] = [];
 
-const ACTIVITY_LOGS: ActivityLog[] = [
-  {
-    id: "act-101",
-    type: "payment_submitted",
-    title: "Payment Receipt Submitted",
-    detail: "Amjad Ali submitted payment receipt of PKR 35,000 via Bank Transfer for Embassy Visa Stamping",
-    clientEmail: "amjad.ali@gmail.com",
-    timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    data: { trackId: "PK-44289", amount: 35000, method: "Bank Transfer" }
-  },
-  {
-    id: "act-102",
-    type: "application_submitted",
-    title: "New Job Application Submitted",
-    detail: "Amjad Ali applied for Senior Electrical & Solar Engineer (Germany)",
-    clientEmail: "amjad.ali@gmail.com",
-    timestamp: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-    data: { id: "app-01", country: "Germany" }
-  },
-  {
-    id: "act-103",
-    type: "passport_linked",
-    title: "Passport File Linked",
-    detail: "Zara Malik linked consular tracking file PK-92144 to user account",
-    clientEmail: "zara.malik@outlook.com",
-    timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    data: { trackId: "PK-92144" }
-  },
-  {
-    id: "act-104",
-    type: "user_registered",
-    title: "New Candidate Registered",
-    detail: "Muhammad Adnan created a new portal account (adnan.k@gmail.com)",
-    clientEmail: "adnan.k@gmail.com",
-    timestamp: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    data: { name: "Muhammad Adnan" }
-  }
-];
+const ACTIVITY_LOGS: ActivityLog[] = [];
 
 function logClientActivity(
   type: ActivityLog["type"],
