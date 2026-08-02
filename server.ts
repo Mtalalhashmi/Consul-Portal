@@ -322,6 +322,154 @@ const APPLICATIONS: Application[] = [
 // Track all passport IDs searched/used
 const TRACKED_IDS = new Set<string>(["PK-78601", "PK-92144", "PK-44289"]);
 
+export interface PaymentReceipt {
+  id: string;
+  transactionId: string;
+  trackId: string;
+  clientName: string;
+  clientEmail: string;
+  stepTitle: string;
+  stepIndex?: number;
+  amount: number;
+  currency: string;
+  method: string;
+  accountNumber?: string;
+  accountName?: string;
+  status: "Verified" | "Pending" | "Rejected" | "Refunded";
+  date: string;
+  timestamp: string;
+  receiptNotes?: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  type: "application_submitted" | "payment_submitted" | "user_registered" | "passport_linked" | "status_changed" | "admin_action" | "document_uploaded";
+  title: string;
+  detail: string;
+  clientEmail?: string;
+  timestamp: string;
+  data?: any;
+}
+
+const PAYMENT_RECEIPTS: PaymentReceipt[] = [
+  {
+    id: "PAY-90821",
+    transactionId: "TXN-88A9F1",
+    trackId: "PK-78601",
+    clientName: "Muhammad Adnan",
+    clientEmail: "adnan.k@gmail.com",
+    stepTitle: "Step 1: Application & Document Verification",
+    stepIndex: 0,
+    amount: 15000,
+    currency: "PKR",
+    method: "EasyPaisa",
+    accountNumber: "0300-1234567",
+    accountName: "Muhammad Adnan",
+    status: "Verified",
+    date: new Date(Date.now() - 2 * 3600 * 1000).toISOString().split("T")[0],
+    timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    receiptNotes: "EasyPaisa instant transfer confirmed"
+  },
+  {
+    id: "PAY-90822",
+    transactionId: "TXN-77B2C4",
+    trackId: "PK-92144",
+    clientName: "Zara Malik",
+    clientEmail: "zara.malik@outlook.com",
+    stepTitle: "Step 1: Document Submission & Legalization",
+    stepIndex: 0,
+    amount: 25000,
+    currency: "PKR",
+    method: "JazzCash",
+    accountNumber: "0345-9876543",
+    accountName: "Zara Malik",
+    status: "Verified",
+    date: new Date(Date.now() - 5 * 3600 * 1000).toISOString().split("T")[0],
+    timestamp: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
+    receiptNotes: "JazzCash wallet payment verified"
+  },
+  {
+    id: "PAY-90823",
+    transactionId: "TXN-55D1E8",
+    trackId: "PK-44289",
+    clientName: "Amjad Ali",
+    clientEmail: "amjad.ali@gmail.com",
+    stepTitle: "Step 2: Embassy Visa Stamping & Medical Clearance",
+    stepIndex: 1,
+    amount: 35000,
+    currency: "PKR",
+    method: "Bank Transfer",
+    accountNumber: "Meezan Bank - 0102938481",
+    accountName: "Amjad Ali",
+    status: "Pending",
+    date: new Date(Date.now() - 20 * 60 * 1000).toISOString().split("T")[0],
+    timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+    receiptNotes: "Awaiting bank statement confirmation"
+  }
+];
+
+const ACTIVITY_LOGS: ActivityLog[] = [
+  {
+    id: "act-101",
+    type: "payment_submitted",
+    title: "Payment Receipt Submitted",
+    detail: "Amjad Ali submitted payment receipt of PKR 35,000 via Bank Transfer for Embassy Visa Stamping",
+    clientEmail: "amjad.ali@gmail.com",
+    timestamp: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+    data: { trackId: "PK-44289", amount: 35000, method: "Bank Transfer" }
+  },
+  {
+    id: "act-102",
+    type: "application_submitted",
+    title: "New Job Application Submitted",
+    detail: "Amjad Ali applied for Senior Electrical & Solar Engineer (Germany)",
+    clientEmail: "amjad.ali@gmail.com",
+    timestamp: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
+    data: { id: "app-01", country: "Germany" }
+  },
+  {
+    id: "act-103",
+    type: "passport_linked",
+    title: "Passport File Linked",
+    detail: "Zara Malik linked consular tracking file PK-92144 to user account",
+    clientEmail: "zara.malik@outlook.com",
+    timestamp: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
+    data: { trackId: "PK-92144" }
+  },
+  {
+    id: "act-104",
+    type: "user_registered",
+    title: "New Candidate Registered",
+    detail: "Muhammad Adnan created a new portal account (adnan.k@gmail.com)",
+    clientEmail: "adnan.k@gmail.com",
+    timestamp: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
+    data: { name: "Muhammad Adnan" }
+  }
+];
+
+function logClientActivity(
+  type: ActivityLog["type"],
+  title: string,
+  detail: string,
+  clientEmail?: string,
+  data?: any
+) {
+  const newLog: ActivityLog = {
+    id: "act-" + Math.floor(10000 + Math.random() * 90000),
+    type,
+    title,
+    detail,
+    clientEmail: clientEmail ? clientEmail.toLowerCase().trim() : undefined,
+    timestamp: new Date().toISOString(),
+    data
+  };
+  ACTIVITY_LOGS.unshift(newLog);
+  if (ACTIVITY_LOGS.length > 200) {
+    ACTIVITY_LOGS.length = 200;
+  }
+  return newLog;
+}
+
 // Sent Emails Database / Virtual Inbox Store
 interface EmailNotification {
   id: string;
@@ -3490,6 +3638,15 @@ app.post("/api/applications", async (req, res) => {
 
     APPLICATIONS.push(newApp);
 
+    // Log client activity for Admin Portal Real-time Feed
+    logClientActivity(
+      "application_submitted",
+      "New Job Application Submitted",
+      `${cleanName} applied for ${effectiveVacancyTitle} (${effectiveCountry}) - Ref: ${generatedId}`,
+      cleanEmail,
+      { id: generatedId, name: cleanName, vacancyTitle: effectiveVacancyTitle, country: effectiveCountry, passportNumber: newApp.passportNumber, phone: cleanPhone }
+    );
+
     // Sync with PREDEFINED_PASSPORTS tracking dictionary so candidate can track their status instantly
     const upperId = generatedId.toUpperCase().trim();
     if (!PREDEFINED_PASSPORTS[upperId]) {
@@ -3648,6 +3805,15 @@ app.post("/api/admin/applications/status", async (req, res) => {
   const normalizedStatus = String(status || "").trim();
   const oldStatus = application.status;
   application.status = normalizedStatus;
+
+  // Log client activity for Admin Portal Activity Stream
+  logClientActivity(
+    "status_changed",
+    "Application Status Transition",
+    `Application ${id} (${application.name}) status changed from ${oldStatus} to ${normalizedStatus}`,
+    application.email,
+    { id, name: application.name, status: normalizedStatus, previousStatus: oldStatus }
+  );
 
   // Trigger emails on transition
   if (normalizedStatus === "Under Review" && oldStatus !== "Under Review") {
@@ -3829,6 +3995,64 @@ app.post("/api/admin/passports/update", (req, res) => {
   }
 });
 
+// Admin endpoint to get list of all client payment receipts
+app.get("/api/admin/payments", (req, res) => {
+  return res.json(PAYMENT_RECEIPTS);
+});
+
+// Admin endpoint to update payment receipt status (e.g. Verified, Pending, Rejected, Refunded)
+app.post("/api/admin/payments/status", (req, res) => {
+  const { id, status, notes } = req.body || {};
+  const payment = PAYMENT_RECEIPTS.find(p => p.id === id);
+  if (!payment) {
+    return res.status(404).json({ error: "Payment receipt record not found." });
+  }
+
+  const oldStatus = payment.status;
+  payment.status = status || payment.status;
+  if (notes) payment.receiptNotes = notes;
+
+  logClientActivity(
+    "admin_action",
+    "Payment Status Updated by Admin",
+    `Payment ${id} (${payment.clientName} - PKR ${payment.amount.toLocaleString()}) changed from ${oldStatus} to ${payment.status}`,
+    payment.clientEmail,
+    payment
+  );
+
+  return res.json({ success: true, payment });
+});
+
+// Admin endpoint to get real-time client activity stream
+app.get("/api/admin/activities", (req, res) => {
+  return res.json(ACTIVITY_LOGS);
+});
+
+// Admin endpoint to get aggregated dashboard metrics
+app.get("/api/admin/dashboard-stats", (req, res) => {
+  const verifiedPaymentsSum = PAYMENT_RECEIPTS
+    .filter(p => p.status === "Verified")
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const pendingPaymentsSum = PAYMENT_RECEIPTS
+    .filter(p => p.status === "Pending")
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  return res.json({
+    totalApplications: APPLICATIONS.length,
+    pendingApplications: APPLICATIONS.filter(a => a.status === "Pending").length,
+    approvedApplications: APPLICATIONS.filter(a => a.status === "Approved").length,
+    rejectedApplications: APPLICATIONS.filter(a => a.status === "Rejected").length,
+    totalPassports: TRACKED_IDS.size,
+    verifiedPaymentsSum,
+    pendingPaymentsSum,
+    totalPaymentReceipts: PAYMENT_RECEIPTS.length,
+    totalRegisteredUsers: USER_ACCOUNTS.length,
+    totalActivityLogs: ACTIVITY_LOGS.length,
+    lastActivityTime: ACTIVITY_LOGS[0]?.timestamp || new Date().toISOString()
+  });
+});
+
 // Passport tracking status endpoint
 app.get("/api/passport/track", (req, res) => {
   const { trackId, email } = req.query;
@@ -3957,6 +4181,36 @@ app.post("/api/passport/pay", async (req, res) => {
   const paymentId = "PAY-" + Math.floor(100000 + Math.random() * 900000);
   const transactionId = "TXN-" + crypto.randomBytes(4).toString("hex").toUpperCase();
   const currentDate = new Date().toISOString().split("T")[0];
+
+  // Save payment receipt to PAYMENT_RECEIPTS store for Admin Portal
+  const paymentRecord: PaymentReceipt = {
+    id: paymentId,
+    transactionId,
+    trackId: upperTrackId,
+    clientName: userName,
+    clientEmail: userEmail,
+    stepTitle: step.title,
+    stepIndex,
+    amount: step.fee,
+    currency: "PKR",
+    method: method || "Bank Transfer",
+    accountNumber: accountNumber || "Direct Portal Payment",
+    accountName: accountName || userName,
+    status: "Verified",
+    date: currentDate,
+    timestamp: new Date().toISOString(),
+    receiptNotes: `Paid via ${method}`
+  };
+  PAYMENT_RECEIPTS.unshift(paymentRecord);
+
+  // Log client activity for Admin Portal Real-time Stream
+  logClientActivity(
+    "payment_submitted",
+    "Client Payment Receipt Received",
+    `${userName} (${userEmail}) paid PKR ${step.fee.toLocaleString()} for ${step.title} via ${method}`,
+    userEmail,
+    paymentRecord
+  );
 
   console.log(`[Email Trigger] Payment successful for ${upperTrackId} step ${stepIndex}. Triggering confirmation email.`);
   

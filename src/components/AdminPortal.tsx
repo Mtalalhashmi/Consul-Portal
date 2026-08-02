@@ -2,9 +2,39 @@ import React, { useState, useEffect, useRef } from "react";
 import { 
   Lock, Check, X, RefreshCw, FileText, Database, 
   AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, ShieldCheck, Mail, Sparkles, Send,
-  Trash2, Clock, CheckSquare, Square, Filter, Calendar, AlertTriangle, Layers, Search
+  Trash2, Clock, CheckSquare, Square, Filter, Calendar, AlertTriangle, Layers, Search,
+  CreditCard, Activity, Eye, CheckCircle2, XCircle, Receipt, Zap, UserCheck, FileCheck
 } from "lucide-react";
 import { PassportTrack, PassportStep } from "../types";
+
+export interface PaymentReceipt {
+  id: string;
+  transactionId: string;
+  trackId: string;
+  clientName: string;
+  clientEmail: string;
+  stepTitle: string;
+  stepIndex?: number;
+  amount: number;
+  currency: string;
+  method: string;
+  accountNumber?: string;
+  accountName?: string;
+  status: "Verified" | "Pending" | "Rejected" | "Refunded";
+  date: string;
+  timestamp: string;
+  receiptNotes?: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  type: "application_submitted" | "payment_submitted" | "user_registered" | "passport_linked" | "status_changed" | "admin_action" | "document_uploaded";
+  title: string;
+  detail: string;
+  clientEmail?: string;
+  timestamp: string;
+  data?: any;
+}
 
 interface Application {
   id: string;
@@ -226,7 +256,16 @@ export default function AdminPortal({
   // Dashboard states
   const [applications, setApplications] = useState<Application[]>([]);
   const [passports, setPassports] = useState<PassportAdminInfo[]>([]);
-  const [adminTab, setAdminTab] = useState<"applications" | "passports" | "settings" | "chatbot" | "fees">("applications");
+  const [adminTab, setAdminTab] = useState<"applications" | "passports" | "payments" | "activities" | "settings" | "chatbot" | "fees">("applications");
+  
+  // Payment receipts, activities & live dashboard stats
+  const [paymentReceipts, setPaymentReceipts] = useState<PaymentReceipt[]>([]);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+
+  const [paymentSearchQuery, setPaymentSearchQuery] = useState("");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<"All" | "Verified" | "Pending" | "Rejected" | "Refunded">("All");
+  const [activityTypeFilter, setActivityTypeFilter] = useState<string>("All");
   
   // Selected Application state & Email dispatch states
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
@@ -709,10 +748,13 @@ export default function AdminPortal({
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [appsRes, passRes, chatbotRes] = await Promise.all([
+      const [appsRes, passRes, chatbotRes, payRes, actRes, statsRes] = await Promise.all([
         adminFetch("/api/admin/applications"),
         adminFetch("/api/admin/passports"),
-        adminFetch("/api/admin/chatbot-analytics")
+        adminFetch("/api/admin/chatbot-analytics"),
+        adminFetch("/api/admin/payments"),
+        adminFetch("/api/admin/activities"),
+        adminFetch("/api/admin/dashboard-stats")
       ]);
       
       let loadedApps: Application[] = [];
@@ -739,6 +781,21 @@ export default function AdminPortal({
         const chatbot = await chatbotRes.json();
         setChatbotAnalytics(chatbot);
       }
+
+      if (payRes.ok) {
+        const payments = await payRes.json();
+        setPaymentReceipts(payments || []);
+      }
+
+      if (actRes.ok) {
+        const activities = await actRes.json();
+        setActivityLogs(activities || []);
+      }
+
+      if (statsRes.ok) {
+        const stats = await statsRes.json();
+        setDashboardStats(stats);
+      }
     } catch (err) {
       console.error("Error loading dashboard data", err);
       setApplications(DEFAULT_APPLICATIONS);
@@ -747,6 +804,34 @@ export default function AdminPortal({
       setEditingPassport(JSON.parse(JSON.stringify(DEFAULT_PASSPORTS[0])));
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Live polling: keep admin portal auto-synchronized with backend activity every 6 seconds
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [isLoggedIn]);
+
+  const handleUpdatePaymentStatus = async (id: string, status: "Verified" | "Pending" | "Rejected" | "Refunded", notes?: string) => {
+    try {
+      const response = await adminFetch("/api/admin/payments/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status, notes })
+      });
+      if (response.ok) {
+        showSuccessMessage(`Payment receipt ${id} status updated to ${status}!`);
+        fetchDashboardData();
+      } else {
+        alert("Failed to update payment status.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating payment status");
     }
   };
 
@@ -1177,26 +1262,42 @@ export default function AdminPortal({
       </div>
 
       {/* Info Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
         <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
           <span className="text-[10px] font-mono text-slate-500 block uppercase">Total Applications</span>
           <span className="text-xl sm:text-2xl font-mono text-white font-extrabold block mt-1">{applications.length}</span>
-        </div>
-        <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
-          <span className="text-[10px] font-mono text-slate-500 block uppercase">Pending Review</span>
-          <span className="text-xl sm:text-2xl font-mono text-amber-400 font-extrabold block mt-1">
-            {applications.filter(a => a.status === "Pending").length}
-          </span>
+          <span className="text-[10px] text-amber-400 mt-1 block font-medium">{applications.filter(a => a.status === "Pending").length} Pending Review</span>
         </div>
         <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
           <span className="text-[10px] font-mono text-slate-500 block uppercase">Active Passport Files</span>
           <span className="text-xl sm:text-2xl font-mono text-teal-400 font-extrabold block mt-1">{passports.length}</span>
+          <span className="text-[10px] text-slate-400 mt-1 block font-medium">Tracking Files Registered</span>
         </div>
         <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
-          <span className="text-[10px] font-mono text-slate-500 block uppercase">Total Cash Verified</span>
-          <span className="text-sm sm:text-base font-mono text-emerald-400 font-extrabold block mt-1.5">
-            PKR {passports.reduce((sum, p) => sum + (p.totalPaid || 0), 0).toLocaleString()}
+          <span className="text-[10px] font-mono text-slate-500 block uppercase">Verified Escrow Receipts</span>
+          <span className="text-xl sm:text-2xl font-mono text-emerald-400 font-extrabold block mt-1">
+            {paymentReceipts.filter(p => p.status === "Verified").length}
           </span>
+          <span className="text-[10px] text-emerald-400 mt-1 block font-medium font-mono">
+            PKR {(dashboardStats?.verifiedPaymentsSum || paymentReceipts.filter(p => p.status === "Verified").reduce((s, p) => s + p.amount, 0)).toLocaleString()}
+          </span>
+        </div>
+        <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
+          <span className="text-[10px] font-mono text-slate-500 block uppercase">Pending Payment Escrow</span>
+          <span className="text-xl sm:text-2xl font-mono text-amber-400 font-extrabold block mt-1">
+            {paymentReceipts.filter(p => p.status === "Pending").length}
+          </span>
+          <span className="text-[10px] text-amber-400 mt-1 block font-medium font-mono">
+            PKR {paymentReceipts.filter(p => p.status === "Pending").reduce((s, p) => s + p.amount, 0).toLocaleString()}
+          </span>
+        </div>
+        <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl col-span-2 md:col-span-1">
+          <span className="text-[10px] font-mono text-slate-500 block uppercase">Live Client Activity</span>
+          <span className="text-xl sm:text-2xl font-mono text-sky-400 font-extrabold block mt-1 flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-sky-400 animate-ping"></span>
+            {activityLogs.length}
+          </span>
+          <span className="text-[10px] text-slate-400 mt-1 block font-medium">Auto-refreshed (6s)</span>
         </div>
       </div>
 
@@ -1216,7 +1317,7 @@ export default function AdminPortal({
               setSelectedApplication(applications[0]);
             }
           }}
-          className={`px-5 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
             adminTab === "applications" 
                ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
                : "border-transparent text-slate-400 hover:text-white"
@@ -1231,7 +1332,7 @@ export default function AdminPortal({
               setEditingPassport(JSON.parse(JSON.stringify(passports[0])));
             }
           }}
-          className={`px-5 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
             adminTab === "passports" 
               ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
               : "border-transparent text-slate-400 hover:text-white"
@@ -1240,18 +1341,45 @@ export default function AdminPortal({
           Consular Passport Tracker Files ({passports.length})
         </button>
         <button 
+          onClick={() => setAdminTab("payments")}
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
+            adminTab === "payments" 
+              ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <CreditCard className="w-4 h-4 text-emerald-400" />
+          <span>Client Payment Receipts & Escrow</span>
+          {paymentReceipts.filter(p => p.status === "Pending").length > 0 && (
+            <span className="bg-amber-500 text-slate-950 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold">
+              {paymentReceipts.filter(p => p.status === "Pending").length}
+            </span>
+          )}
+        </button>
+        <button 
+          onClick={() => setAdminTab("activities")}
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
+            adminTab === "activities" 
+              ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <Activity className="w-4 h-4 text-sky-400 animate-pulse" />
+          <span>Live Activity Feed & Audit ({activityLogs.length})</span>
+        </button>
+        <button 
           onClick={() => setAdminTab("chatbot")}
-          className={`px-5 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
             adminTab === "chatbot" 
               ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
               : "border-transparent text-slate-400 hover:text-white"
           }`}
         >
-          🤖 AI Chatbot Insights & Analytics
+          🤖 AI Chatbot Insights
         </button>
         <button 
           onClick={() => setAdminTab("settings")}
-          className={`px-5 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
             adminTab === "settings" 
               ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
               : "border-transparent text-slate-400 hover:text-white"
@@ -1261,7 +1389,7 @@ export default function AdminPortal({
         </button>
         <button 
           onClick={() => setAdminTab("fees")}
-          className={`px-5 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap ${
             adminTab === "fees" 
               ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
               : "border-transparent text-slate-400 hover:text-white"
@@ -2289,6 +2417,283 @@ export default function AdminPortal({
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* Payment Receipts & Escrow Tab Panel */}
+      {adminTab === "payments" && (
+        <div className="space-y-6">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-emerald-400" />
+                  <span>Client Payment Receipts & Escrow Ledger</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Real-time list of all candidate payments submitted for visa processing, medical clearance, and document legalization.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="relative">
+                  <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                  <input
+                    type="text"
+                    placeholder="Search candidate name, email, TXN or PK ID..."
+                    value={paymentSearchQuery}
+                    onChange={(e) => setPaymentSearchQuery(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 w-64 focus:outline-none focus:border-amber-500/50"
+                  />
+                </div>
+
+                <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl">
+                  {(["All", "Verified", "Pending", "Rejected", "Refunded"] as const).map(st => (
+                    <button
+                      key={st}
+                      type="button"
+                      onClick={() => setPaymentStatusFilter(st)}
+                      className={`px-3 py-1 text-[11px] font-semibold rounded-lg transition ${
+                        paymentStatusFilter === st
+                          ? "bg-amber-500 text-slate-950 font-bold"
+                          : "text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Payments Table */}
+            <div className="overflow-x-auto border border-slate-800/80 rounded-2xl bg-slate-950/60">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-900/60 text-[11px] font-mono uppercase text-slate-400">
+                    <th className="p-3.5 pl-4">Receipt & TXN</th>
+                    <th className="p-3.5">Candidate / Email</th>
+                    <th className="p-3.5">Track Ref</th>
+                    <th className="p-3.5">Payment Step</th>
+                    <th className="p-3.5">Amount & Method</th>
+                    <th className="p-3.5">Status</th>
+                    <th className="p-3.5">Date</th>
+                    <th className="p-3.5 pr-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-xs">
+                  {paymentReceipts
+                    .filter(p => {
+                      if (paymentStatusFilter !== "All" && p.status !== paymentStatusFilter) return false;
+                      if (paymentSearchQuery.trim()) {
+                        const q = paymentSearchQuery.toLowerCase().trim();
+                        return (
+                          p.clientName?.toLowerCase().includes(q) ||
+                          p.clientEmail?.toLowerCase().includes(q) ||
+                          p.transactionId?.toLowerCase().includes(q) ||
+                          p.trackId?.toLowerCase().includes(q) ||
+                          p.id?.toLowerCase().includes(q)
+                        );
+                      }
+                      return true;
+                    })
+                    .map((receipt) => (
+                      <tr key={receipt.id} className="hover:bg-slate-900/40 transition">
+                        <td className="p-3.5 pl-4 font-mono">
+                          <div className="font-bold text-amber-400">{receipt.id}</div>
+                          <div className="text-[10px] text-slate-500">{receipt.transactionId}</div>
+                        </td>
+                        <td className="p-3.5">
+                          <div className="font-semibold text-white">{receipt.clientName}</div>
+                          <div className="text-[11px] text-slate-400 font-mono">{receipt.clientEmail}</div>
+                        </td>
+                        <td className="p-3.5 font-mono font-bold text-teal-400">
+                          {receipt.trackId}
+                        </td>
+                        <td className="p-3.5 max-w-xs truncate text-slate-300">
+                          {receipt.stepTitle}
+                        </td>
+                        <td className="p-3.5 font-mono">
+                          <div className="font-extrabold text-emerald-400">PKR {receipt.amount?.toLocaleString()}</div>
+                          <div className="text-[10px] text-slate-400">{receipt.method}</div>
+                        </td>
+                        <td className="p-3.5">
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold border ${
+                            receipt.status === "Verified"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                              : receipt.status === "Pending"
+                              ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                              : receipt.status === "Rejected"
+                              ? "bg-red-500/10 text-red-400 border-red-500/20"
+                              : "bg-slate-800 text-slate-400 border-slate-700"
+                          }`}>
+                            {receipt.status === "Verified" && <CheckCircle2 className="w-3 h-3" />}
+                            {receipt.status === "Pending" && <Clock className="w-3 h-3" />}
+                            {receipt.status === "Rejected" && <XCircle className="w-3 h-3" />}
+                            <span>{receipt.status}</span>
+                          </span>
+                        </td>
+                        <td className="p-3.5 font-mono text-[11px] text-slate-400">
+                          {receipt.date}
+                        </td>
+                        <td className="p-3.5 pr-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {receipt.status !== "Verified" && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdatePaymentStatus(receipt.id, "Verified")}
+                                className="bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-400 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition flex items-center gap-1"
+                              >
+                                <Check className="w-3 h-3" />
+                                <span>Verify</span>
+                              </button>
+                            )}
+                            {receipt.status !== "Pending" && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdatePaymentStatus(receipt.id, "Pending")}
+                                className="bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-400 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition flex items-center gap-1"
+                              >
+                                <Clock className="w-3 h-3" />
+                                <span>Pending</span>
+                              </button>
+                            )}
+                            {receipt.status !== "Rejected" && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdatePaymentStatus(receipt.id, "Rejected")}
+                                className="bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 px-2.5 py-1 rounded-lg text-[10px] font-mono font-bold transition flex items-center gap-1"
+                              >
+                                <X className="w-3 h-3" />
+                                <span>Reject</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  {paymentReceipts.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="p-8 text-center text-slate-500 italic">
+                        No client payment receipts recorded yet. Payments made via Candidate Portal will appear here automatically.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Live Activity Feed Tab Panel */}
+      {adminTab === "activities" && (
+        <div className="space-y-6">
+          <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Activity className="w-5 h-5 text-sky-400 animate-pulse" />
+                  <span>Real-Time Client Activity Audit Stream</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Live audit trail showing candidate applications, payment submissions, account registrations, and status changes.
+                </p>
+              </div>
+
+              <div className="flex bg-slate-950 border border-slate-800 p-1 rounded-xl flex-wrap">
+                {[
+                  { label: "All Events", value: "All" },
+                  { label: "Applications", value: "application_submitted" },
+                  { label: "Payments", value: "payment_submitted" },
+                  { label: "Registrations", value: "user_registered" },
+                  { label: "Status Changes", value: "status_changed" }
+                ].map(item => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setActivityTypeFilter(item.value)}
+                    className={`px-3 py-1 text-[11px] font-semibold rounded-lg transition ${
+                      activityTypeFilter === item.value
+                        ? "bg-sky-500 text-slate-950 font-bold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Activity Feed List */}
+            <div className="space-y-3">
+              {activityLogs
+                .filter(log => activityTypeFilter === "All" || log.type === activityTypeFilter)
+                .map((log) => {
+                  let IconComponent = Activity;
+                  let iconBg = "bg-sky-500/10 text-sky-400 border-sky-500/20";
+                  if (log.type === "application_submitted") {
+                    IconComponent = FileText;
+                    iconBg = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                  } else if (log.type === "payment_submitted") {
+                    IconComponent = DollarSign;
+                    iconBg = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                  } else if (log.type === "user_registered") {
+                    IconComponent = UserCheck;
+                    iconBg = "bg-sky-500/10 text-sky-400 border-sky-500/20";
+                  } else if (log.type === "passport_linked") {
+                    IconComponent = FileCheck;
+                    iconBg = "bg-teal-500/10 text-teal-400 border-teal-500/20";
+                  } else if (log.type === "status_changed") {
+                    IconComponent = RefreshCw;
+                    iconBg = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+                  } else if (log.type === "admin_action") {
+                    IconComponent = ShieldCheck;
+                    iconBg = "bg-purple-500/10 text-purple-400 border-purple-500/20";
+                  }
+
+                  return (
+                    <div
+                      key={log.id}
+                      className="bg-slate-950 border border-slate-800/80 p-4 rounded-2xl flex items-start gap-4 hover:border-slate-700 transition"
+                    >
+                      <div className={`p-2.5 rounded-xl border ${iconBg} shrink-0 mt-0.5`}>
+                        <IconComponent className="w-5 h-5" />
+                      </div>
+
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-sm font-bold text-white">{log.title}</h4>
+                          <span className="text-[10px] font-mono text-slate-500">
+                            {new Date(log.timestamp).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit"
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">{log.detail}</p>
+                        {log.clientEmail && (
+                          <div className="pt-1 flex items-center gap-2">
+                            <span className="text-[10px] font-mono text-amber-400/90 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md">
+                              Candidate: {log.clientEmail}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+              {activityLogs.length === 0 && (
+                <div className="p-8 text-center text-slate-500 italic bg-slate-950 rounded-2xl border border-slate-800">
+                  No activity events logged yet. Candidate activities will stream here live.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
