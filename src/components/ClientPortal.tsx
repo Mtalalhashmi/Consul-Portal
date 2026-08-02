@@ -199,7 +199,8 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
 
   const fetchPassportDetails = async (trackCode: string) => {
     try {
-      const res = await fetch(`/api/passport/track?trackId=${encodeURIComponent(trackCode)}`);
+      const emailParam = user?.email ? `&email=${encodeURIComponent(user.email)}` : "";
+      const res = await fetch(`/api/passport/track?trackId=${encodeURIComponent(trackCode)}${emailParam}`);
       if (res.ok) {
         const data = await res.json();
         setLinkedPassport(data);
@@ -222,14 +223,8 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
         return;
       }
       
-      // Validate password strength client-side to guide user
-      const hasUppercase = /[A-Z]/.test(password);
-      const hasLowercase = /[a-z]/.test(password);
-      const hasNumber = /[0-9]/.test(password);
-      const hasSpecial = /[^A-Za-z0-9]/.test(password);
-      
-      if (password.length < 8 || !hasUppercase || !hasLowercase || !hasNumber || !hasSpecial) {
-        setErrorMsg("Password must be at least 8 characters and contain uppercase, lowercase, numeric, and special characters.");
+      if (password.length < 6) {
+        setErrorMsg("Password must be at least 6 characters.");
         setLoading(false);
         return;
       }
@@ -246,9 +241,14 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bodyObj)
       });
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        data = {};
+      }
 
-      if (response.ok) {
+      if (response.ok && data.user) {
         if (rememberMe) {
           localStorage.setItem("consul_client_session", JSON.stringify(data.user));
           localStorage.setItem("consul_remember_me", "true");
@@ -260,7 +260,7 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
         setIsLoggedIn(true);
         
         if (authTab === "signup") {
-          setSuccessMsg("Congratulations! Your account has been registered. Please check your inbox (Virtual Mail Inbox) for the verification code.");
+          setSuccessMsg("Congratulations! Your account has been registered successfully. Welcome to your Client Portal!");
         } else {
           setSuccessMsg("Welcome back! Login successful.");
         }
@@ -269,10 +269,10 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
         setPassword("");
         setConfirmPassword("");
       } else {
-        setErrorMsg(data.error || "Authentication failed. Please verify credentials.");
+        setErrorMsg(data.error || data.message || "Authentication failed. Please verify credentials.");
       }
     } catch (err) {
-      setErrorMsg("Connection error to server gateway.");
+      setErrorMsg("Unable to connect to server gateway. Please check your network connection.");
     } finally {
       setLoading(false);
     }
@@ -921,39 +921,12 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
                 )}
 
                 {authTab === "signup" && password && (
-                  <div className="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-850 text-[11px] space-y-1.5">
-                    <p className="font-bold text-slate-400 uppercase font-mono tracking-wider text-[9px]">Password Strength Requirements</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className={password.length >= 8 ? "text-emerald-400 font-bold" : "text-slate-600"}>
-                          {password.length >= 8 ? "✓" : "○"}
-                        </span>
-                        <span className={password.length >= 8 ? "text-slate-300" : "text-slate-500"}>Min 8 characters</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={/[A-Z]/.test(password) ? "text-emerald-400 font-bold" : "text-slate-600"}>
-                          {/[A-Z]/.test(password) ? "✓" : "○"}
-                        </span>
-                        <span className={/[A-Z]/.test(password) ? "text-slate-300" : "text-slate-500"}>One uppercase letter</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={/[a-z]/.test(password) ? "text-emerald-400 font-bold" : "text-slate-600"}>
-                          {/[a-z]/.test(password) ? "✓" : "○"}
-                        </span>
-                        <span className={/[a-z]/.test(password) ? "text-slate-300" : "text-slate-500"}>One lowercase letter</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={/[0-9]/.test(password) ? "text-emerald-400 font-bold" : "text-slate-600"}>
-                          {/[0-9]/.test(password) ? "✓" : "○"}
-                        </span>
-                        <span className={/[0-9]/.test(password) ? "text-slate-300" : "text-slate-500"}>One numeric digit</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={/[^A-Za-z0-9]/.test(password) ? "text-emerald-400 font-bold" : "text-slate-600"}>
-                          {/[^A-Za-z0-9]/.test(password) ? "✓" : "○"}
-                        </span>
-                        <span className={/[^A-Za-z0-9]/.test(password) ? "text-slate-300" : "text-slate-500"}>One special character</span>
-                      </div>
+                  <div className="bg-slate-900/60 p-3 rounded-2xl border border-slate-850 text-[11px] space-y-1.5">
+                    <p className="font-bold text-slate-400 uppercase font-mono tracking-wider text-[9px]">Security Status</p>
+                    <div className="flex items-center gap-2">
+                      <span className={password.length >= 6 ? "text-emerald-400 font-bold" : "text-amber-400"}>
+                        {password.length >= 6 ? "✓ Password Meets Requirement" : "○ Minimum 6 characters required"}
+                      </span>
                     </div>
                   </div>
                 )}
