@@ -5,7 +5,38 @@
 export function getJobImageByTitle(title: string): string {
   const lowerTitle = title.toLowerCase();
 
-  // 1. Food Packing / Food Packaging / Food Packers
+  // 1. Agriculture / Farming / Fruit Picker / Greenhouse / Dairy / Livestock / Tractor
+  if (
+    lowerTitle.includes("fruit picker") ||
+    lowerTitle.includes("vegetable picker") ||
+    lowerTitle.includes("berry") ||
+    lowerTitle.includes("harvest")
+  ) {
+    return "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("greenhouse")) {
+    return "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("dairy") ||
+    lowerTitle.includes("livestock") ||
+    lowerTitle.includes("cattle") ||
+    lowerTitle.includes("farm worker")
+  ) {
+    return "https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("tractor")) {
+    return "https://images.unsplash.com/photo-1530507629858-e4977d30e9e0?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("agricultural") ||
+    lowerTitle.includes("farming") ||
+    lowerTitle.includes("crop")
+  ) {
+    return "https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 2. Food Packing / Food Packaging / Food Packers
   if (
     lowerTitle.includes("packing") ||
     lowerTitle.includes("packaging") ||
@@ -14,6 +45,90 @@ export function getJobImageByTitle(title: string): string {
     lowerTitle.includes("canning")
   ) {
     return "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 3. Construction / Mason / Bricklayer / Carpenter / Steel Fixer / Laborer
+  if (
+    lowerTitle.includes("mason") ||
+    lowerTitle.includes("bricklayer") ||
+    lowerTitle.includes("tile")
+  ) {
+    return "https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("carpenter") ||
+    lowerTitle.includes("shuttering") ||
+    lowerTitle.includes("formwork")
+  ) {
+    return "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("steel fixer") ||
+    lowerTitle.includes("heavy equipment") ||
+    lowerTitle.includes("excavator") ||
+    lowerTitle.includes("crane")
+  ) {
+    return "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("construction") ||
+    lowerTitle.includes("laborer") ||
+    lowerTitle.includes("civil")
+  ) {
+    return "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 4. Hospitality & Domestic / Hotel Worker / Housekeeper / Cleaner / Receptionist
+  if (
+    lowerTitle.includes("cleaner") ||
+    lowerTitle.includes("housekeeper") ||
+    lowerTitle.includes("domestic") ||
+    lowerTitle.includes("sanitization")
+  ) {
+    return "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("receptionist") ||
+    lowerTitle.includes("front desk") ||
+    lowerTitle.includes("concierge")
+  ) {
+    return "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("hotel") ||
+    lowerTitle.includes("waiter") ||
+    lowerTitle.includes("waitress") ||
+    lowerTitle.includes("hospitality")
+  ) {
+    return "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 5. Driver & Transport / Truck / Bus / Taxi / Forklift
+  if (
+    lowerTitle.includes("truck") ||
+    lowerTitle.includes("heavy vehicle") ||
+    lowerTitle.includes("trailer")
+  ) {
+    return "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&q=80&w=600";
+  }
+  if (
+    lowerTitle.includes("bus driver") ||
+    lowerTitle.includes("delivery driver") ||
+    lowerTitle.includes("taxi driver") ||
+    lowerTitle.includes("driver") ||
+    lowerTitle.includes("chauffeur")
+  ) {
+    return "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 6. Security / CCTV / Guard / Officer
+  if (
+    lowerTitle.includes("security") ||
+    lowerTitle.includes("cctv") ||
+    lowerTitle.includes("guard") ||
+    lowerTitle.includes("safety")
+  ) {
+    return "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=600";
   }
 
   // 2. Solar / Wind / Renewable / Power Systems
@@ -174,7 +289,79 @@ export function getJobImageByTitle(title: string): string {
     return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=600";
   }
 
-  // 15. Civil / Mechanical / Pipe / Piping / Welder / Construction Engineer / Heavy / Supervisor / Laborer
+  // 15. Driver / Chauffeur / Transport / Heavy Vehicle / Truck
+  if (
+    lowerTitle.includes("driver") ||
+    lowerTitle.includes("chauffeur") ||
+    lowerTitle.includes("transport") ||
+    lowerTitle.includes("truck") ||
+    lowerTitle.includes("trailer")
+  ) {
+    return "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 16. Security / Officer / Guard / Safety
+  if (
+    lowerTitle.includes("security") ||
+    lowerTitle.includes("guard") ||
+    lowerTitle.includes("surveillance") ||
+    lowerTitle.includes("safety officer")
+  ) {
+    return "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 17. Electrician / Electrical / Power
+  if (
+    lowerTitle.includes("electrician") ||
+    lowerTitle.includes("electrical") ||
+    lowerTitle.includes("wiring")
+  ) {
+    return "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 18. Plumber / Plumbing / Pipefitter
+  if (
+    lowerTitle.includes("plumber") ||
+    lowerTitle.includes("plumbing") ||
+    lowerTitle.includes("pipefitter")
+  ) {
+    return "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 19. Beautician / Salon / Spa / Stylist / Makeup
+  if (
+    lowerTitle.includes("beautician") ||
+    lowerTitle.includes("salon") ||
+    lowerTitle.includes("spa") ||
+    lowerTitle.includes("stylist") ||
+    lowerTitle.includes("makeup") ||
+    lowerTitle.includes("aesthetics")
+  ) {
+    return "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 20. Finance / Accountant / Banking / Audit
+  if (
+    lowerTitle.includes("finance") ||
+    lowerTitle.includes("accountant") ||
+    lowerTitle.includes("banking") ||
+    lowerTitle.includes("audit") ||
+    lowerTitle.includes("payroll")
+  ) {
+    return "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 21. Airport / Flight / Aviation / Ground Handling
+  if (
+    lowerTitle.includes("airport") ||
+    lowerTitle.includes("aviation") ||
+    lowerTitle.includes("flight") ||
+    lowerTitle.includes("ground handling")
+  ) {
+    return "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80&w=600";
+  }
+
+  // 22. Civil / Mechanical / Pipe / Piping / Welder / Construction Engineer / Heavy / Supervisor / Laborer
   if (
     lowerTitle.includes("civil") ||
     lowerTitle.includes("mechanical") ||

@@ -1,5 +1,6 @@
 import { Country, SportInfo, LiveJob } from "../types";
 import { RAW_COUNTRIES, RawCountry } from "./countriesData";
+import { getJobImageByTitle } from "./jobImages";
 
 // Hand-crafted high-fidelity database for top countries
 const CUSTOM_COUNTRY_DETAILS: Record<string, Partial<Country>> = {
@@ -362,6 +363,7 @@ export function getLiveJobs(countryName: string, query?: string): LiveJob[] {
       title,
       company,
       companyLogo: title.substring(0, 1),
+      jobImage: getJobImageByTitle(title),
       salary,
       location: `${getCountry(countryName).capital}, ${countryName}`,
       country: countryName,

@@ -41,7 +41,9 @@ try {
     app = getApp();
   }
   auth = getAuth(app);
-  db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+  db = (firebaseConfig as any).firestoreDatabaseId 
+    ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId)
+    : getFirestore(app);
 } catch (err) {
   console.warn("Firebase Initialization error:", err);
   app = getApps().length > 0 ? getApp() : null;

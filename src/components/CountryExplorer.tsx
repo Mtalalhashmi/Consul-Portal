@@ -41,6 +41,7 @@ import {
   Image as ImageIcon
 } from "lucide-react";
 import { RAW_COUNTRIES } from "../utils/countriesData";
+import { getJobImageByTitle } from "../utils/jobImages";
 import { motion, AnimatePresence } from "motion/react";
 
 interface CountryStats {
@@ -472,7 +473,14 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
         if (response.ok) {
           const data = await response.json();
           if (data.jobs && data.jobs.length > 0) {
-            setVacancies(data.jobs);
+            const seen = new Set<string>();
+            const unique = data.jobs.filter((j: any) => {
+              const norm = (j.title || "").trim().toLowerCase();
+              if (seen.has(norm)) return false;
+              seen.add(norm);
+              return true;
+            });
+            setVacancies(unique);
           } else {
             setVacancies(getFallbackJobs(selectedCountryName));
           }
@@ -1222,8 +1230,19 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                     {vacancies.map((job) => (
                       <div 
                         key={job.id}
-                        className="bg-slate-900/60 border border-slate-800/80 hover:border-rose-500/30 p-5 rounded-2xl flex flex-col justify-between transition-all duration-300 group shadow-lg text-left"
+                        className="bg-slate-900/60 border border-slate-800/80 hover:border-rose-500/30 p-5 rounded-2xl flex flex-col justify-between transition-all duration-300 group shadow-lg text-left overflow-hidden"
                       >
+                        {/* Job Image Banner */}
+                        <div className="relative h-36 -mx-5 -mt-5 mb-4 overflow-hidden rounded-t-2xl shrink-0">
+                          <img 
+                            src={getJobImageByTitle(job.title) || (job as any).jobImage || (job as any).imageUrl || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"} 
+                            alt={job.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/30 to-transparent" />
+                        </div>
+
                         <div className="space-y-4">
                           <div className="flex items-center justify-between gap-2 text-[10px] font-mono flex-wrap">
                             <div className="flex items-center gap-1.5">

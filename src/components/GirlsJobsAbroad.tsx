@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import CountryPicker, { Country, COUNTRIES_DATA } from "./CountryPicker";
 import { RAW_COUNTRIES } from "../utils/countriesData";
+import { getJobImageByTitle } from "../utils/jobImages";
 
 interface FemaleVacancy {
   id: string;
@@ -1188,9 +1189,18 @@ export default function GirlsJobsAbroad() {
               key={job.id} 
               className="bg-slate-950/60 p-6 rounded-2xl border border-slate-850/80 hover:border-slate-700/60 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden group shadow-md"
             >
-              {/* Highlight Region Tag */}
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500/10 to-transparent px-3 py-1.5 text-[9px] font-mono text-amber-400 uppercase tracking-wider font-extrabold">
-                {job.region} Visa
+              {/* Job Picture Header */}
+              <div className="relative h-44 -mx-6 -mt-6 mb-2 overflow-hidden shrink-0">
+                <img 
+                  src={getJobImageByTitle(job.title) || "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=600"} 
+                  alt={job.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/30 to-transparent" />
+                <div className="absolute top-3 right-3 bg-gradient-to-l from-amber-500/90 to-amber-600/90 text-slate-950 px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider rounded-md shadow">
+                  {job.region} Visa
+                </div>
               </div>
 
               <div className="space-y-4">

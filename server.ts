@@ -285,7 +285,7 @@ const SENT_EMAILS: EmailNotification[] = [
   {
     id: "mail-9001",
     to: "adnan@gmail.com",
-    from: "bridgevisaimigration@gmail.com",
+    from: "consulportall@gmail.com",
     subject: "ConsulPortal - Application Submission Received!",
     body: `Dear Muhammad Adnan,\n\nThank you for submitting your application for the "Senior Electrical & Solar Engineer" position via ConsulPortal.\n\nYour application has been received and logged under reference ID: app-01.\n\nOur certified visa consultants and recruiting advisors are already conducting an initial audit of your HEC degree and relevant trade credentials.\n\n**What's Next?**\n1. Keep an eye on your live Client Portal under "Application Log History" to view real-time changes.\n2. Once approved, you will receive instructions on physical document submission and biometric setup.\n\nWe look forward to accelerating your professional journey!\n\nBest regards,\nConsulPortal Support Team\nFirst St SE, Washington, D.C. 20004`,
     date: new Date(Date.now() - 36 * 3600 * 1000).toISOString(), // 36 hours ago
@@ -294,7 +294,7 @@ const SENT_EMAILS: EmailNotification[] = [
   {
     id: "mail-9002",
     to: "adnan@gmail.com",
-    from: "bridgevisaimigration@gmail.com",
+    from: "consulportall@gmail.com",
     subject: "Escrow Payment Success Receipt: Step 1 (Document Submission & Legalization)",
     body: `Dear Muhammad Adnan,\n\nWe are pleased to confirm that your Escrow Payment of PKR 18,000 for "Step 1: Document Submission & Legalization" (Ref: PK-78601) has been successfully verified and released.\n\n**Receipt Details:**\n- **Service Paid:** Step 1 Dossier Assembly & Notary Verification\n- **Transaction Amount:** PKR 18,000\n- **Status:** Verified & Released from Escrow\n- **Payment Gateway Ref:** EP-9042-882\n\nYour Step 1 status has now been fully marked as completed. Our team has advanced your file to "Step 2: Embassy Appointment & Bio-metrics". You can track the real-time scheduling progress on your Live Tracker.\n\nThank you for trusting ConsulPortal's verified escrow system.\n\nBest regards,\nConsulPortal Billing Department\nFirst St SE, Washington, D.C. 20004`,
     date: new Date(Date.now() - 24 * 3600 * 1000).toISOString(), // 24 hours ago
@@ -302,19 +302,19 @@ const SENT_EMAILS: EmailNotification[] = [
   },
   {
     id: "mail-9003",
-    to: "bridgevisaimigration@gmail.com",
-    from: "bridgevisaimigration@gmail.com",
-    subject: "ConsulPortal - Bridge Visa Migration Account Provisioned & Synced",
-    body: `Dear Bridge Visa Migration Support,\n\nWe are pleased to inform you that your secure ConsulPortal agency and candidate monitoring mailbox is now fully operational!\n\nThis mailbox is live-linked to your registered email address: bridgevisaimigration@gmail.com.\n\n**Portal Account Profile:**\n- **Pre-linked Passport Tracking ID:** PK-44289\n- **Candidate Registry Name:** Bridge Visa Migration Support\n- **Initial Processing Sector:** Germany (Schengen) - Corporate Recruitment Coordination\n- **Mail Routing Protection:** Enabled (End-to-End Cryptographic Escrow Dispatch)\n\n**How to Test Live Mail Flow:**\n1. Go to **"Global Vacancy Hub"** and apply for any open vacancy using your registered email: **bridgevisaimigration@gmail.com**.\n2. Instantly refresh your **"Virtual Mail Inbox"** to view the automated registration and vetting certificate!\n3. Alternatively, navigate to **"Linked Passport Milestones"** and complete a simulated Escrow payment for any active milestones under tracking code **PK-44289**. An automated cryptographic receipt will instantly pop up right here in this mailbox.\n\nThank you for utilizing ConsulPortal's high-speed legal sourcing gateway.\n\nBest regards,\nConsulPortal Technology and Compliance Board\nFirst St SE, Washington, D.C. 20004`,
+    to: "consulportall@gmail.com",
+    from: "consulportall@gmail.com",
+    subject: "ConsulPortal - Primary Agency Mailbox Provisioned & Synced",
+    body: `Dear ConsulPortal Agency Team,\n\nWe are pleased to inform you that your primary agency and client communication mailbox is now fully operational!\n\nThis mailbox is live-linked to your official email address: consulportall@gmail.com.\n\n**Portal Account Profile:**\n- **Primary Agency Email:** consulportall@gmail.com\n- **Pre-linked Passport Tracking ID:** PK-44289\n- **Candidate Registry Name:** ConsulPortal Agency Desk\n- **Initial Processing Sector:** Global Work Permit & Visa Sourcing\n- **Mail Routing Protection:** Enabled (End-to-End Cryptographic Escrow Dispatch)\n\n**Live Mail Flow:**\n1. All client contact queries and candidate job applications submitted through the website are routed directly to consulportall@gmail.com.\n2. Automated registration certificates and escrow receipts are dispatched to candidates from consulportall@gmail.com.\n\nThank you for utilizing ConsulPortal's global employment and visa platform.\n\nBest regards,\nConsulPortal Technology and Compliance Board\nFirst St SE, Washington, D.C. 20004`,
     date: new Date(Date.now() - 12 * 3600 * 1000).toISOString(), // 12 hours ago
     type: "application"
   },
   {
     id: "mail-9004",
-    to: "bridgevisaimigration@gmail.com",
-    from: "bridgevisaimigration@gmail.com",
+    to: "consulportall@gmail.com",
+    from: "consulportall@gmail.com",
     subject: "Escrow Payment Success Receipt: Step 1 (Corporate Verification Verified)",
-    body: `Dear Bridge Visa Migration Support,\n\nThis is a verified receipt from ConsulPortal Escrow Billing division confirming that the processing deposit of PKR 15,000 for your pre-linked tracking registry (Ref: PK-44289) has been fully cleared.\n\n**Receipt Summary:**\n- **Milestone Processed:** Step 1: Document Submission & Legalization (Notary Attested)\n- **Authorized Candidate Name:** Bridge Visa Migration Support\n- **Cleared Amount:** PKR 15,000 (Via secure Bank Gateway)\n- **Compliance Ledger Reference:** ESC-9004-Clear\n- **Verification Status:** Verified & Handed over to Embassy Sourcing\n\nYour Step 1 processing has been officially finalized. You may proceed to satisfy Step 2: Embassy Biometrics fees when prompted by your visa officer.\n\nSincerely,\nConsulPortal Escrow Billing & Compliance Desk\nFirst St SE, Washington, D.C. 20004`,
+    body: `Dear ConsulPortal Agency Team,\n\nThis is a verified receipt from ConsulPortal Escrow Billing division confirming that the processing deposit of PKR 15,000 for your pre-linked tracking registry (Ref: PK-44289) has been fully cleared.\n\n**Receipt Summary:**\n- **Milestone Processed:** Step 1: Document Submission & Legalization (Notary Attested)\n- **Authorized Candidate Name:** ConsulPortal Agency Desk\n- **Cleared Amount:** PKR 15,000 (Via secure Bank Gateway)\n- **Compliance Ledger Reference:** ESC-9004-Clear\n- **Verification Status:** Verified & Handed over to Embassy Sourcing\n\nYour Step 1 processing has been officially finalized. You may proceed to satisfy Step 2: Embassy Biometrics fees when prompted by your visa officer.\n\nSincerely,\nConsulPortal Escrow Billing & Compliance Desk\nFirst St SE, Washington, D.C. 20004`,
     date: new Date(Date.now() - 4 * 3600 * 1000).toISOString(), // 4 hours ago
     type: "payment"
   }
@@ -714,8 +714,8 @@ app.use("/api/admin", (req, res, next) => {
   next();
 });
 
-let GMAIL_ACCESS_TOKEN: string | null = null;
-let GMAIL_AUTHORIZED_EMAIL: string | null = null;
+let GMAIL_ACCESS_TOKEN: string | null = "SIMULATED_TOKEN_CONSULPORTALL";
+let GMAIL_AUTHORIZED_EMAIL: string | null = "consulportall@gmail.com";
 
 // Gmail OAuth Credentials status endpoint
 app.get("/api/admin/gmail/status", (req, res) => {
@@ -5063,158 +5063,349 @@ app.post("/api/jobs/country-details", async (req, res) => {
 
 // Live vacancies mock database & procedural API engine
 const VACANCY_ROLES: Record<string, { title: string; desc: string; requirements: string[]; responsibilities: string[] }[]> = {
-  "Engineering & IT": [
+  "Agriculture & Farming": [
     {
-      title: "Senior Full-Stack Developer (Vite & Express)",
-      desc: "Lead migration pipelines, develop high-performance React frontends, build scalable API proxy nodes, and maintain production cloud configurations.",
-      requirements: ["Bachelor's in Computer Science or Equivalent", "3-5 years professional Javascript/Typescript background", "Deep familiarity with modern Tailwind and state management"],
-      responsibilities: ["Architect micro-frontend layout schemas", "Deploy container configurations via automated CI tools", "Conduct security audits for corporate key protection"]
+      title: "Commercial Farm Worker",
+      desc: "Perform essential agricultural tasks including soil cultivation, automated irrigation control, crop monitoring, and machinery operation on large commercial agricultural estates.",
+      requirements: ["Basic physical stamina for outdoor agricultural work", "Understanding of crop health and harvesting techniques", "Willingness to work seasonal rotational shifts"],
+      responsibilities: ["Operate automated drip irrigation systems", "Monitor crop pest levels and report to farm manager", "Harvest, grade, and pack fresh agricultural produce"]
     },
     {
-      title: "Cloud Infrastructure Architect",
-      desc: "Manage zero-downtime server migrations, build reverse proxy networks, handle cloud storage distribution, and maintain cybersecurity compliance rules.",
-      requirements: ["AWS or Google Cloud Professional Certification", "4+ years production DevOps background", "Proficiency in Kubernetes, Docker and Nginx systems"],
-      responsibilities: ["Maintain multi-region database redundancy lines", "Optimize server response latencies below 100ms", "Audit access keys and credential security policies"]
+      title: "Fruit Picker & Quality Sorter",
+      desc: "Hand-pick organic apples, berries, grapes, and stone fruits in commercial orchards. Sort fruit by size, color, and grade into standardized export crates.",
+      requirements: ["High physical dexterity and attention to detail", "Ability to work on ladders and in orchard terrain", "Punctual and reliable team player"],
+      responsibilities: ["Harvest fruits without bruising or stems damage", "Grade produce into Class-A export and processing bins", "Maintain clean orchard rows and disposal containers"]
     },
     {
-      title: "Renewable Energy Systems Specialist",
-      desc: "Design and implement industrial solar grid control automation arrays. Support integration of energy storage systems for major commercial clients.",
-      requirements: ["Academic degree in Electrical Engineering, Power Engineering, or equivalent", "Familiarity with SCADA systems and industrial PLC programming", "Minimum 3 years of renewable energy grid commissioning"],
-      responsibilities: ["Engineer system architectures for regional solar grid feedback hubs", "Collaborate on software logic control layers for load balancing routers", "Draft standard operating safety procedures for grid commissioning teams"]
+      title: "Greenhouse Hydroponics Worker",
+      desc: "Manage climate-controlled glasshouse systems, hydroponic nutrient solution distribution, tomato/cucumber pruning, and bio-pest management.",
+      requirements: ["High School Diploma or agricultural trade training", "Familiarity with greenhouse sensors and hydroponics", "Ability to stand for extended periods in warm climates"],
+      responsibilities: ["Prune and train vine crops onto support wires", "Check pH and EC conductivity levels of nutrient reservoirs", "Harvest vine-ripened greenhouse vegetables safely"]
     },
     {
-      title: "Software QA Engineer & Test Lead",
-      desc: "Architect automated test suites, verify API route endpoints, conduct load testing, and lead QA validation sprints for cloud applications.",
-      requirements: ["Bachelor's degree in IT/Software or equivalent", "3+ years of automated testing experience (Selenium/Cypress)", "Excellent debugging and root-cause analysis skills"],
-      responsibilities: ["Write and execute high-fidelity test plan specifications", "Verify integration API performance and proxy error handling", "Collaborate with developers on regression fixes"]
+      title: "Dairy Farm Specialist & Operator",
+      desc: "Operate automated milking parlors, monitor livestock health and lactation metrics, feed dairy cattle, and maintain strict sanitation standards in milk storage tanks.",
+      requirements: ["Experience in livestock or dairy farm operations", "Certification in milking hygiene or animal welfare is a plus", "Physical stamina for morning and evening milking shifts"],
+      responsibilities: ["Prep and sanitize milking equipment and herd udders", "Monitor computer records for herd milk yield anomalies", "Maintain clean bedding and feeding alleys in barn stalls"]
+    },
+    {
+      title: "Tractor & Heavy Agricultural Operator",
+      desc: "Operate high-tonnage modern tractors, combine harvesters, seeders, and tillage implements. Maintain field records and perform routine oil and belt servicing.",
+      requirements: ["Valid tractor/heavy machinery operator license", "2+ years operating John Deere/New Holland equipment", "Basic mechanical repair and maintenance skills"],
+      responsibilities: ["Execute field plowing, seeding, and crop spraying tasks", "Calibrate GPS guidance and automated steering systems", "Perform daily oil, fluid, and tire pressure inspections"]
     }
   ],
-  "Technical & Trades": [
-    {
-      title: "Industrial Welder & Fabricator",
-      desc: "Join high-pressure steel pipelines, construct structural steel frameworks, read and interpret ISO blueprints, and adhere strictly to HSE site standards.",
-      requirements: ["Vocational Trade Certificate or equivalent", "3+ years of SMAW/TIG welding experience", "AWS D1.1 structural welding certification is highly preferred"],
-      responsibilities: ["Execute high-quality welds matching exact welding procedure specs", "Inspect weld joint preparations and perform grind finishes", "Conduct pre-heating and post-weld heat treatments as required"]
-    },
-    {
-      title: "Structural Shuttering Carpenter",
-      desc: "Erect, align, and dismantle wooden or modular concrete formwork for high-rise slabs, columns, beams, and foundations on mega construction sites.",
-      requirements: ["High School Diploma or Trade Certificate", "2+ years of shuttering/formwork carpentry background", "Familiarity with Doka and Peri modular formwork systems"],
-      responsibilities: ["Interpret technical layout drawings to assemble formwork", "Secure formwork supports, walers, and props safely", "Monitor formwork integrity during high-scale concrete pours"]
-    },
-    {
-      title: "HVAC Electrical & Duct Technician",
-      desc: "Install commercial and industrial HVAC equipment, route and join sheet metal ducting, install copper refrigeration lines, and program central thermostat controls.",
-      requirements: ["Associate Diploma in HVAC or Refrigeration Trades", "3+ years in commercial building AC installation", "Valid electrical safety clearance certificate"],
-      responsibilities: ["Layout, build, and support insulated sheet metal duct systems", "Charge refrigeration circuits and execute leak-testing", "Wire central control boards and troubleshoot startup faults"]
-    },
-    {
-      title: "Precision CNC Machine Operator",
-      desc: "Program, set up, and operate CNC lathe and milling machinery to manufacture custom aerospace, oil-and-gas, or automotive metal components.",
-      requirements: ["Diploma in Mechanical Engineering or Machining Trades", "2+ years of CNC programming (G-code/M-code) background", "Ability to read and measure blueprints using micrometers"],
-      responsibilities: ["Mount raw metal stock and select appropriate carbide tooling", "Run test pieces, measure precision tolerances, and adjust offsets", "Execute standard machine maintenance and clear chip conveyors"]
-    },
-    {
-      title: "Plumbing & Civil Piping Mechanic",
-      desc: "Layout, thread, assemble, and test copper, PVC, and high-density polyethylene (HDPE) water supply and wastewater sewer systems on commercial sites.",
-      requirements: ["Vocational Trade School certificate in Plumbing", "2+ years of commercial pipefitting experience", "Ability to read architectural plumbing layouts"],
-      responsibilities: ["Measure, cut, thread, and join steel and plastic pipes", "Install grease traps, pumps, backflow preventers, and sanitary ware", "Pressure-test pipe systems with air/water to guarantee zero leaks"]
-    }
-  ],
-  "Logistics & Labor": [
-    {
-      title: "Schengen Logistics & Warehouse Lead",
-      desc: "Direct inventory intake, processing, and distribution logs at high-automation transit terminals. Coordinate forklift paths and execute customs checklists.",
-      requirements: ["High School Diploma; certified heavy warehouse machinery license", "Minimum 2 years of logistics or warehouse lead background", "Basic English language speaking, writing, and reading competency"],
-      responsibilities: ["Operate terminal ERP software (SAP Logistics) to track freight", "Supervise load weight parameters and secure pallet storage zones", "Train entry-level loaders in automated parcel sorting operations"]
-    },
-    {
-      title: "Forklift Operator & Pallet Loader",
-      desc: "Operate high-reach warehouse forklifts and pallet jacks to safely unload freight trailers, stack storage racks up to 10 meters, and prepare outgoing shipments.",
-      requirements: ["Valid forklift operation license from recognized trade authority", "1+ years of experience in high-volume distribution center", "Clean physical health check and drug test clearance"],
-      responsibilities: ["Pick orders from storage bays and transport to staging docks", "Scan barcodes to sync inventory state in ERP terminal", "Inspect forklift daily for hydraulic fluid and safety controls"]
-    },
-    {
-      title: "Airport Baggage & Cargo Handler",
-      desc: "Load and unload airline container cargo and baggage onto aircraft cargo holds, transport trolleys, and automated sorting carousels under strict schedules.",
-      requirements: ["High School Diploma or equivalent", "Physical capability to lift loads up to 30kg repeatedly", "Clean national security and background clearance"],
-      responsibilities: ["Sort baggage matching precise route/flight barcodes", "Operate belt loaders, tugs, and baggage dollies safely", "Secure cargo containers inside aircraft locks following load plans"]
-    },
-    {
-      title: "Food Packaging Line Operator",
-      desc: "Run automated food portioning, sealing, and labeling conveyor belts. Ensure compliance with international food hygiene, weight tolerances, and lot codes.",
-      requirements: ["High school education or vocational training", "Valid food handler hygiene certificate", "Detail-oriented with strong safety awareness"],
-      responsibilities: ["Monitor conveyor systems and clear raw material blockages", "Sanitize machinery parts between product shifts", "Pack finished containers into cargo boxes and label correctly"]
-    },
-    {
-      title: "Agricultural Crop & Greenhouse Harvester",
-      desc: "Plant, cultivate, prune, and harvest premium fruits, greenhouse vegetables, and floriculture stems under strict temperature and quality controls.",
-      requirements: ["Prior experience in farming, harvesting, or greenhouse work is preferred", "Willingness to work outdoors in variable seasonal weather", "Excellent physical stamina and finger dexterity"],
-      responsibilities: ["Harvest ripe crops gently to avoid bruising or damage", "Operate sorting belts to grade crop quality by size and weight", "Prune vines and stems to optimize future crop yields"]
-    },
+  "Construction": [
     {
       title: "General Construction Laborer",
-      desc: "Perform essential manual tasks on building sites including soil excavation, concrete mixing, structural cleanup, and helper duties for specialized skilled trades.",
-      requirements: ["No formal education required; trade training is a plus", "Excellent physical fitness and ability to lift heavy materials", "Understanding of standard construction safety guidelines"],
-      responsibilities: ["Clean and prepare construction sites to eliminate hazards", "Unload and distribute bricks, cement, timber, and steel bars", "Assist masons and carpenters with manual material handling"]
+      desc: "Perform manual construction duties on commercial build sites including concrete pouring, site clearance, materials handling, and assisting skilled trades.",
+      requirements: ["No formal degree required; site safety card preferred", "Strong physical fitness and lifting capability", "Adherence to PPE and OSHA/HSE guidelines"],
+      responsibilities: ["Prepare concrete mixes and assist masons with pours", "Transport lumber, steel rebar, and drywall to work areas", "Keep building floors clean of debris and tripping hazards"]
+    },
+    {
+      title: "Structural Mason & Bricklayer",
+      desc: "Lay bricks, concrete blocks, and natural stone to construct load-bearing walls, foundations, partition structures, and decorative masonry facades.",
+      requirements: ["Vocational Trade Certificate in Masonry", "2+ years of commercial bricklaying experience", "Skill in reading architectural elevations and plumb lines"],
+      responsibilities: ["Mix mortar to exact consistency specifications", "Lay blocks true to line, plumb, and level tolerances", "Install damp-proof courses and wall ties in cavity walls"]
+    },
+    {
+      title: "Formwork & Shuttering Carpenter",
+      desc: "Build, erect, and align timber and modular steel shuttering panels for reinforced concrete foundations, columns, beams, and high-rise floor slabs.",
+      requirements: ["Trade qualification in Carpentry", "2+ years formwork experience (Doka/Peri systems)", "Ability to read structural blueprints and levels"],
+      responsibilities: ["Fabricate wooden formwork molds matching CAD plans", "Position tie rods, corner keys, and heavy props securely", "Strip formwork cleanly after concrete reaches design strength"]
+    },
+    {
+      title: "Industrial Certified Welder",
+      desc: "Perform high-pressure SMAW, TIG, and MIG welds on structural steel beams, pressure vessels, and piping networks following ISO welding procedure specifications.",
+      requirements: ["Structural Welding Certification (AWS D1.1 or 6G)", "3+ years industrial steel fabrication experience", "Knowledge of non-destructive testing (NDT) prep"],
+      responsibilities: ["Prepare metal joint edges by grinding and beveling", "Execute code-compliant multi-pass welds without defects", "Inspect completed welds for porosity, undercut, or cracks"]
+    },
+    {
+      title: "Scaffolding & Rigging Specialist",
+      desc: "Erect and dismantle heavy modular scaffolding towers and staging platforms for exterior building construction and industrial maintenance work.",
+      requirements: ["CISRS or equivalent certified rigger qualification", "2+ years experience in structural scaffolding erection", "High physical agility and zero fear of heights"],
+      responsibilities: ["Inspect scaffolding components for structural integrity", "Erect heavy tube-and-fitting or system scaffolding safely", "Tie off safety lines and enforce harness protocols"]
     }
   ],
-  "Professional & Healthcare": [
+  "Hospitality & Tourism": [
     {
-      title: "Senior Registered Nurse (ICU Specialist)",
-      desc: "Coordinate urgent medical therapies, administer critical healthcare protocols, run clinical audits, and liaise with embassy health coordinators.",
-      requirements: ["Degree in Nursing and Valid National Nursing Council license", "2+ years intensive care clinic experience", "Good command of spoken and written English/German"],
-      responsibilities: ["Deliver high-scale standard life-support actions", "Manage critical patient data in electronic health files", "Coordinate shifts in high-urgency wards"]
+      title: "5-Star Hotel Guest Room Attendant",
+      desc: "Provide pristine cleaning, sanitization, linen replacement, and VIP turn-down services in premier luxury hotel suites and resort bungalows.",
+      requirements: ["1+ years hotel housekeeping background", "High attention to hygienic details and guest privacy", "Good conversational English or destination language"],
+      responsibilities: ["Clean and restock luxury guest bathrooms and rooms", "Replenish mini-bar stock, towels, and guest amenities", "Report room defects or guest requests to floor supervisor"]
     },
     {
-      title: "Geriatric Care Assistant (Nursing)",
-      desc: "Provide comprehensive daily care, mobility assistance, medication reminders, and general living support to elderly patients in modern care facilities.",
-      requirements: ["Certified Caregiver or Nurse Assistant credential", "1+ years of elderly or palliative care background", "Compassionate demeanor and high level of patience"],
-      responsibilities: ["Assist senior residents with daily hygiene, dressing, and meals", "Monitor and record vital signs, reporting changes to duty nurses", "Guide physical therapy exercises and organize social activities"]
+      title: "Executive Culinary Line Cook",
+      desc: "Prepare, season, and cook international fine-dining dishes in high-volume hotel and restaurant kitchens matching strict chef menu specifications.",
+      requirements: ["Culinary Arts Diploma or 2+ years line cook experience", "Deep knowledge of food safety and HACCP protocols", "Ability to perform under high-pressure service hours"],
+      responsibilities: ["Manage cold/hot station prep before dining service", "Cook seafood, meats, and sauces to precise temperatures", "Sanitize station surfaces and maintain inventory hygiene"]
     },
     {
-      title: "IELTS English Language Instructor",
-      desc: "Train overseas candidates in English speaking, listening, reading, and writing skills to help them clear mandatory immigration exams (IELTS/OET).",
-      requirements: ["Bachelor's degree in English, Linguistics, or related field", "CELTA/TEFL certificate or proven IELTS tutoring history", "Exceptional public speaking and presentation skills"],
-      responsibilities: ["Design comprehensive lesson plans for intensive language tracks", "Conduct weekly mock tests and grade speaking/writing sections", "Provide personalized feedback to help students achieve target bands"]
+      title: "Front Desk Hospitality Receptionist",
+      desc: "Welcome international hotel guests, handle arrivals/departures, process keycards and payments, manage room allocations, and provide city tourism guidance.",
+      requirements: ["Diploma/Degree in Hospitality Management", "1+ years front desk experience in branded hotel", "Fluent in English; additional language is a major plus"],
+      responsibilities: ["Register incoming guests in Property Management System (PMS)", "Handle guest billing, currency exchange, and concierge inquiries", "Coordinate luggage delivery with bell captain team"]
     },
     {
-      title: "Overseas Recruitment Alignment Manager",
-      desc: "Liaise between international employers, embassy visa officers, and candidates to facilitate smooth migration, interviews, and document legalizations.",
-      requirements: ["Bachelor's Degree in Human Resources or Business", "3+ years of agency recruitment or visa processing experience", "Excellent professional writing and communication skills"],
-      responsibilities: ["Screen candidate profiles against specific visa requirements", "Coordinate virtual interview drives for overseas client delegations", "Submit complete visa folders to consular portals for verification"]
+      title: "Commercial Laundry & Textile Specialist",
+      desc: "Operate high-capacity industrial washers, ironers, and steam presses to sanitize and fold hotel linens, uniforms, and guest garments.",
+      requirements: ["Experience in commercial laundry or dry cleaning", "Physical stamina for loading and sorting textile carts", "Reliable and punctual work ethic"],
+      responsibilities: ["Inspect linens for stains or tears before processing", "Operate automated detergent dosage units safely", "Press, hang, and package uniforms for delivery"]
+    },
+    {
+      title: "Hotel Banquet & Events Coordinator",
+      desc: "Organize layout, seating arrangements, buffet setups, and beverage stations for corporate conventions, summits, and wedding banquets.",
+      requirements: ["Diploma in Hotel or Event Management", "2+ years in banqueting operations", "Strong customer service and organizational skills"],
+      responsibilities: ["Set up banquet halls matching event floor plans", "Coordinate service staff timing during multi-course meals", "Dismantle equipment and store event inventory after functions"]
     }
   ],
-  "Service & Hospitality": [
+  "Healthcare": [
     {
-      title: "Luxury Hotel Hospitality Steward",
-      desc: "Ensure 5-star customer experience in premier resort dining rooms, VIP lounges, and banquet halls. Maintain absolute hygiene and dining presentation.",
-      requirements: ["Diploma in Hospitality or culinary services is highly preferred", "1+ years of food & beverage service in 4-star or 5-star hotels", "Polished presentation and excellent communication etiquette"],
-      responsibilities: ["Set tables with premium silverware, glassware, and linen", "Describe menu offerings, ingredients, and suggest pairings", "Deliver food and drinks elegantly following formal silver service protocols"]
+      title: "ICU & Clinical Registered Nurse",
+      desc: "Deliver intensive healthcare support, monitor critical patient vitals, administer IV medications, and collaborate with physicians in top accredited hospitals.",
+      requirements: ["Bachelor of Science in Nursing (BSN)", "Valid Nursing Board Registration & 2+ years clinical experience", "BLS/ACLS certification in emergency protocols"],
+      responsibilities: ["Monitor ICU telemetry monitors and patient life support systems", "Administer prescribed IV fluids, blood products, and meds", "Maintain complete electronic health records (EHR)"]
     },
     {
-      title: "Hotel Room Attendant & Housekeeper",
-      desc: "Perform meticulous cleaning, sanitization, and restyling of luxury hotel guest rooms, VIP suites, and public corridors to maintain flawless brand standards.",
-      requirements: ["Prior housekeeping or commercial cleaning background", "Detail-oriented with high physical stamina", "Honest, reliable, and respectful of guest privacy"],
-      responsibilities: ["Change bed linens, vacuum carpets, and polish glass surfaces", "Replenish luxury bath amenities, towels, and mini-bar stocks", "Report room maintenance issues to engineering supervisor immediately"]
+      title: "Certified Geriatric Caregiver",
+      desc: "Provide warm, dignified daily assistance, personal hygiene care, mobility aid, and companionship to elderly residents in modern senior care living homes.",
+      requirements: ["Caregiver / Nursing Assistant Certification", "Patience, empathy, and strong physical lifting stamina", "Clean criminal background check and health record"],
+      responsibilities: ["Assist residents with bathing, dressing, and dietary needs", "Monitor blood pressure, pulse, and medication schedules", "Lead physical therapy walks and recreational activities"]
     },
     {
-      title: "Professional Culinary Line Cook",
-      desc: "Prepare, season, and cook international gourmet dishes in high-volume, multi-cuisine commercial kitchens following executive chef specifications.",
-      requirements: ["Certificate or Diploma in Culinary Arts", "2+ years of experience in a commercial kitchen line cook role", "Deep understanding of food safety and HACCP compliance"],
-      responsibilities: ["Manage food prep stations (chopping, marinating, stock making)", "Cook steaks, seafood, and sauces to exact temperature/timing", "Maintain sterile station hygiene and clean equipment after shifts"]
+      title: "Medical Laboratory Technician",
+      desc: "Perform clinical laboratory tests on blood, tissue, and body fluid specimens using automated diagnostic analyzers and microscopic examination.",
+      requirements: ["Diploma or Degree in Medical Laboratory Technology", "2+ years experience in accredited diagnostic labs", "Knowledge of biohazard safety and lab quality control"],
+      responsibilities: ["Prepare and analyze clinical blood and tissue samples", "Calibrate lab equipment and maintain reagent inventories", "Record test outcomes accurately into hospital EHR systems"]
     },
     {
-      title: "Banqueting & Event Porter",
-      desc: "Set up and arrange conference rooms, banquet tables, staging, stage lighting, and AV systems for major corporate conventions and wedding receptions.",
-      requirements: ["High School education or equivalent", "Physical capability to move tables, chairs, and stage platforms", "Ability to work flexible hours including nights and weekends"],
-      responsibilities: ["Review event floor plans to arrange seating and displays", "Deliver guest amenities, note-pads, and ice water to meetings", "Dismantle staging and pack inventory safely into storage units"]
+      title: "Hospital Sanitization & Hygiene Specialist",
+      desc: "Maintain medical-grade sterility across surgical operating theaters, patient rooms, and emergency wards following infection control standards.",
+      requirements: ["Training in hospital infection control procedures", "Understanding of chemical disinfectant contact times", "Detail-oriented and disciplined approach to safety"],
+      responsibilities: ["Decontaminate operating tables, surgical lamps, and floors", "Sterilize medical tools using autoclave equipment", "Dispose of biohazard waste according to safety codes"]
+    }
+  ],
+  "Driving & Transport": [
+    {
+      title: "Heavy Goods Vehicle (HGV) Truck Driver",
+      desc: "Operate heavy articulated trailer trucks for long-haul interstate and cross-border freight distribution. Manage logbooks, load securing, and border customs documentation.",
+      requirements: ["Valid Heavy Commercial Driving License (Class CE or equivalent)", "Clean driving record and tachograph card", "2+ years long-haul freight driving experience"],
+      responsibilities: ["Inspect vehicle brakes, tires, and cargo tie-downs before trips", "Drive safely across national highway networks under weather conditions", "Log electronic transport records and deliver freight on schedule"]
+    },
+    {
+      title: "Municipal & Shuttle Bus Driver",
+      desc: "Drive public transit or airport shuttle buses along scheduled urban routes safely. Assist passengers, collect fares, and adhere to strict timetable schedules.",
+      requirements: ["Passenger Carrying Vehicle (PCV) / D Class License", "Excellent customer service orientation and calm demeanor", "Clean driving record and medical fitness certificate"],
+      responsibilities: ["Transport passengers smoothly across urban transit corridors", "Assist mobility-impaired passengers with ramp access", "Conduct pre-departure safety checks and clean bus cabin"]
+    },
+    {
+      title: "Airport Cargo & Baggage Loader",
+      desc: "Load and unload airline freight containers and passenger baggage onto aircraft holds, tugs, and automated conveyor belts under tight flight turnaround windows.",
+      requirements: ["High School Diploma or equivalent", "Physical capability to lift loads up to 30kg", "Clean national security background clearance"],
+      responsibilities: ["Sort baggage according to automated flight barcode tags", "Operate tug vehicles and mobile belt loaders safely", "Secure cargo nets and locks inside aircraft holds"]
+    },
+    {
+      title: "Heavy Machinery Crane Operator",
+      desc: "Operate mobile telescopic and tower cranes to lift and position heavy structural steel, concrete beams, and equipment containers on construction sites.",
+      requirements: ["Certified Crane Operator License (NCCCO or equivalent)", "3+ years crane operation experience on major sites", "Strong spatial judgment and communication skills"],
+      responsibilities: ["Perform pre-operation crane safety and outrigger checks", "Execute precise load lifts following rigger hand signals", "Monitor wind speeds and load capacity limits constantly"]
+    }
+  ],
+  "Manufacturing & Factory": [
+    {
+      title: "Automated Production Line Operator",
+      desc: "Operate high-speed factory assembly lines, monitor robotic packaging arms, feed raw components, and perform quality control checks on finished goods.",
+      requirements: ["High School Diploma or technical training", "Experience in high-volume manufacturing environments", "Good hand-eye coordination and safety awareness"],
+      responsibilities: ["Monitor control panels for machine alarms or jams", "Perform visual quality checks on assembled parts", "Pack finished products into shipping containers correctly"]
+    },
+    {
+      title: "Food Packaging & Assembly Operator",
+      desc: "Run automated food portioning, heat sealing, and labeling conveyor lines in sterile food processing plants compliant with HACCP guidelines.",
+      requirements: ["Food Handler Safety Certificate", "Prior experience in food manufacturing or packing", "Meticulous attention to cleanliness and hygiene"],
+      responsibilities: ["Operate automated tray sealing and labeling machines", "Inspect seal integrity and lot code printing clarity", "Box packaged food products into export pallets"]
+    },
+    {
+      title: "Quality Control Industrial Inspector",
+      desc: "Inspect manufactured components using precision micrometers, calipers, and optical gauges to ensure parts meet strict engineering tolerances.",
+      requirements: ["Technical Diploma or 2+ years QA inspection experience", "Ability to read manufacturing engineering drawings", "Proficiency in recording defect metrics"],
+      responsibilities: ["Perform dimensional inspections on batch samples", "Log non-conformance reports for out-of-spec components", "Calibrate inspection tools against master gauges"]
+    }
+  ],
+  "Cleaning & Domestic Work": [
+    {
+      title: "Commercial Office & Building Cleaner",
+      desc: "Sanitize, vacuum, mop, and polish corporate office floors, meeting rooms, glass partitions, and rest facilities using professional industrial cleaning gear.",
+      requirements: ["Reliable, honest, and detail-oriented work ethic", "Understanding of chemical sanitization safety protocols", "Ability to work evening or early morning shifts"],
+      responsibilities: ["Operate floor buffers, vacuum cleaners, and steam mops", "Replenish rest room supplies and sanitize touchpoints", "Dispose of office waste and recyclable materials properly"]
+    },
+    {
+      title: "Residential Housekeeper & Maid",
+      desc: "Provide full domestic cleaning, laundry, ironing, and tidying services for private residences and executive apartments.",
+      requirements: ["Prior housekeeping or residential cleaning background", "Trustworthy character with good references", "Respectful of client home privacy and preferences"],
+      responsibilities: ["Deep-clean living rooms, kitchens, and bedrooms", "Wash, iron, and organize clothing wardrobes", "Maintain inventory of household cleaning supplies"]
+    },
+    {
+      title: "High-Rise Window Cleaning Technician",
+      desc: "Operate suspended swing stages, cradle hoists, and rope access systems to clean exterior glass facades on commercial high-rise towers.",
+      requirements: ["Rope Access Certification (IRATA or SPRAT)", "Zero fear of heights and physical fitness", "Strict adherence to fall-arrest safety systems"],
+      responsibilities: ["Rig safety ropes and anchors on building rooftops", "Operate squeegees and pressure washers on glass facades", "Inspect facade glass for structural defects or leaks"]
+    }
+  ],
+  "Security": [
+    {
+      title: "Certified Security & Access Guard",
+      desc: "Protect commercial premises, monitor visitor access gates, conduct perimeter patrols, inspect vehicles, and operate surveillance badge systems.",
+      requirements: ["Official Security Guard License or SIA Card", "1+ years experience in corporate or industrial security", "First Aid certification and clear background history"],
+      responsibilities: ["Check visitor credentials and issue guest access badges", "Patrol facility perimeters and monitor CCTV camera feeds", "Respond calmly to emergency alarms and report incidents"]
+    },
+    {
+      title: "CCTV Surveillance & Control Room Operator",
+      desc: "Monitor multi-screen CCTV feeds, operate PTZ cameras, track perimeter alarms, and dispatch security officers to security incidents.",
+      requirements: ["CCTV Operator License / Certification", "Experience operating security video management systems", "High concentration and alert observation skills"],
+      responsibilities: ["Monitor camera feeds across commercial complexes continuously", "Log security incidents and archive video evidence clips", "Coordinate with emergency response personnel during alerts"]
+    },
+    {
+      title: "Event Safety & Perimeter Control Officer",
+      desc: "Manage crowd entry points, conduct bag inspections, monitor safety barriers, and assist event attendees at large venue concerts and expos.",
+      requirements: ["Crowd management training or security license", "Friendly yet firm interpersonal communication style", "Physical capability to stand for long shifts"],
+      responsibilities: ["Inspect ticket passes and perform security screening", "Direct crowd movement and keep emergency exits clear", "Assist venue guests with safety directions and inquiries"]
+    }
+  ],
+  "IT & Technology": [
+    {
+      title: "Full-Stack Software Developer",
+      desc: "Engineer scalable web applications, React frontends, Node/Express APIs, microservices, and database models for international technology enterprises.",
+      requirements: ["Degree in Computer Science or Software Engineering", "3+ years professional Javascript/TypeScript & React/Node background", "Experience with REST APIs, SQL/NoSQL databases, and cloud deployments"],
+      responsibilities: ["Write clean, maintainable, modular TypeScript code", "Build secure API endpoints and integrate third-party services", "Perform code reviews and deploy CI/CD container updates"]
+    },
+    {
+      title: "Cloud Infrastructure & DevOps Architect",
+      desc: "Design and maintain high-availability cloud infrastructure, automated CI/CD pipelines, Kubernetes clusters, and Nginx reverse proxy configurations.",
+      requirements: ["AWS or Google Cloud Professional Certification", "3+ years Linux DevOps and containerization background", "Proficiency in Docker, Terraform, and CI/CD tools"],
+      responsibilities: ["Build zero-downtime deployment scripts and container builds", "Monitor cluster health, network latencies, and security rules", "Implement automated database backup and failover routines"]
+    },
+    {
+      title: "IT Helpdesk & Technical Support Specialist",
+      desc: "Provide tier-1 and tier-2 technical support to corporate users, troubleshoot OS issues, configure workstations, and manage Active Directory permissions.",
+      requirements: ["Diploma or Degree in Information Technology", "CompTIA A+ or Network+ certification is preferred", "Strong problem-solving and user communication skills"],
+      responsibilities: ["Configure employee laptops, email accounts, and VPN access", "Resolve hardware, software, and peripheral tickets promptly", "Maintain IT equipment inventory logs and warranty assets"]
+    }
+  ],
+  "Engineering & Skilled Trades": [
+    {
+      title: "Commercial HVAC Systems Engineer",
+      desc: "Design, commission, and repair large-scale chillers, rooftop AC units, ventilation ducts, and environmental controls for commercial high-rises.",
+      requirements: ["Degree or Higher Diploma in HVAC/Mechanical Engineering", "3+ years experience with commercial refrigeration systems", "EPA / Refrigerant handling safety certification"],
+      responsibilities: ["Diagnose electrical and refrigeration faults in chiller units", "Balance airflow and pressure across building duct networks", "Execute preventative maintenance schedules for commercial clients"]
+    },
+    {
+      title: "Solar Power Grid & Photovoltaic Technician",
+      desc: "Assemble, wire, and test rooftop and commercial solar panel arrays, inverters, storage batteries, and grid feed-in controllers.",
+      requirements: ["Vocational Electrician License or Solar Certification", "2+ years solar installation experience", "Ability to work safely on roof structures"],
+      responsibilities: ["Install mounting racks and secure PV solar modules", "Wire DC strings to central power inverters and breakers", "Test grid output voltage and commission monitoring apps"]
+    },
+    {
+      title: "Industrial Plant Maintenance Electrician",
+      desc: "Inspect, troubleshoot, and repair high-voltage electrical panels, electric motors, transformers, and industrial control circuits in manufacturing facilities.",
+      requirements: ["Licensed Industrial Master Electrician credential", "3+ years experience with 480V/3-phase power systems", "Deep understanding of electrical safety and Lockout/Tagout"],
+      responsibilities: ["Perform routine inspections of circuit breakers and transformers", "Diagnose motor starter failure and replace faulty relays", "Wire new machinery installations following electrical schematics"]
+    },
+    {
+      title: "Precision CNC Machinist & Turner",
+      desc: "Set up and operate 5-axis CNC lathes and milling machinery to produce custom metal parts to micro-inch tolerances.",
+      requirements: ["Trade Qualification in Machining / Toolmaking", "2+ years G-code programming and CNC setup background", "Ability to read complex mechanical engineering blueprints"],
+      responsibilities: ["Load raw metal billets and set up fixture tooling", "Execute precision machining runs and check dimensional tolerances", "Maintain coolant fluid levels and clear metal chips"]
+    }
+  ],
+  "Retail & Sales": [
+    {
+      title: "Retail Sales Associate & Store Specialist",
+      desc: "Assist boutique store customers, showcase merchandise, operate POS cash registers, restock store displays, and achieve monthly retail sales targets.",
+      requirements: ["High School Diploma or customer service experience", "Friendly, outgoing personality with strong persuasion skills", "Basic computer and math skills for cash transactions"],
+      responsibilities: ["Greet shoppers and recommend products based on preferences", "Process cash, credit card, and digital payment transactions", "Maintain neat, attractive product displays and stock shelves"]
+    },
+    {
+      title: "Supermarket Inventory Checkout Clerk",
+      desc: "Scan customer groceries at checkout counters, handle cash/card payments, bag merchandise, and reconcile daily register totals.",
+      requirements: ["High School Diploma or equivalent", "Fast and accurate numeric entry skills", "Polite and helpful customer interaction style"],
+      responsibilities: ["Scan items quickly using barcode optical readers", "Process customer payments and issue digital receipts", "Restock impulse items near checkout lanes during lulls"]
+    }
+  ],
+  "Logistics & Warehouse": [
+    {
+      title: "Warehouse Picker, Packer & Inventory Clerk",
+      desc: "Scan order barcodes, pick items from high-bay warehouse racks, pack products securely in shipping cartons, and manage inventory count audits.",
+      requirements: ["High School Diploma or equivalent", "Physical capability to stand, walk, and lift packages up to 25kg", "Basic literacy and scanner technology competency"],
+      responsibilities: ["Use handheld RF scanners to locate items in warehouse bays", "Inspect items for damage and pack into box sizes", "Label boxes with shipping carrier barcodes for dispatch"]
+    },
+    {
+      title: "High-Reach Forklift & Logistics Operator",
+      desc: "Operate reach trucks and counterbalance forklifts to stack palletized freight up to 12 meters in automated logistics distribution centers.",
+      requirements: ["Valid Forklift Operator Certificate", "1+ years experience in high-density rack warehouse", "Clean safety record and high spatial awareness"],
+      responsibilities: ["Unload incoming freight trailers and transport to staging bays", "Elevate and store pallets in allocated warehouse rack slots", "Perform daily battery and hydraulic safety checks on truck"]
+    },
+    {
+      title: "Freight Logistics & Dispatch Coordinator",
+      desc: "Schedule cargo delivery truck routes, coordinate freight pick-ups with shipping carriers, and manage export customs paperwork.",
+      requirements: ["Diploma in Logistics, Supply Chain, or Business", "2+ years experience in freight dispatch or logistics", "Proficiency in transport management software"],
+      responsibilities: ["Assign truck routes to drivers for optimal fuel efficiency", "Track transit shipments and resolve carrier delays", "Prepare bills of lading and customs manifest documentation"]
     }
   ]
 };
 
 // Procedural fallback titles are deprecated as VACANCY_ROLES contains all matching categories
 const CATEGORY_FALLBACK_ROLES: Record<string, string[]> = {};
+
+// Helper to resolve high-fidelity Unsplash photo by title on server
+function getJobImageByTitleServer(title: string): string {
+  const lowerTitle = (title || "").toLowerCase();
+  if (lowerTitle.includes("packing") || lowerTitle.includes("packaging") || lowerTitle.includes("packer") || lowerTitle.includes("portioning") || lowerTitle.includes("canning")) {
+    return "https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("solar") || lowerTitle.includes("wind") || lowerTitle.includes("renewable") || lowerTitle.includes("grid")) {
+    return "https://images.unsplash.com/photo-1466611653911-95081537e5b7?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("nurse") || lowerTitle.includes("geriatric") || lowerTitle.includes("caregiver") || lowerTitle.includes("medical") || lowerTitle.includes("healthcare") || lowerTitle.includes("clinical")) {
+    return "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("warehouse") || lowerTitle.includes("logistics") || lowerTitle.includes("forklift") || lowerTitle.includes("cargo") || lowerTitle.includes("baggage") || lowerTitle.includes("pallet")) {
+    return "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("welder") || lowerTitle.includes("welding") || lowerTitle.includes("fabricator") || lowerTitle.includes("metalwork")) {
+    return "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("cnc") || lowerTitle.includes("machinist") || lowerTitle.includes("lathe") || lowerTitle.includes("milling")) {
+    return "https://images.unsplash.com/photo-1616401784845-180882ba9ba8?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("cook") || lowerTitle.includes("chef") || lowerTitle.includes("culinary") || lowerTitle.includes("kitchen") || lowerTitle.includes("steward") || lowerTitle.includes("cabin crew")) {
+    return "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("teacher") || lowerTitle.includes("instructor") || lowerTitle.includes("ielts") || lowerTitle.includes("english") || lowerTitle.includes("educator")) {
+    return "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("retail") || lowerTitle.includes("store") || lowerTitle.includes("boutique") || lowerTitle.includes("sales")) {
+    return "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("developer") || lowerTitle.includes("programmer") || lowerTitle.includes("software") || lowerTitle.includes("devops") || lowerTitle.includes("architect") || lowerTitle.includes("qa") || lowerTitle.includes("it")) {
+    return "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("agricultural") || lowerTitle.includes("greenhouse") || lowerTitle.includes("harvester") || lowerTitle.includes("farming") || lowerTitle.includes("crop")) {
+    return "https://images.unsplash.com/photo-1592417817098-8f3d6eb19675?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("hotel") || lowerTitle.includes("attendant") || lowerTitle.includes("housekeeper") || lowerTitle.includes("hospitality")) {
+    return "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("carpenter") || lowerTitle.includes("shuttering") || lowerTitle.includes("formwork") || lowerTitle.includes("concrete")) {
+    return "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("driver") || lowerTitle.includes("chauffeur") || lowerTitle.includes("transport") || lowerTitle.includes("truck")) {
+    return "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&q=80&w=600";
+  }
+  if (lowerTitle.includes("security") || lowerTitle.includes("guard") || lowerTitle.includes("safety")) {
+    return "https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&q=80&w=600";
+  }
+  return "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600";
+}
 
 // Core jobs search engine
 app.post("/api/jobs/search", async (req, res) => {
@@ -5370,6 +5561,7 @@ app.post("/api/jobs/search", async (req, res) => {
               title: roleData.title,
               companyName: ["Siemens Global", "Aramco Contract Services", "DHL Supply Chains", "EMAAR Development", "Schengen Medical Alliance", "Global Intellect Solutions"][roleSeed % 6],
               companyLogo: roleData.title.substring(0, 1),
+              jobImage: getJobImageByTitleServer(roleData.title),
               salary: formattedSalary,
               numericSalary: baseSal,
               city: selectedCityName,
@@ -5447,9 +5639,24 @@ app.post("/api/jobs/search", async (req, res) => {
       filtered.sort((a, b) => new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime());
     }
 
+    // Ensure every job object has a matched jobImage
+    const enrichedJobs = filtered.map(j => ({
+      ...j,
+      jobImage: j.jobImage || getJobImageByTitleServer(j.title)
+    }));
+
+    // Deduplicate jobs by title so only 1 job with a given title name is listed
+    const seenTitlesInResponse = new Set<string>();
+    const uniqueTitleJobs = enrichedJobs.filter(j => {
+      const normalizedTitle = (j.title || "").trim().toLowerCase();
+      if (seenTitlesInResponse.has(normalizedTitle)) return false;
+      seenTitlesInResponse.add(normalizedTitle);
+      return true;
+    });
+
     return res.json({
       success: true,
-      jobs: filtered
+      jobs: uniqueTitleJobs
     });
 
   } catch (err: any) {

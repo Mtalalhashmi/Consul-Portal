@@ -112,6 +112,7 @@ export interface LiveJob {
   title: string;
   company: string;
   companyLogo: string;
+  jobImage?: string;
   salary: string;
   location: string;
   country: string;

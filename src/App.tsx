@@ -680,7 +680,8 @@ export default function App() {
     }
   };
 
-  // Filter vacancies
+  // Filter vacancies with strict title deduplication (only 1 job listed per title name)
+  const seenVacTitles = new Set<string>();
   const filteredVacancies = VACANCIES.filter(vacancy => {
     const regionMatches = selectedRegion === "All" || vacancy.region === selectedRegion;
     const countryMatches = selectedCountry === "All" || vacancy.country.toLowerCase() === selectedCountry.toLowerCase();
@@ -689,7 +690,12 @@ export default function App() {
       vacancy.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vacancy.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
       vacancy.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return regionMatches && countryMatches && queryMatches;
+    if (!regionMatches || !countryMatches || !queryMatches) return false;
+
+    const norm = vacancy.title.trim().toLowerCase();
+    if (seenVacTitles.has(norm)) return false;
+    seenVacTitles.add(norm);
+    return true;
   });
 
   return (
@@ -2388,28 +2394,26 @@ export default function App() {
                     className="group bg-slate-950/70 rounded-3xl border border-slate-800/80 overflow-hidden flex flex-col justify-between hover:border-amber-500/30 hover:-translate-y-1 transition-all duration-300 shadow-xl"
                   >
                     {/* Job Representation Picture Banner */}
-                    {vacancy.imageUrl && (
-                      <div className="relative h-48 sm:h-56 overflow-hidden">
-                        <img 
-                          src={getJobImageByTitle(vacancy.title) || vacancy.imageUrl} 
-                          alt={vacancy.title} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          referrerPolicy="no-referrer"
-                        />
-                        {/* Overlay shading */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
-                        
-                        {/* Overlaid Badges inside image */}
-                        <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
-                          <span className="bg-amber-500 text-slate-950 text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md">
-                            {vacancy.spots} SPOTS LEFT
-                          </span>
-                          <span className="bg-slate-950/95 text-emerald-400 text-[10px] font-mono border border-slate-800/80 px-2.5 py-1 rounded-lg font-bold">
-                            {vacancy.salary}
-                          </span>
-                        </div>
+                    <div className="relative h-48 sm:h-56 overflow-hidden">
+                      <img 
+                        src={getJobImageByTitle(vacancy.title) || vacancy.imageUrl || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"} 
+                        alt={vacancy.title} 
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      {/* Overlay shading */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
+                      
+                      {/* Overlaid Badges inside image */}
+                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
+                        <span className="bg-amber-500 text-slate-950 text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md">
+                          {vacancy.spots} SPOTS LEFT
+                        </span>
+                        <span className="bg-slate-950/95 text-emerald-400 text-[10px] font-mono border border-slate-800/80 px-2.5 py-1 rounded-lg font-bold">
+                          {vacancy.salary}
+                        </span>
                       </div>
-                    )}
+                    </div>
 
                     {/* Core Card Content */}
                     <div className="p-5 sm:p-6 flex-grow flex flex-col justify-between space-y-4">

@@ -639,7 +639,15 @@ export default function GlobalJobDirectory({
                 ]
               };
             });
-            setJobs(enrichedList);
+            // Guarantee deduplication by job title - only 1 job per title name listed
+            const seenTitles = new Set<string>();
+            const uniqueJobs = enrichedList.filter((j: any) => {
+              const norm = (j.title || "").trim().toLowerCase();
+              if (seenTitles.has(norm)) return false;
+              seenTitles.add(norm);
+              return true;
+            });
+            setJobs(uniqueJobs);
           } else {
             // Fallback to static if empty response
             setJobs(ENRICHED_STATIC_PRESEEDED_JOBS);
@@ -1238,7 +1246,7 @@ export default function GlobalJobDirectory({
                   {/* Job Sector Image Banner */}
                   <div className="relative h-44 overflow-hidden shrink-0">
                     <img 
-                      src={job.jobImage} 
+                      src={getJobImageByTitle(job.title) || job.jobImage || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"} 
                       alt={job.title} 
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
@@ -1582,7 +1590,7 @@ export default function GlobalJobDirectory({
                 {/* Sector Image */}
                 <div className="relative h-48 rounded-2xl overflow-hidden">
                   <img 
-                    src={selectedJobDetails.jobImage} 
+                    src={getJobImageByTitle(selectedJobDetails.title) || selectedJobDetails.jobImage || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"} 
                     alt={selectedJobDetails.title} 
                     className="w-full h-full object-cover"
                     referrerPolicy="no-referrer"
