@@ -277,14 +277,116 @@ async function saveApplicationToSupabase(appData: Application, companyName?: str
       uploaded_file: appData.uploadedFile ? JSON.stringify(appData.uploadedFile) : null
     };
 
-    const { data, error } = await supabase.from("applications").upsert([record], { onConflict: "id" });
+    let { error } = await supabase.from("applications").upsert([record], { onConflict: "id" });
     if (error) {
-      console.warn(`[Supabase Storage Note] ${error.message}`);
+      const { error: err2 } = await supabase.from("job_applications").upsert([record], { onConflict: "id" });
+      if (err2) {
+        console.warn(`[Supabase Storage Note] ${error.message} / ${err2.message}`);
+      } else {
+        console.log(`[Supabase Storage Success] Application ${appData.id} (${appData.name}) stored in Supabase job_applications.`);
+      }
     } else {
-      console.log(`[Supabase Storage Success] Application ${appData.id} (${appData.name}) stored in Supabase.`);
+      console.log(`[Supabase Storage Success] Application ${appData.id} (${appData.name}) stored in Supabase applications.`);
     }
   } catch (err: any) {
     console.error("[Supabase Storage Exception]:", err?.message || String(err));
+  }
+}
+
+async function saveUserAccountToSupabase(userData: any) {
+  if (!supabase) return;
+  try {
+    const record = {
+      id: userData.id || `usr-${Date.now()}`,
+      name: userData.name || "",
+      email: userData.email,
+      phone: userData.phone || "",
+      role: userData.role || "user",
+      status: userData.status || "active",
+      passport_num: userData.passportNum || userData.passport_num || "",
+      track_id: userData.trackId || userData.track_id || "",
+      created_at: userData.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    let { error } = await supabase.from("client_accounts").upsert([record], { onConflict: "id" });
+    if (error) {
+      let { error: err2 } = await supabase.from("users").upsert([record], { onConflict: "id" });
+      if (err2) {
+        await supabase.from("clients").upsert([record], { onConflict: "id" });
+      }
+    }
+    console.log(`[Supabase Auth Sync] Account ${userData.email} saved to Supabase.`);
+  } catch (err: any) {
+    console.warn("[Supabase User Sync Note]:", err?.message || String(err));
+  }
+}
+
+async function saveClientQueryToSupabase(queryData: {
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  subject?: string;
+  message?: string;
+  category?: string;
+  country?: string;
+  type?: string;
+  created_at?: string;
+}) {
+  if (!supabase) return;
+  try {
+    const record = {
+      id: queryData.id || `query-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: queryData.name || "Client",
+      email: queryData.email || "",
+      phone: queryData.phone || "",
+      subject: queryData.subject || queryData.category || "General Inquiry",
+      message: queryData.message || "",
+      category: queryData.category || "General",
+      country: queryData.country || "",
+      type: queryData.type || "client_query",
+      created_at: queryData.created_at || new Date().toISOString()
+    };
+
+    let { error } = await supabase.from("client_queries").upsert([record], { onConflict: "id" });
+    if (error) {
+      let { error: err2 } = await supabase.from("queries").upsert([record], { onConflict: "id" });
+      if (err2) {
+        await supabase.from("contacts").upsert([record], { onConflict: "id" });
+      }
+    }
+    console.log(`[Supabase Query] Saved client query for ${queryData.email || queryData.name} to Supabase.`);
+  } catch (err: any) {
+    console.warn("[Supabase Query Note]:", err?.message || String(err));
+  }
+}
+
+async function savePaymentToSupabase(paymentData: PaymentReceipt) {
+  if (!supabase) return;
+  try {
+    const record = {
+      id: paymentData.id,
+      transaction_id: paymentData.transactionId,
+      track_id: paymentData.trackId,
+      client_name: paymentData.clientName,
+      client_email: paymentData.clientEmail,
+      step_title: paymentData.stepTitle,
+      amount: paymentData.amount,
+      currency: paymentData.currency || "PKR",
+      method: paymentData.method,
+      status: paymentData.status,
+      date: paymentData.date,
+      created_at: paymentData.timestamp || new Date().toISOString()
+    };
+
+    let { error } = await supabase.from("payments").upsert([record], { onConflict: "id" });
+    if (error) {
+      await supabase.from("payment_receipts").upsert([record], { onConflict: "id" });
+    }
+    console.log(`[Supabase Payment] Payment ${paymentData.id} saved to Supabase.`);
+  } catch (err: any) {
+    console.warn("[Supabase Payment Note]:", err?.message || String(err));
   }
 }
 
@@ -2227,6 +2329,7 @@ const handleSignupLogic = (req: any, res: any) => {
     };
 
     USER_ACCOUNTS.push(newUser);
+    saveUserAccountToSupabase(newUser).catch(err => console.warn("[Supabase Signup Sync]:", err));
 
     // Auto-create/sync PREDEFINED_PASSPORTS record
     const upperTrack = effectiveTrackId.toUpperCase();

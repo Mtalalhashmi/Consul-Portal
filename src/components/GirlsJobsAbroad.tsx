@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { saveApplicationSupabaseClient } from "../lib/supabase";
 import { 
   Briefcase, 
   MapPin, 
@@ -925,6 +926,16 @@ export default function GirlsJobsAbroad() {
         const errData = await response.json().catch(() => ({}));
         throw new Error(errData.error || "Failed to submit application");
       }
+
+      saveApplicationSupabaseClient({
+        vacancyId: selectedJob.id,
+        vacancyTitle: selectedJob.title,
+        country: selectedJob.country,
+        name: fullName,
+        phone: whatsappNum,
+        email: email,
+        applyingFrom: applyingFrom
+      }).catch(() => {});
 
       setSubmitSuccess(true);
       // Reset form fields

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { saveApplicationSupabaseClient } from "../lib/supabase";
 import { 
   Search, 
   MapPin, 
@@ -826,6 +827,19 @@ export default function GlobalJobDirectory({
           trackingNumber: randomId
         })
       });
+
+      saveApplicationSupabaseClient({
+        id: randomId,
+        trackingNumber: randomId,
+        name: candidateName,
+        phone: candidatePhone,
+        email: candidateEmail,
+        vacancyId: selectedJobDetails?.id || "custom-job",
+        vacancyTitle: selectedJobDetails?.title || "Employer Sponsored Visa Placement",
+        country: selectedJobDetails?.country || "Schengen",
+        passportNumber: passportNumber,
+        applyingFrom: "Pakistan"
+      }).catch(() => {});
     } catch (err) {
       console.error("Failed to post application to the server:", err);
     }

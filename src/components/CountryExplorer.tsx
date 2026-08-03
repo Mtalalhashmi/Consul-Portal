@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { saveApplicationSupabaseClient } from "../lib/supabase";
 import { 
   Search, 
   ChevronDown, 
@@ -638,6 +639,20 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
           trackingNumber: code
         })
       });
+
+      saveApplicationSupabaseClient({
+        id: code,
+        trackingNumber: code,
+        vacancyId: selectedJobForModal?.id || "custom-job",
+        vacancyTitle: selectedJobForModal?.title || "Sponsorship Career Path",
+        country: selectedJobForModal?.country || "Schengen",
+        name: applyForm.name,
+        phone: applyForm.phone,
+        email: applyForm.email,
+        passportNumber: applyForm.passportNumber,
+        cnic: applyForm.cnic,
+        applyingFrom: "Pakistan"
+      }).catch(() => {});
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));

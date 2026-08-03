@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { saveQuerySupabaseClient } from "../lib/supabase";
 import { 
   Plane, 
   MapPin, 
@@ -424,6 +425,15 @@ export default function FlightBookingDesk() {
     const randCode = "BM-" + Math.floor(100000 + Math.random() * 900000);
     setBookingConfirmation(randCode);
     setIsBooked(true);
+
+    saveQuerySupabaseClient({
+      id: randCode,
+      name: fullName,
+      subject: `Flight Reservation: ${selectedOffer?.airline || "Flight"} (${randCode})`,
+      message: `Passport: ${passportNumber}, Route: ${fromInput} -> ${toInput}, Departure: ${departDate}, Airline: ${selectedOffer?.airline}, Price: PKR ${selectedOffer?.pricePKR?.toLocaleString()}, Seat: ${selectedSeat || "Auto"}, Meal: ${mealPreference}`,
+      category: "Flight Booking",
+      type: "flight_booking"
+    }).catch(() => {});
   };
 
   return (

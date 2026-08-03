@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { saveUserAccountSupabaseClient } from "../lib/supabase";
 import { 
   User, 
   Lock, 
@@ -261,6 +262,7 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
         
         if (authTab === "signup") {
           setSuccessMsg("Congratulations! Your account has been registered successfully. Welcome to your Client Portal!");
+          saveUserAccountSupabaseClient(data.user).catch(() => {});
         } else {
           setSuccessMsg("Welcome back! Login successful.");
         }

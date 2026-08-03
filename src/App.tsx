@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { saveApplicationSupabaseClient, saveQuerySupabaseClient } from "./lib/supabase";
 import { 
   Briefcase, 
   Search, 
@@ -572,6 +573,17 @@ export default function App() {
 
       if (response.ok && data.success) {
         setApplySuccess(true);
+        saveApplicationSupabaseClient({
+          id: data.application?.id || `app-${Date.now()}`,
+          name: applyName.trim(),
+          email: applyEmail.trim(),
+          phone: applyPhone.trim(),
+          vacancyId: applyingVacancy.id,
+          vacancyTitle: applyingVacancy.title,
+          country: applyTargetCountry || applyingVacancy.country,
+          applyingFrom: applyFromCountry,
+          company: applyingVacancy.company || ""
+        }).catch(() => {});
         setTimeout(() => {
           setApplyingVacancy(null);
           setApplySuccess(false);
