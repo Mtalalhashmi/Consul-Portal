@@ -815,6 +815,22 @@ const upload = multer({
   }
 });
 
+// Safe Multer Upload Middleware wrapper that returns JSON on upload errors
+function parseUpload(req: any, res: any, next: any) {
+  upload.any()(req, res, (err: any) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(400).json({ error: "Uploaded file size exceeds the 10 MB limit." });
+        }
+        return res.status(400).json({ error: `Upload error: ${err.message}` });
+      }
+      return res.status(400).json({ error: err.message || "Invalid file format uploaded." });
+    }
+    next();
+  });
+}
+
 interface EmailAttachment {
   filename: string;
   content?: Buffer | string;
@@ -3683,8 +3699,8 @@ async function handleApplicationSubmission(req: any, res: any) {
 }
 
 // Routes for Application & Pre-Evaluation Submissions
-app.post("/api/applications", upload.any(), handleApplicationSubmission);
-app.post("/api/pre-evaluation", upload.any(), handleApplicationSubmission);
+app.post("/api/applications", parseUpload, handleApplicationSubmission);
+app.post("/api/pre-evaluation", parseUpload, handleApplicationSubmission);
 
 
 // Admin endpoint to update passport details for an application

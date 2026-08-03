@@ -544,7 +544,12 @@ export default function App() {
         body: formData
       });
 
-      const data = await response.json();
+      let data: any = {};
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        data = { error: "Server returned an unexpected response. Please try again." };
+      }
 
       if (response.ok && data.success) {
         setApplySuccess(true);
