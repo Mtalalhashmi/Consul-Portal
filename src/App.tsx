@@ -509,9 +509,9 @@ export default function App() {
 
     if (applyCv) {
       const ext = applyCv.name.slice(applyCv.name.lastIndexOf(".")).toLowerCase();
-      const validExts = [".pdf", ".doc", ".docx"];
+      const validExts = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"];
       if (!validExts.includes(ext)) {
-        setApplyError("Invalid document format. Only PDF, DOC, and DOCX files up to 10 MB are allowed.");
+        setApplyError("Invalid document format. Only PDF, DOC, DOCX, JPG, and PNG files up to 10 MB are allowed.");
         return;
       }
 
@@ -545,10 +545,11 @@ export default function App() {
       });
 
       let data: any = {};
+      const resText = await response.text();
       try {
-        data = await response.json();
+        data = JSON.parse(resText);
       } catch (parseErr) {
-        data = { error: "Server returned an unexpected response. Please try again." };
+        data = { error: resText || "Server returned an unexpected response. Please try again." };
       }
 
       if (response.ok && data.success) {
@@ -3899,7 +3900,7 @@ export default function App() {
                   <div className="border border-dashed border-slate-800 rounded-xl p-4 text-center bg-slate-950 hover:bg-slate-950/60 transition cursor-pointer relative">
                     <input 
                       type="file" 
-                      accept=".pdf,.doc,.docx"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                       onChange={(e) => setApplyCv(e.target.files ? e.target.files[0] : null)}
                       className="absolute inset-0 opacity-0 cursor-pointer"
                     />
@@ -3907,7 +3908,7 @@ export default function App() {
                     <p className="text-xs text-slate-300 font-bold">
                       {applyCv ? applyCv.name : "Drag & drop file or click to choose"}
                     </p>
-                    <p className="text-[10px] text-slate-500 mt-1">PDF, DOC, DOCX files up to 10MB</p>
+                    <p className="text-[10px] text-slate-500 mt-1">PDF, DOC, DOCX, JPG, PNG files up to 10MB</p>
                   </div>
                 </div>
 

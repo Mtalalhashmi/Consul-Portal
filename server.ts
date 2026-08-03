@@ -867,6 +867,9 @@ const upload = multer({
 
 // Safe Multer Upload Middleware wrapper that returns JSON on upload errors
 function parseUpload(req: any, res: any, next: any) {
+  if (req.headers["content-type"]?.includes("application/json")) {
+    return next();
+  }
   upload.any()(req, res, (err: any) => {
     if (err) {
       if (err instanceof multer.MulterError) {
@@ -3506,10 +3509,10 @@ async function handleApplicationSubmission(req: any, res: any) {
 
     // Validate uploaded file if present
     if (uploadedFileObj) {
-      const allowedExts = [".pdf", ".doc", ".docx"];
+      const allowedExts = [".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png"];
       const ext = path.extname(uploadedFileObj.originalname).toLowerCase();
       if (!allowedExts.includes(ext)) {
-        return res.status(400).json({ error: "Invalid document format. Only PDF, DOC, and DOCX files up to 10 MB are accepted." });
+        return res.status(400).json({ error: "Invalid document format. Only PDF, DOC, DOCX, JPG, and PNG files up to 10 MB are accepted." });
       }
       if (uploadedFileObj.size > 10 * 1024 * 1024) {
         return res.status(400).json({ error: "Uploaded file size exceeds the 10 MB limit." });
@@ -6055,6 +6058,17 @@ app.post("/api/global-search", async (req, res) => {
     console.error("Global AI Search Error:", error);
     return res.status(500).json({ error: "Search failed" });
   }
+});
+
+// Global Express Error Handler to catch all unhandled route errors and return clean JSON
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("[Global Express Route Error]:", err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  return res.status(err.status || 500).json({ 
+    error: err.message || "An unexpected server error occurred. Please try again." 
+  });
 });
 
 // 3. Vite Server Integration (Vite is mounted AFTER API routes)
