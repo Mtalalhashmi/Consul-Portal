@@ -539,17 +539,35 @@ export default function App() {
         formData.append("cv", applyCv);
       }
 
-      const response = await fetch("/api/applications", {
+      let response = await fetch("/api/applications", {
         method: "POST",
         body: formData
       });
 
+      let resText = await response.text();
+
+      // Fallback to /api/pre-evaluation if 404 or NOT_FOUND returned
+      if (!response.ok && (response.status === 404 || resText.includes("NOT_FOUND") || resText.trim().startsWith("<"))) {
+        try {
+          response = await fetch("/api/pre-evaluation", {
+            method: "POST",
+            body: formData
+          });
+          resText = await response.text();
+        } catch (fallbackErr) {
+          console.warn("Fallback endpoint error:", fallbackErr);
+        }
+      }
+
       let data: any = {};
-      const resText = await response.text();
       try {
         data = JSON.parse(resText);
       } catch (parseErr) {
-        data = { error: resText || "Server returned an unexpected response. Please try again." };
+        if (resText.includes("NOT_FOUND") || resText.trim().startsWith("<") || response.status === 404) {
+          data = { error: "Application submission service is temporarily unreachable (404 Not Found). Please verify your network connection and try again." };
+        } else {
+          data = { error: resText || "Server returned an unexpected response. Please try again." };
+        }
       }
 
       if (response.ok && data.success) {
@@ -573,7 +591,11 @@ export default function App() {
           ]);
         }, 3000);
       } else {
-        setApplyError(data.error || "Submission failed. Please check your inputs and try again.");
+        let errMsg = data.error || "Submission failed. Please check your inputs and try again.";
+        if (typeof errMsg === "string" && (errMsg.includes("NOT_FOUND") || errMsg.trim().startsWith("<"))) {
+          errMsg = "Application submission service is temporarily unreachable (404 Not Found). Please check backend deployment.";
+        }
+        setApplyError(errMsg);
         setIsSubmittingApply(false);
       }
     } catch (err: any) {
