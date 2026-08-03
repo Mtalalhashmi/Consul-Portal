@@ -3760,7 +3760,7 @@ export default function App() {
             {applySuccess ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-2xl text-center space-y-4">
                 <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-                <h4 className="font-bold text-white">Application Pre-Vetted Successfully!</h4>
+                <h4 className="font-bold text-white text-base">Application submitted successfully. We will contact you soon.</h4>
                 <p className="text-xs text-slate-300 leading-relaxed">
                   Your credentials have been indexed in ConsulPortal archives. Our legal panel will verify your records and message you within 24 hours.
                 </p>

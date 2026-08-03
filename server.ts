@@ -3617,7 +3617,10 @@ async function handleApplicationSubmission(req: any, res: any) {
     const toEmail = process.env.TO_EMAIL || "bsaj1145@gmail.com";
     const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
 
-    const emailSubject = `📋 New Pre-Evaluation Application: ${effectiveVacancyTitle} - ${cleanName} (Ref: ${generatedId})`;
+    const isSchengenLogistics = effectiveVacancyTitle.toLowerCase().includes("logistics") || effectiveVacancyTitle.toLowerCase().includes("schengen");
+    const emailSubject = isSchengenLogistics
+      ? `📋 New Schengen Logistics Application - ${cleanName}`
+      : `📋 New Application: ${effectiveVacancyTitle} - ${cleanName} (Ref: ${generatedId})`;
     const emailHtmlBody = `
       <div style="font-family: 'Inter', sans-serif; color: #0f172a; max-width: 650px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
         <div style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 32px; text-align: center;">
