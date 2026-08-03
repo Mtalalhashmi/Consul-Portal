@@ -7,6 +7,7 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle, 
+  Loader2,
   Plane, 
   Calendar, 
   Users, 
@@ -197,6 +198,9 @@ export default function App() {
   const [applyEmail, setApplyEmail] = useState("");
   const [applyCv, setApplyCv] = useState<File | null>(null);
   const [applySuccess, setApplySuccess] = useState(false);
+  const [isSubmittingApply, setIsSubmittingApply] = useState(false);
+  const [applyError, setApplyError] = useState("");
+
 
   // Flags Marquee Lines
   const marqueeFlagsRow1 = [
@@ -486,21 +490,63 @@ export default function App() {
   const handleApplyVacancySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!applyingVacancy) return;
+    setApplyError("");
+
+    if (!applyName || !applyName.trim()) {
+      setApplyError("Please enter your full name as on passport.");
+      return;
+    }
+
+    if (!applyPhone || !applyPhone.trim()) {
+      setApplyError("Please enter a valid mobile number.");
+      return;
+    }
+
+    if (!applyEmail || !applyEmail.trim() || !applyEmail.includes("@")) {
+      setApplyError("Please enter a valid email address.");
+      return;
+    }
+
+    if (applyCv) {
+      const ext = applyCv.name.slice(applyCv.name.lastIndexOf(".")).toLowerCase();
+      const validExts = [".pdf", ".doc", ".docx"];
+      if (!validExts.includes(ext)) {
+        setApplyError("Invalid document format. Only PDF, DOC, and DOCX files up to 10 MB are allowed.");
+        return;
+      }
+
+      if (applyCv.size > 10 * 1024 * 1024) {
+        setApplyError("CV/document file size exceeds the 10 MB limit.");
+        return;
+      }
+    }
+
+    setIsSubmittingApply(true);
+
     try {
+      const formData = new FormData();
+      formData.append("vacancyId", applyingVacancy.id);
+      formData.append("vacancyTitle", applyingVacancy.title);
+      formData.append("country", applyTargetCountry || applyingVacancy.country);
+      formData.append("name", applyName.trim());
+      formData.append("phone", applyPhone.trim());
+      formData.append("email", applyEmail.trim());
+      formData.append("applyingFrom", applyFromCountry);
+      if (applyingVacancy.company) {
+        formData.append("company", applyingVacancy.company);
+      }
+      if (applyCv) {
+        formData.append("cv", applyCv);
+      }
+
       const response = await fetch("/api/applications", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vacancyId: applyingVacancy.id,
-          vacancyTitle: applyingVacancy.title,
-          country: applyTargetCountry || applyingVacancy.country,
-          name: applyName,
-          phone: applyPhone,
-          email: applyEmail,
-          applyingFrom: applyFromCountry
-        })
+        body: formData
       });
-      if (response.ok) {
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         setApplySuccess(true);
         setTimeout(() => {
           setApplyingVacancy(null);
@@ -509,6 +555,8 @@ export default function App() {
           setApplyPhone("");
           setApplyEmail("");
           setApplyCv(null);
+          setApplyError("");
+          setIsSubmittingApply(false);
           // Push confirmation chat message
           setChatMessages(prev => [
             ...prev,
@@ -519,11 +567,13 @@ export default function App() {
           ]);
         }, 3000);
       } else {
-        alert("Submission failed. Please check your network or inputs.");
+        setApplyError(data.error || "Submission failed. Please check your inputs and try again.");
+        setIsSubmittingApply(false);
       }
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong connecting to the submission server.");
+    } catch (err: any) {
+      console.error("Submission exception:", err);
+      setApplyError("Something went wrong connecting to the submission server. Please try again.");
+      setIsSubmittingApply(false);
     }
   };
 
@@ -3860,11 +3910,26 @@ export default function App() {
                   We are a Government licensed coordination firm. There is <strong>no advance commission</strong> charged. You pay step fees as scheduled.
                 </div>
 
+                {applyError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-xs text-red-400 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                    <span>{applyError}</span>
+                  </div>
+                )}
+
                 <button 
                   type="submit"
-                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition"
+                  disabled={isSubmittingApply}
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  Submit Pre-Evaluation
+                  {isSubmittingApply ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>Submitting Pre-Evaluation...</span>
+                    </>
+                  ) : (
+                    "Submit Pre-Evaluation"
+                  )}
                 </button>
 
               </form>

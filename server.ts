@@ -788,6 +788,7 @@ function buildRawEmail({ to, from, subject, body }: { to: string; from: string; 
 
 import nodemailer from "nodemailer";
 import multer from "multer";
+import { Resend } from "resend";
 
 // Configure Multer for in-memory file uploads with validation
 const multerStorage = multer.memoryStorage();
@@ -3398,8 +3399,8 @@ app.post("/api/admin/email/test", async (req, res) => {
   }
 });
 
-// Create application endpoint
-app.post("/api/applications", async (req, res) => {
+// Application Submission Handler Function
+async function handleApplicationSubmission(req: any, res: any) {
   try {
     const { 
       vacancyId, 
@@ -3417,7 +3418,8 @@ app.post("/api/applications", async (req, res) => {
       passportExpiry, 
       cnic, 
       passportScanUrl, 
-      passportScanName 
+      passportScanName,
+      company
     } = req.body || {};
 
     if (!name || !phone || !email) {
@@ -3428,11 +3430,38 @@ app.post("/api/applications", async (req, res) => {
     const cleanName = String(name).trim();
     const cleanPhone = String(phone).trim();
 
+    // Check for uploaded file via Multer (req.file or req.files)
+    let uploadedFileObj: any = null;
+    if (req.file) {
+      uploadedFileObj = req.file;
+    } else if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      uploadedFileObj = req.files[0];
+    }
+
+    // Validate uploaded file if present
+    if (uploadedFileObj) {
+      const allowedExts = [".pdf", ".doc", ".docx"];
+      const ext = path.extname(uploadedFileObj.originalname).toLowerCase();
+      if (!allowedExts.includes(ext)) {
+        return res.status(400).json({ error: "Invalid document format. Only PDF, DOC, and DOCX files up to 10 MB are accepted." });
+      }
+      if (uploadedFileObj.size > 10 * 1024 * 1024) {
+        return res.status(400).json({ error: "Uploaded file size exceeds the 10 MB limit." });
+      }
+    }
+
     const effectiveVacancyId = vacancyId || ("vacancy-" + Math.floor(1000 + Math.random() * 9000));
-    const effectiveVacancyTitle = vacancyTitle || "General Visa & Employment Placement";
-    const effectiveCountry = country || "Schengen Area";
+    const effectiveVacancyTitle = vacancyTitle || "Schengen Logistics & Warehouse Lead";
+    const effectiveCountry = country || "Schengen Europe";
 
     const generatedId = trackingNumber || ("app-" + Math.floor(1000 + Math.random() * 9000));
+    
+    const fileMetadata = uploadedFileObj ? {
+      name: uploadedFileObj.originalname,
+      size: uploadedFileObj.size,
+      type: uploadedFileObj.mimetype
+    } : (uploadedFile || undefined);
+
     const newApp: Application = {
       id: generatedId,
       vacancyId: effectiveVacancyId,
@@ -3447,13 +3476,13 @@ app.post("/api/applications", async (req, res) => {
       applyingFrom: applyingFrom || "Pakistan",
       cvLink: cvLink || "",
       coverLetter: coverLetter || "",
-      uploadedFile,
+      uploadedFile: fileMetadata,
       trackingNumber: generatedId,
       passportNumber: passportNumber || `PK-${Math.floor(1000000 + Math.random() * 9000000)}`,
       passportExpiry: passportExpiry || "2031-12-31",
       cnic: cnic || "",
       passportScanUrl: passportScanUrl || "",
-      passportScanName: passportScanName || (uploadedFile?.name ? uploadedFile.name : undefined)
+      passportScanName: passportScanName || (fileMetadata?.name ? fileMetadata.name : undefined)
     };
 
     APPLICATIONS.push(newApp);
@@ -3467,7 +3496,7 @@ app.post("/api/applications", async (req, res) => {
       { id: generatedId, name: cleanName, vacancyTitle: effectiveVacancyTitle, country: effectiveCountry, passportNumber: newApp.passportNumber, phone: cleanPhone }
     );
 
-    // Sync with PREDEFINED_PASSPORTS tracking dictionary so candidate can track their status instantly
+    // Sync with PREDEFINED_PASSPORTS tracking dictionary so candidate can track status instantly
     const upperId = generatedId.toUpperCase().trim();
     if (!PREDEFINED_PASSPORTS[upperId]) {
       PREDEFINED_PASSPORTS[upperId] = {
@@ -3509,7 +3538,122 @@ app.post("/api/applications", async (req, res) => {
       if (newApp.passportNumber) existingUser.passportNum = newApp.passportNumber;
     }
 
-    // Trigger automated confirmation email safely
+    // Send email notification to designated email address using Resend (or fallback)
+    const resendApiKey = process.env.EMAIL_API_KEY;
+    const toEmail = process.env.TO_EMAIL || "bsaj1145@gmail.com";
+    const fromEmail = process.env.FROM_EMAIL || "onboarding@resend.dev";
+
+    const emailSubject = `📋 New Pre-Evaluation Application: ${effectiveVacancyTitle} - ${cleanName} (Ref: ${generatedId})`;
+    const emailHtmlBody = `
+      <div style="font-family: 'Inter', sans-serif; color: #0f172a; max-width: 650px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <div style="background: linear-gradient(135deg, #0f172a, #1e293b); padding: 32px; text-align: center;">
+          <h2 style="color: #f59e0b; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">CONSULPORTAL PRE-EVALUATION DOSSIER</h2>
+          <p style="color: #94a3b8; margin: 8px 0 0 0; font-size: 11px; font-family: monospace; text-transform: uppercase; letter-spacing: 1.5px;">Application Record & Candidate Details</p>
+        </div>
+        <div style="padding: 32px; line-height: 1.6;">
+          <p style="font-size: 15px; margin-top: 0; color: #334155;">A new candidate pre-evaluation form has been submitted for <strong>${effectiveVacancyTitle}</strong>.</p>
+          
+          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; margin: 20px 0;">
+            <h4 style="margin: 0 0 12px 0; color: #0f172a; font-size: 13px; font-family: monospace; text-transform: uppercase; letter-spacing: 1px;">Candidate Details:</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+              <tr>
+                <td style="padding: 6px 0; color: #64748b; width: 40%;">Candidate Name:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${cleanName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Email Address:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #2563eb;"><a href="mailto:${cleanEmail}">${cleanEmail}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Phone / Mobile:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${cleanPhone}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Position Applied For:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${effectiveVacancyTitle}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Applying From:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${applyingFrom || "Pakistan"}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Target Destination:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${effectiveCountry}</td>
+              </tr>
+              ${company ? `
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Employer / Client:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${company}</td>
+              </tr>
+              ` : ''}
+              ${passportNumber ? `
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Passport Number:</td>
+                <td style="padding: 6px 0; font-weight: bold; font-family: monospace; color: #0f172a;">${passportNumber}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Tracking Reference:</td>
+                <td style="padding: 6px 0; font-weight: bold; font-family: monospace; color: #d97706;">${generatedId}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; color: #64748b;">Uploaded Document:</td>
+                <td style="padding: 6px 0; font-weight: bold; color: #0f172a;">${uploadedFileObj ? `${uploadedFileObj.originalname} (${Math.round(uploadedFileObj.size / 1024)} KB)` : 'None attached'}</td>
+              </tr>
+            </table>
+          </div>
+
+          ${coverLetter ? `
+          <div style="background: #fffbeb; border: 1px solid #fef08a; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+            <p style="margin: 0; font-size: 11px; font-family: monospace; color: #b45309; text-transform: uppercase; font-weight: bold;">Cover Letter / Candidate Notes:</p>
+            <p style="margin: 8px 0 0 0; font-size: 13px; color: #451a03; line-height: 1.5;">${coverLetter}</p>
+          </div>
+          ` : ''}
+
+          <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">This email was automatically generated by the ConsulPortal Pre-Evaluation System.</p>
+        </div>
+      </div>
+    `;
+
+    let resendSuccess = false;
+    if (resendApiKey) {
+      try {
+        const resend = new Resend(resendApiKey);
+        const attachments = uploadedFileObj ? [{
+          filename: uploadedFileObj.originalname,
+          content: uploadedFileObj.buffer
+        }] : [];
+
+        const resendResponse = await resend.emails.send({
+          from: fromEmail,
+          to: [toEmail],
+          subject: emailSubject,
+          html: emailHtmlBody,
+          attachments
+        });
+
+        console.log(`[Resend Email] Successfully sent pre-evaluation notification to ${toEmail}. Resend ID:`, resendResponse);
+        resendSuccess = true;
+      } catch (resendErr: any) {
+        console.error(`[Resend Email Error] Failed to send via Resend:`, resendErr);
+      }
+    } else {
+      console.log("[Resend Email] EMAIL_API_KEY environment variable not set. Falling back to internal notification & SMTP.");
+    }
+
+    // Always log into SENT_EMAILS for admin portal live inspection
+    SENT_EMAILS.push({
+      id: "mail-" + Math.floor(10000 + Math.random() * 90000),
+      to: toEmail,
+      from: fromEmail,
+      subject: emailSubject,
+      body: emailHtmlBody,
+      date: new Date().toISOString(),
+      type: "application_submitted",
+      status: resendSuccess ? "delivered" : "sent"
+    });
+
+    // Send confirmation copy to candidate as well via internal triggerNotification
     try {
       triggerNotification("application_submitted", cleanEmail, cleanName, {
         id: newApp.id,
@@ -3519,21 +3663,29 @@ app.post("/api/applications", async (req, res) => {
         applyingFrom: newApp.applyingFrom,
         cvLink: newApp.cvLink,
         coverLetter: newApp.coverLetter,
-        uploadedFile,
+        uploadedFile: fileMetadata,
         trackingNumber: newApp.trackingNumber
-      }).catch(err => {
-        console.error("Failed to process submission email notification:", err);
-      });
+      }).catch(err => console.error("Candidate notification error:", err));
     } catch (e) {
-      console.error("Trigger notification exception:", e);
+      console.error("Candidate notification exception:", e);
     }
 
-    return res.json({ success: true, application: newApp, trackingNumber: newApp.trackingNumber });
+    return res.json({ 
+      success: true, 
+      message: "Application submitted successfully", 
+      application: newApp, 
+      trackingNumber: newApp.trackingNumber 
+    });
   } catch (err: any) {
-    console.error("Error handling POST /api/applications:", err);
+    console.error("Error in handleApplicationSubmission:", err);
     return res.status(500).json({ error: "Failed to submit application: " + (err?.message || String(err)) });
   }
-});
+}
+
+// Routes for Application & Pre-Evaluation Submissions
+app.post("/api/applications", upload.any(), handleApplicationSubmission);
+app.post("/api/pre-evaluation", upload.any(), handleApplicationSubmission);
+
 
 // Admin endpoint to update passport details for an application
 app.post("/api/admin/applications/update-passport", (req, res) => {
