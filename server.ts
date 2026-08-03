@@ -11,8 +11,35 @@ import { getCountry, getLiveJobs } from "./src/utils/countryDb";
 dotenv.config();
 
 // Initialize Supabase Client (Project ID: ulnuttbknfavzckbaqzb)
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://ulnuttbknfavzckbaqzb.supabase.co";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_FD3F2UqYEhyD9Xa05MI0DA_sDwTlWaR";
+function sanitizeServerUrl(rawUrl?: string): string {
+  const defaultUrl = "https://ulnuttbknfavzckbaqzb.supabase.co";
+  if (!rawUrl || typeof rawUrl !== "string") return defaultUrl;
+  let cleaned = rawUrl.trim();
+  if (!cleaned || cleaned === "undefined" || cleaned === "null") return defaultUrl;
+  if (!cleaned.startsWith("http://") && !cleaned.startsWith("https://")) {
+    cleaned = "https://" + cleaned;
+  }
+  try {
+    const parsed = new URL(cleaned);
+    if ((parsed.protocol === "http:" || parsed.protocol === "https:") && parsed.hostname.includes(".")) {
+      return cleaned;
+    }
+  } catch (e) {
+    // Ignore invalid URL
+  }
+  return defaultUrl;
+}
+
+function sanitizeServerKey(rawKey?: string): string {
+  const defaultKey = "sb_publishable_FD3F2UqYEhyD9Xa05MI0DA_sDwTlWaR";
+  if (!rawKey || typeof rawKey !== "string") return defaultKey;
+  const cleaned = rawKey.trim();
+  if (!cleaned || cleaned === "undefined" || cleaned === "null" || cleaned.length < 15) return defaultKey;
+  return cleaned;
+}
+
+const SUPABASE_URL = sanitizeServerUrl(process.env.SUPABASE_URL);
+const SUPABASE_ANON_KEY = sanitizeServerKey(process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY);
 
 let supabase: any = null;
 try {
