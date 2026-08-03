@@ -461,7 +461,7 @@ export default function AdminPortal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           accessToken: "SIMULATED_TOKEN",
-          email: "bridgevisaimigration@gmail.com"
+          email: "admin@consulportal.com"
         })
       });
       if (res.ok) {

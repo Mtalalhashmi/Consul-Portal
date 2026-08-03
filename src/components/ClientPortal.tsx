@@ -638,9 +638,9 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
               <div className="flex gap-3 bg-slate-950/40 p-3 rounded-2xl border border-slate-850">
                 <span className="text-lg bg-amber-500/10 p-2 rounded-xl text-amber-500 h-10 w-10 flex items-center justify-center font-bold">✓</span>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">Pre-seeded Test Profiles Available</h4>
+                  <h4 className="text-xs font-bold text-slate-200">Verified Client Accounts</h4>
                   <p className="text-[10px] text-slate-500 leading-normal">
-                    Enter email <strong className="text-amber-400 font-mono">adnan@gmail.com</strong> or <strong className="text-amber-400 font-mono">ali@yahoo.com</strong> with password <strong className="text-amber-400 font-mono">password123</strong> to experience fully pre-populated dashboards!
+                    Sign in with your email or register a new candidate profile to access your tracking portal and document records.
                   </p>
                 </div>
               </div>
@@ -811,17 +811,6 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
 
               {/* Main Form element */}
               <form onSubmit={handleAuthSubmit} className="space-y-4">
-                
-                {authTab === "login" && (
-                  <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4 text-slate-300 space-y-1.5 shadow-lg shadow-amber-500/2">
-                    <p className="text-[11px] font-mono font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider">
-                      💡 Connected ConsulPortal Mailbox
-                    </p>
-                    <p className="text-[11px] leading-relaxed text-slate-300">
-                      Sign in with <strong className="font-mono text-amber-400 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">bridgevisaimigration@gmail.com</strong> and password <strong className="font-mono text-amber-400 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">password123</strong> to access the linked candidate tracker, virtual inbox, and milestone escrow system.
-                    </p>
-                  </div>
-                )}
                 
                 {authTab === "signup" && (
                   <div className="space-y-1.5">

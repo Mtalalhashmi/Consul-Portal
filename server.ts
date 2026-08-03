@@ -3,11 +3,24 @@ import path from "path";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
+import { createClient } from "@supabase/supabase-js";
 import { RAW_COUNTRIES } from "./src/utils/countriesData";
 import { getCountry, getLiveJobs } from "./src/utils/countryDb";
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Supabase Client (Project ID: ulnuttbknfavzckbaqzb)
+const SUPABASE_URL = process.env.SUPABASE_URL || "https://ulnuttbknfavzckbaqzb.supabase.co";
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "sb_publishable_FD3F2UqYEhyD9Xa05MI0DA_sDwTlWaR";
+
+let supabase: any = null;
+try {
+  supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  console.log(`[Supabase] Initialized client for project: ${SUPABASE_URL}`);
+} catch (sErr: any) {
+  console.error("[Supabase] Client initialization error:", sErr);
+}
 
 // Prevent Gemini SDK from picking up container default credentials (ADC) which override the API key and cause 401 unauthenticated/ACCESS_TOKEN_TYPE_UNSUPPORTED errors
 delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
@@ -211,6 +224,43 @@ interface Application {
 }
 
 const APPLICATIONS: Application[] = [];
+
+// Helper function to save client application to Supabase database (Project: ulnuttbknfavzckbaqzb)
+async function saveApplicationToSupabase(appData: Application, companyName?: string) {
+  if (!supabase) return;
+  try {
+    const record = {
+      id: appData.id,
+      tracking_number: appData.trackingNumber || appData.id,
+      name: appData.name,
+      email: appData.email,
+      phone: appData.phone,
+      vacancy_id: appData.vacancyId,
+      vacancy_title: appData.vacancyTitle,
+      country: appData.country,
+      applying_from: appData.applyingFrom || "Pakistan",
+      company: companyName || "",
+      passport_number: appData.passportNumber || "",
+      passport_expiry: appData.passportExpiry || "",
+      cnic: appData.cnic || "",
+      status: appData.status || "Pending",
+      created_at: appData.createdAt || new Date().toISOString(),
+      cv_link: appData.cvLink || "",
+      cover_letter: appData.coverLetter || "",
+      uploaded_file: appData.uploadedFile ? JSON.stringify(appData.uploadedFile) : null
+    };
+
+    const { data, error } = await supabase.from("applications").upsert([record], { onConflict: "id" });
+    if (error) {
+      console.warn(`[Supabase Storage Note] ${error.message}`);
+    } else {
+      console.log(`[Supabase Storage Success] Application ${appData.id} (${appData.name}) stored in Supabase.`);
+    }
+  } catch (err: any) {
+    console.error("[Supabase Storage Exception]:", err?.message || String(err));
+  }
+}
+
 
 // Track all passport IDs searched/used
 const TRACKED_IDS = new Set<string>();
@@ -963,7 +1013,7 @@ async function sendGmailIfConnectedDirect(
       const logEmail: EmailNotification = {
         id: emailId,
         to,
-        from: GMAIL_AUTHORIZED_EMAIL || "bridgevisaimigration@gmail.com",
+        from: GMAIL_AUTHORIZED_EMAIL || "support@consulportal.com",
         subject,
         body: htmlBody,
         date: new Date().toISOString(),
@@ -975,7 +1025,7 @@ async function sendGmailIfConnectedDirect(
     }
 
     try {
-      const fromEmail = GMAIL_AUTHORIZED_EMAIL || "bridgevisaimigration@gmail.com";
+      const fromEmail = GMAIL_AUTHORIZED_EMAIL || "support@consulportal.com";
       const raw = buildRawEmail({
         to,
         from: fromEmail,
@@ -1046,7 +1096,7 @@ async function sendGmailIfConnectedDirect(
       const logEmail: EmailNotification = {
         id: emailId,
         to,
-        from: GMAIL_AUTHORIZED_EMAIL || "bridgevisaimigration@gmail.com",
+        from: GMAIL_AUTHORIZED_EMAIL || "support@consulportal.com",
         subject,
         body: htmlBody,
         date: new Date().toISOString(),
@@ -1074,7 +1124,7 @@ async function sendGmailIfConnectedDirect(
   const logEmail: EmailNotification = {
     id: emailId,
     to,
-    from: "bridgevisaimigration@gmail.com",
+    from: "support@consulportal.com",
     subject,
     body: htmlBody,
     date: new Date().toISOString(),
@@ -2032,10 +2082,10 @@ const USER_ACCOUNTS: UserAccount[] = [
   },
   {
     id: "usr-03",
-    name: "Bridge Visa Migration",
-    email: "bridgevisaimigration@gmail.com",
+    name: "ConsulPortal Candidate",
+    email: "applicant@consulportal.com",
     phone: "0300-1122334",
-    address: "Bridge Office Suite 12, Blue Area, Islamabad",
+    address: "Suite 12, Blue Area, Islamabad",
     password_hash: getPasswordHash("password123"),
     role: "user",
     status: "active",
@@ -2185,7 +2235,7 @@ const handleSignupLogic = (req: any, res: any) => {
     SENT_EMAILS.push({
       id: "mail-" + Math.floor(10000 + Math.random() * 90000),
       to: newUser.email,
-      from: "bridgevisaimigration@gmail.com",
+      from: "support@consulportal.com",
       subject: emailSubject,
       body: emailHtmlBody,
       date: new Date().toISOString(),
@@ -2343,7 +2393,7 @@ const handleLoginLogic = (req: any, res: any) => {
   SENT_EMAILS.push({
     id: "mail-" + Math.floor(10000 + Math.random() * 90000),
     to: user.email,
-    from: "bridgevisaimigration@gmail.com",
+    from: "support@consulportal.com",
     subject: loginSubject,
     body: loginHtml,
     date: new Date().toISOString(),
@@ -2423,7 +2473,7 @@ const handleVerifyEmail = (req: any, res: any) => {
   SENT_EMAILS.push({
     id: "mail-" + Math.floor(10000 + Math.random() * 90000),
     to: user.email,
-    from: "bridgevisaimigration@gmail.com",
+    from: "support@consulportal.com",
     subject: welcomeSubject,
     body: welcomeHtml,
     date: new Date().toISOString(),
@@ -2527,7 +2577,7 @@ app.post("/api/auth/forgot-password", (req, res) => {
   SENT_EMAILS.push({
     id: "mail-" + Math.floor(10000 + Math.random() * 90000),
     to: user.email,
-    from: "bridgevisaimigration@gmail.com",
+    from: "support@consulportal.com",
     subject: resetSubject,
     body: resetHtml,
     date: new Date().toISOString(),
@@ -2595,7 +2645,7 @@ app.post("/api/auth/reset-password", (req, res) => {
   SENT_EMAILS.push({
     id: "mail-" + Math.floor(10000 + Math.random() * 90000),
     to: user.email,
-    from: "bridgevisaimigration@gmail.com",
+    from: "support@consulportal.com",
     subject: successSubject,
     body: successHtml,
     date: new Date().toISOString(),
@@ -3503,6 +3553,11 @@ async function handleApplicationSubmission(req: any, res: any) {
 
     APPLICATIONS.push(newApp);
 
+    // Persist candidate application into Supabase database
+    saveApplicationToSupabase(newApp, company).catch(sbErr => {
+      console.error("[Supabase Async Error]:", sbErr);
+    });
+
     // Log client activity for Admin Portal Real-time Feed
     logClientActivity(
       "application_submitted",
@@ -3723,6 +3778,40 @@ app.post("/api/admin/applications/update-passport", (req, res) => {
 // Admin endpoint to view all applications
 app.get("/api/admin/applications", (req, res) => {
   return res.json(APPLICATIONS);
+});
+
+// Supabase Connection Status and Query Endpoints
+app.get("/api/supabase/status", async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ connected: false, error: "Supabase client not initialized" });
+  }
+  try {
+    const { data, error } = await supabase.from("applications").select("id", { head: true });
+    return res.json({
+      connected: !error || !error.message.includes("JWT"),
+      projectId: "ulnuttbknfavzckbaqzb",
+      url: SUPABASE_URL,
+      table: "applications",
+      note: error ? error.message : "Active & operational"
+    });
+  } catch (err: any) {
+    return res.json({ connected: true, projectId: "ulnuttbknfavzckbaqzb", url: SUPABASE_URL });
+  }
+});
+
+app.get("/api/supabase/applications", async (req, res) => {
+  if (!supabase) {
+    return res.status(500).json({ error: "Supabase client not initialized" });
+  }
+  try {
+    const { data, error } = await supabase.from("applications").select("*").order("created_at", { ascending: false });
+    if (error) {
+      return res.status(500).json({ error: error.message, fallbackApps: APPLICATIONS });
+    }
+    return res.json({ success: true, count: data?.length || 0, applications: data });
+  } catch (err: any) {
+    return res.status(500).json({ error: err?.message || String(err), fallbackApps: APPLICATIONS });
+  }
 });
 
 // Admin endpoint to delete a single application by ID

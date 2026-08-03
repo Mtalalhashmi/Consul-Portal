@@ -3769,7 +3769,7 @@ export default function App() {
                     📧 Secure Email Dispatched
                   </div>
                   <p className="text-[11px] text-slate-400 leading-normal">
-                    We have dispatched an automated submission confirmation email to <strong className="text-slate-200 font-mono">{applyEmail}</strong> from <strong className="text-amber-400 font-mono">bridgevisaimigration@gmail.com</strong>.
+                    We have dispatched an automated submission confirmation email to <strong className="text-slate-200 font-mono">{applyEmail}</strong> from <strong className="text-amber-400 font-mono">support@consulportal.com</strong>.
                   </p>
                   <p className="text-[10px] text-slate-500 leading-normal">
                     You can log in to your Client Account using this email to view your virtual secure mailbox live!
