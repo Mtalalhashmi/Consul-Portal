@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { saveApplicationSupabaseClient, saveQuerySupabaseClient } from "./lib/supabase";
+import { saveApplicationSupabaseClient, saveQuerySupabaseClient, savePaymentSupabaseClient } from "./lib/supabase";
 import { 
   Briefcase, 
   Search, 
@@ -371,6 +371,14 @@ export default function App() {
       setPaymentSuccessMsg(resData.message);
       // Update tracking data instantly in local UI state
       setTrackData(resData.passport);
+
+      savePaymentSupabaseClient({
+        trackId: trackingId,
+        method: selectedPaymentMethod,
+        clientName: paymentAccountName,
+        amount: resData.amount || 0,
+        transactionId: resData.transactionId || `TXN-${Date.now()}`
+      }).catch(() => {});
       
       // Delay closing modal so user sees receipt of transaction
       setTimeout(() => {

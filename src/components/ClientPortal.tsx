@@ -265,6 +265,7 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
           saveUserAccountSupabaseClient(data.user).catch(() => {});
         } else {
           setSuccessMsg("Welcome back! Login successful.");
+          saveUserAccountSupabaseClient(data.user).catch(() => {});
         }
         
         // Reset secret password inputs
@@ -403,6 +404,7 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
         const updatedUser = { ...user, ...data.user };
         localStorage.setItem("consul_client_session", JSON.stringify(updatedUser));
         setUser(updatedUser);
+        saveUserAccountSupabaseClient(updatedUser).catch(() => {});
         setSuccessMsg("Profile information updated successfully!");
       } else {
         setErrorMsg(data.error || "Failed to update profile.");

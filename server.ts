@@ -2525,6 +2525,7 @@ const handleLoginLogic = (req: any, res: any) => {
   });
 
   sendGmailIfConnected(user.email, loginSubject, loginHtml).catch(() => {});
+  saveUserAccountToSupabase(user).catch(err => console.warn("[Supabase Login Sync]:", err));
 
   return res.json({ 
     success: true, 
