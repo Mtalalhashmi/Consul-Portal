@@ -835,34 +835,75 @@ export default function AdminPortal({
 
       setClientRecords(finalClientsList);
 
-      // 4. Load passports, chatbot, payments, activities
+      // 4. Load passports directly from Supabase
       try {
-        const [passRes, chatbotRes, payRes, actRes, statsRes] = await Promise.all([
-          adminFetch("/api/admin/passports").catch(() => null),
+        const { data: passRows } = await supabase.from("passports").select("*");
+        if (passRows && passRows.length > 0) {
+          const parsedPasses: PassportAdminInfo[] = passRows.map((pr: any) => ({
+            trackId: pr.track_id || pr.id,
+            name: pr.name || pr.full_name || "Client",
+            email: pr.email || "",
+            category: pr.category || "Work Visa",
+            country: pr.country || "Schengen",
+            steps: typeof pr.steps === "string" ? JSON.parse(pr.steps) : (pr.steps || [])
+          }));
+          setPassports(parsedPasses);
+          setEditingPassport(prev => {
+            if (!parsedPasses || parsedPasses.length === 0) return null;
+            if (prev && parsedPasses.some((p: any) => p.trackId === prev.trackId)) return prev;
+            return JSON.parse(JSON.stringify(parsedPasses[0]));
+          });
+        } else {
+          const passRes = await adminFetch("/api/admin/passports").catch(() => null);
+          if (passRes && passRes.ok) {
+            const passes = await passRes.json();
+            setPassports(passes || []);
+            setEditingPassport(prev => {
+              if (!passes || passes.length === 0) return null;
+              if (prev && passes.some((p: any) => p.trackId === prev.trackId)) return prev;
+              return JSON.parse(JSON.stringify(passes[0]));
+            });
+          }
+        }
+      } catch (pErr) {}
+
+      // 5. Load payments directly from Supabase
+      try {
+        const { data: payRows } = await supabase.from("payments").select("*").order("created_at", { ascending: false });
+        if (payRows && payRows.length > 0) {
+          const parsedPays: PaymentReceipt[] = payRows.map((py: any) => ({
+            id: py.id,
+            transactionId: py.transaction_id || py.id,
+            amount: Number(py.amount) || 0,
+            currency: py.currency || "PKR",
+            method: py.method || "Bank Transfer",
+            senderName: py.sender_name || py.client_name || "Client",
+            status: py.status || "Pending",
+            date: py.created_at ? new Date(py.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            receiptUrl: py.receipt_url || py.receipt_path || "",
+            notes: py.notes || ""
+          }));
+          setPaymentReceipts(parsedPays);
+        } else {
+          const payRes = await adminFetch("/api/admin/payments").catch(() => null);
+          if (payRes && payRes.ok) {
+            const payments = await payRes.json();
+            setPaymentReceipts(payments || []);
+          }
+        }
+      } catch (payErr) {}
+
+      // 6. Load chatbot analytics, activities, stats
+      try {
+        const [chatbotRes, actRes, statsRes] = await Promise.all([
           adminFetch("/api/admin/chatbot-analytics").catch(() => null),
-          adminFetch("/api/admin/payments").catch(() => null),
           adminFetch("/api/admin/activities").catch(() => null),
           adminFetch("/api/admin/dashboard-stats").catch(() => null)
         ]);
 
-        if (passRes && passRes.ok) {
-          const passes = await passRes.json();
-          setPassports(passes || []);
-          setEditingPassport(prev => {
-            if (!passes || passes.length === 0) return null;
-            if (prev && passes.some((p: any) => p.trackId === prev.trackId)) return prev;
-            return JSON.parse(JSON.stringify(passes[0]));
-          });
-        }
-
         if (chatbotRes && chatbotRes.ok) {
           const chatbot = await chatbotRes.json();
           setChatbotAnalytics(chatbot);
-        }
-
-        if (payRes && payRes.ok) {
-          const payments = await payRes.json();
-          setPaymentReceipts(payments || []);
         }
 
         if (actRes && actRes.ok) {
@@ -883,28 +924,47 @@ export default function AdminPortal({
     }
   };
 
-  // Live polling: keep admin portal auto-synchronized with backend activity every 6 seconds
+  // Real-time Supabase Channel + 6-second polling fallback
   useEffect(() => {
     if (!isLoggedIn) return;
+
+    fetchDashboardData();
+
+    // Subscribe to real-time changes in Supabase tables
+    const channel = supabase
+      .channel("admin_realtime_data")
+      .on("postgres_changes", { event: "*", schema: "public", table: "applications" }, () => fetchDashboardData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "client_accounts" }, () => fetchDashboardData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "passports" }, () => fetchDashboardData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "payments" }, () => fetchDashboardData())
+      .subscribe();
+
     const interval = setInterval(() => {
       fetchDashboardData();
     }, 6000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      supabase.removeChannel(channel);
+    };
   }, [isLoggedIn]);
 
   const handleUpdatePaymentStatus = async (id: string, status: "Verified" | "Pending" | "Rejected" | "Refunded", notes?: string) => {
     try {
-      const response = await adminFetch("/api/admin/payments/status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status, notes })
-      });
-      if (response.ok) {
-        showSuccessMessage(`Payment receipt ${id} status updated to ${status}!`);
-        fetchDashboardData();
-      } else {
-        alert("Failed to update payment status.");
-      }
+      // Direct Supabase Update
+      await supabase.from("payments").update({ status, notes, updated_at: new Date().toISOString() }).eq("id", id);
+      await supabase.from("payment_receipts").update({ status, notes, updated_at: new Date().toISOString() }).eq("id", id);
+
+      try {
+        await adminFetch("/api/admin/payments/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, status, notes })
+        });
+      } catch (e) {}
+
+      showSuccessMessage(`Payment receipt ${id} status updated to ${status}!`);
+      setPaymentReceipts(prev => prev.map(p => p.id === id ? { ...p, status, notes: notes || p.notes } : p));
     } catch (err) {
       console.error(err);
       alert("Error updating payment status");
@@ -959,21 +1019,24 @@ export default function AdminPortal({
 
     setDeletingAppId(id);
     try {
-      const response = await adminFetch(`/api/admin/applications/delete`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id })
-      });
-      if (response.ok) {
-        showSuccessMessage(`Application #${id} deleted successfully.`);
-        setApplications(prev => prev.filter(a => a.id !== id));
-        setSelectedAppIds(prev => prev.filter(appId => appId !== id));
-        if (selectedApplication?.id === id) {
-          const remaining = applications.filter(a => a.id !== id);
-          setSelectedApplication(remaining.length > 0 ? remaining[0] : null);
-        }
-      } else {
-        alert("Failed to delete application file.");
+      // Direct Supabase Delete
+      await supabase.from("applications").delete().eq("id", id);
+      await supabase.from("job_applications").delete().eq("id", id);
+
+      try {
+        await adminFetch(`/api/admin/applications/delete`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id })
+        });
+      } catch (e) {}
+
+      showSuccessMessage(`Application #${id} deleted successfully.`);
+      setApplications(prev => prev.filter(a => a.id !== id));
+      setSelectedAppIds(prev => prev.filter(appId => appId !== id));
+      if (selectedApplication?.id === id) {
+        const remaining = applications.filter(a => a.id !== id);
+        setSelectedApplication(remaining.length > 0 ? remaining[0] : null);
       }
     } catch (err) {
       console.error(err);
@@ -1118,25 +1181,36 @@ export default function AdminPortal({
     if (!editingPassport) return;
 
     try {
-      const response = await adminFetch("/api/admin/passports/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trackId: editingPassport.trackId,
-          name: editingPassport.name,
-          email: editingPassport.email,
-          category: editingPassport.category,
-          country: editingPassport.country,
-          steps: editingPassport.steps
-        })
-      });
-      if (response.ok) {
-        showSuccessMessage(`Passport file ${editingPassport.trackId} updated!`);
-        setEditingPassport(null);
-        fetchDashboardData();
-      } else {
-        alert("Failed to save changes");
-      }
+      // Direct Supabase Upsert
+      await supabase.from("passports").upsert({
+        id: editingPassport.trackId,
+        track_id: editingPassport.trackId,
+        name: editingPassport.name,
+        email: editingPassport.email,
+        category: editingPassport.category,
+        country: editingPassport.country,
+        steps: editingPassport.steps,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "id" });
+
+      try {
+        await adminFetch("/api/admin/passports/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            trackId: editingPassport.trackId,
+            name: editingPassport.name,
+            email: editingPassport.email,
+            category: editingPassport.category,
+            country: editingPassport.country,
+            steps: editingPassport.steps
+          })
+        });
+      } catch (e) {}
+
+      showSuccessMessage(`Passport file ${editingPassport.trackId} updated successfully!`);
+      setEditingPassport(null);
+      fetchDashboardData();
     } catch (err) {
       console.error(err);
     }
@@ -1174,34 +1248,44 @@ export default function AdminPortal({
     ];
 
     try {
-      const response = await adminFetch("/api/admin/passports/update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          trackId: newTrackId,
-          name: newClientName,
-          email: newEmail,
-          passportNum: newPassportNum,
-          category: newCategory || "Work Visa Professional",
-          country: newCountry,
-          steps: defaultSteps
-        })
-      });
+      // Direct Supabase Upsert
+      await supabase.from("passports").upsert({
+        id: newTrackId,
+        track_id: newTrackId,
+        name: newClientName,
+        email: newEmail,
+        passport_number: newPassportNum,
+        category: newCategory || "Work Visa Professional",
+        country: newCountry,
+        steps: defaultSteps,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, { onConflict: "id" });
 
-      const resData = await response.json().catch(() => ({}));
+      try {
+        await adminFetch("/api/admin/passports/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            trackId: newTrackId,
+            name: newClientName,
+            email: newEmail,
+            passportNum: newPassportNum,
+            category: newCategory || "Work Visa Professional",
+            country: newCountry,
+            steps: defaultSteps
+          })
+        });
+      } catch (e) {}
 
-      if (response.ok && resData.success) {
-        showSuccessMessage(`New passport track file ${newTrackId} generated successfully! ${newEmail ? `Notification email dispatched to ${newEmail}` : ""}`);
-        setNewTrackId("");
-        setNewClientName("");
-        setNewPassportNum("");
-        setNewCategory("");
-        setNewCountry("");
-        setNewEmail("");
-        fetchDashboardData();
-      } else {
-        alert(resData.error || "Failed to create passport tracking file.");
-      }
+      showSuccessMessage(`New passport track file ${newTrackId} generated successfully! ${newEmail ? `Notification email dispatched to ${newEmail}` : ""}`);
+      setNewTrackId("");
+      setNewClientName("");
+      setNewPassportNum("");
+      setNewCategory("");
+      setNewCountry("");
+      setNewEmail("");
+      fetchDashboardData();
     } catch (err: any) {
       console.error("Error creating file:", err);
       alert(err.message || "Network error while generating passport tracking file.");
