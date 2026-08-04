@@ -6204,7 +6204,7 @@ initializeGeminiClient().catch(err => {
 // Configure static asset serving and Vite middleware
 const distPath = path.join(process.cwd(), "dist");
 
-if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+if (process.env.NODE_ENV !== "production") {
   console.log("Starting server in DEVELOPMENT mode with Vite middleware...");
   createViteServer({
     server: { middlewareMode: true },
@@ -6215,7 +6215,7 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     console.error("Vite middleware error:", err);
   });
 } else {
-  console.log("Starting server in PRODUCTION / VERCEL mode...");
+  console.log("Starting server in PRODUCTION mode (Hostinger / Standalone Node.js)...");
   app.use(express.static(distPath));
   app.get("*", (req: any, res: any) => {
     if (req.path.startsWith("/api/")) {
@@ -6225,16 +6225,14 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
-      res.status(404).send("Application build not found. Please run build.");
+      res.status(404).send("Application build not found. Please run 'npm run build' first.");
     }
   });
 }
 
-// Only start Express HTTP listener if running as standalone server (not Vercel function)
-if (!process.env.VERCEL && !process.env.NOW_BUILD) {
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server is running at http://localhost:${PORT}`);
-  });
-}
+// Start Express HTTP listener on port 3000 / process.env.PORT
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
+});
 
 export default app;

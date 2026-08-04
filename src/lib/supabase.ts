@@ -164,3 +164,56 @@ export async function savePaymentSupabaseClient(paymentData: any) {
     console.warn("[Supabase Client Payment Save Note]:", err);
   }
 }
+
+export async function uploadFileSupabaseClient(file: File, bucketName: string = "documents"): Promise<{ success: boolean; url?: string; path?: string; error?: string }> {
+  try {
+    // 1. Validation: Max 10MB
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      return { success: false, error: "File size exceeds maximum allowed limit of 10 MB." };
+    }
+
+    // 2. Format check: PDF, DOC, DOCX, JPG, PNG
+    const allowedExtensions = ["pdf", "doc", "docx", "jpg", "jpeg", "png"];
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(ext)) {
+      return { success: false, error: "Unsupported file format. Please upload PDF, DOC, DOCX, JPG, or PNG files." };
+    }
+
+    const filePath = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+
+    // Attempt upload to primary bucket, then fallback bucket
+    let { data, error } = await supabase.storage.from(bucketName).upload(filePath, file, {
+      cacheControl: "3600",
+      upsert: true
+    });
+
+    if (error) {
+      // Try fallback bucket 'applications'
+      const fallback = await supabase.storage.from("applications").upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true
+      });
+      if (!fallback.error) {
+        data = fallback.data;
+        error = null;
+        bucketName = "applications";
+      }
+    }
+
+    if (error) {
+      console.warn("[Supabase Storage Upload Note]:", error.message);
+      return { success: false, error: error.message };
+    }
+
+    const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
+    return {
+      success: true,
+      path: filePath,
+      url: publicUrlData?.publicUrl || filePath
+    };
+  } catch (err: any) {
+    console.error("[Supabase Storage Error]:", err);
+    return { success: false, error: err?.message || "Failed to upload document" };
+  }
+}
