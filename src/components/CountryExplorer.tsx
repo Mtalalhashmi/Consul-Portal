@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { saveApplicationSupabaseClient } from "../lib/supabase";
+import { saveApplicationSupabaseClient, uploadFileSupabaseClient } from "../lib/supabase";
 import { 
   Search, 
   ChevronDown, 
@@ -616,7 +616,35 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
     const code = `CP-${prefix}-${randomDigits}`;
 
     try {
-      const response = await fetch("/api/applications", {
+      let uploadedDocPath = "";
+      if (uploadedFile && uploadedFile.fileObj) {
+        const uploadRes = await uploadFileSupabaseClient(uploadedFile.fileObj, "application-documents");
+        if (uploadRes.success) {
+          uploadedDocPath = uploadRes.url || uploadRes.path || "";
+        }
+      }
+
+      await saveApplicationSupabaseClient({
+        id: code,
+        trackingNumber: code,
+        vacancyId: selectedJobForModal?.id || "custom-job",
+        vacancyTitle: selectedJobForModal?.title || "Sponsorship Career Path",
+        country: selectedJobForModal?.country || "Schengen",
+        destinationCountry: selectedJobForModal?.country || "Schengen",
+        name: applyForm.name,
+        fullName: applyForm.name,
+        phone: applyForm.phone,
+        email: applyForm.email,
+        passportNumber: applyForm.passportNumber,
+        cnic: applyForm.cnic,
+        applyingFrom: "Pakistan",
+        cvLink: uploadedDocPath || applyForm.cvLink,
+        documentPath: uploadedDocPath || applyForm.cvLink,
+        coverLetter: applyForm.coverLetter
+      });
+
+      // Optional server ping
+      fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -629,35 +657,10 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
           passportNumber: applyForm.passportNumber,
           cnic: applyForm.cnic,
           applyingFrom: "Pakistan",
-          cvLink: applyForm.cvLink,
-          coverLetter: applyForm.coverLetter,
-          uploadedFile: uploadedFile ? {
-            name: uploadedFile.name,
-            size: uploadedFile.size,
-            type: uploadedFile.type
-          } : undefined,
+          cvLink: uploadedDocPath || applyForm.cvLink,
           trackingNumber: code
         })
-      });
-
-      saveApplicationSupabaseClient({
-        id: code,
-        trackingNumber: code,
-        vacancyId: selectedJobForModal?.id || "custom-job",
-        vacancyTitle: selectedJobForModal?.title || "Sponsorship Career Path",
-        country: selectedJobForModal?.country || "Schengen",
-        name: applyForm.name,
-        phone: applyForm.phone,
-        email: applyForm.email,
-        passportNumber: applyForm.passportNumber,
-        cnic: applyForm.cnic,
-        applyingFrom: "Pakistan"
       }).catch(() => {});
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        console.warn("Application submission warning:", errData.error);
-      }
     } catch (err) {
       console.error("Failed to post application to the server:", err);
     }

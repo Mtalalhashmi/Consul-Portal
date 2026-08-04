@@ -908,7 +908,21 @@ export default function GirlsJobsAbroad() {
     setSubmitError("");
 
     try {
-      const response = await fetch("/api/applications", {
+      await saveApplicationSupabaseClient({
+        id: `girls-app-${Date.now()}`,
+        vacancyId: selectedJob.id,
+        vacancyTitle: selectedJob.title,
+        country: selectedJob.country,
+        destinationCountry: selectedJob.country,
+        name: fullName,
+        fullName: fullName,
+        phone: whatsappNum,
+        email: email,
+        applyingFrom: applyingFrom
+      });
+
+      // Optional backend ping
+      fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -920,21 +934,6 @@ export default function GirlsJobsAbroad() {
           email: email,
           applyingFrom: applyingFrom
         })
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || "Failed to submit application");
-      }
-
-      saveApplicationSupabaseClient({
-        vacancyId: selectedJob.id,
-        vacancyTitle: selectedJob.title,
-        country: selectedJob.country,
-        name: fullName,
-        phone: whatsappNum,
-        email: email,
-        applyingFrom: applyingFrom
       }).catch(() => {});
 
       setSubmitSuccess(true);
@@ -944,7 +943,7 @@ export default function GirlsJobsAbroad() {
       setWhatsappNum("");
     } catch (err: any) {
       console.error(err);
-      setSubmitError(err.message || "Something went wrong. Please check your network and try again.");
+      setSubmitError("Your application could not be saved. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

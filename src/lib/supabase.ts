@@ -51,29 +51,38 @@ export async function saveApplicationSupabaseClient(appData: any) {
     const record = {
       id: appData.id || `app-${Date.now()}`,
       tracking_number: appData.trackingNumber || appData.id,
-      name: appData.name || "Applicant",
+      name: appData.name || appData.fullName || "Applicant",
+      full_name: appData.fullName || appData.name || "Applicant",
       email: appData.email || "",
       phone: appData.phone || "",
-      vacancy_id: appData.vacancyId || "",
-      vacancy_title: appData.vacancyTitle || "",
-      country: appData.country || "",
+      user_id: appData.userId || appData.user_id || "",
+      job_id: appData.vacancyId || appData.jobId || "",
+      vacancy_id: appData.vacancyId || appData.jobId || "",
+      vacancy_title: appData.vacancyTitle || appData.jobTitle || "",
+      country: appData.country || appData.destinationCountry || "",
+      destination_country: appData.destinationCountry || appData.country || "",
       applying_from: appData.applyingFrom || "Pakistan",
+      recruitment_target: appData.recruitmentTarget || appData.company || "",
       company: appData.company || "",
       passport_number: appData.passportNumber || "",
       passport_expiry: appData.passportExpiry || "",
       cnic: appData.cnic || "",
       status: appData.status || "Pending",
+      document_path: appData.documentPath || appData.cvLink || "",
+      cv_link: appData.cvLink || appData.documentPath || "",
+      cover_letter: appData.coverLetter || "",
       created_at: appData.createdAt || new Date().toISOString(),
-      cv_link: appData.cvLink || "",
-      cover_letter: appData.coverLetter || ""
+      updated_at: new Date().toISOString()
     };
     const { error } = await supabase.from("applications").upsert([record], { onConflict: "id" });
     if (error) {
       await supabase.from("job_applications").upsert([record], { onConflict: "id" });
     }
     console.log("[Supabase Client] Job application saved to Supabase.");
-  } catch (err) {
+    return { success: true, record };
+  } catch (err: any) {
     console.warn("[Supabase Client App Save Note]:", err);
+    return { success: false, error: err?.message };
   }
 }
 
@@ -165,45 +174,57 @@ export async function savePaymentSupabaseClient(paymentData: any) {
   }
 }
 
-export async function uploadFileSupabaseClient(file: File, bucketName: string = "documents"): Promise<{ success: boolean; url?: string; path?: string; error?: string }> {
+export async function uploadFileSupabaseClient(file: File, bucketName: string = "application-documents"): Promise<{ success: boolean; url?: string; path?: string; error?: string }> {
   try {
     // 1. Validation: Max 10MB
     const MAX_SIZE = 10 * 1024 * 1024; // 10MB
     if (file.size > MAX_SIZE) {
-      return { success: false, error: "File size exceeds maximum allowed limit of 10 MB." };
+      return { success: false, error: "Your document is larger than 10 MB." };
     }
 
     // 2. Format check: PDF, DOC, DOCX, JPG, PNG
     const allowedExtensions = ["pdf", "doc", "docx", "jpg", "jpeg", "png"];
     const ext = file.name.split(".").pop()?.toLowerCase() || "";
     if (!allowedExtensions.includes(ext)) {
-      return { success: false, error: "Unsupported file format. Please upload PDF, DOC, DOCX, JPG, or PNG files." };
+      return { success: false, error: "This document type is not supported. Allowed formats: PDF, DOC, DOCX, JPG, PNG." };
     }
 
-    const filePath = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+    const cleanFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
+    const filePath = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}_${cleanFileName}`;
 
-    // Attempt upload to primary bucket, then fallback bucket
+    // Attempt upload to primary bucket 'application-documents'
     let { data, error } = await supabase.storage.from(bucketName).upload(filePath, file, {
       cacheControl: "3600",
       upsert: true
     });
 
     if (error) {
-      // Try fallback bucket 'applications'
-      const fallback = await supabase.storage.from("applications").upload(filePath, file, {
+      // Try fallback bucket 'documents'
+      let fallback = await supabase.storage.from("documents").upload(filePath, file, {
         cacheControl: "3600",
         upsert: true
       });
       if (!fallback.error) {
         data = fallback.data;
         error = null;
-        bucketName = "applications";
+        bucketName = "documents";
+      } else {
+        // Try fallback bucket 'applications'
+        let fallbackApp = await supabase.storage.from("applications").upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true
+        });
+        if (!fallbackApp.error) {
+          data = fallbackApp.data;
+          error = null;
+          bucketName = "applications";
+        }
       }
     }
 
     if (error) {
       console.warn("[Supabase Storage Upload Note]:", error.message);
-      return { success: false, error: error.message };
+      return { success: false, error: "Your document could not be uploaded. Please try again." };
     }
 
     const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
@@ -214,6 +235,6 @@ export async function uploadFileSupabaseClient(file: File, bucketName: string = 
     };
   } catch (err: any) {
     console.error("[Supabase Storage Error]:", err);
-    return { success: false, error: err?.message || "Failed to upload document" };
+    return { success: false, error: "Your document could not be uploaded. Please try again." };
   }
 }

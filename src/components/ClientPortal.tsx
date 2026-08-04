@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { saveUserAccountSupabaseClient } from "../lib/supabase";
+import { saveUserAccountSupabaseClient, supabase } from "../lib/supabase";
 import { 
   User, 
   Lock, 
@@ -271,10 +271,81 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
         // Reset secret password inputs
         setPassword("");
         setConfirmPassword("");
+      } else if (!response.ok && (response.status === 404 || response.status === 500)) {
+        // Fallback to Supabase Auth directly if API route is 404/500
+        if (authTab === "signup") {
+          const { data: sbAuth, error: sbErr } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { name, phone, passport_num: passportNum, track_id: trackId } }
+          });
+          if (sbErr && !sbErr.message.includes("User already registered")) {
+            setErrorMsg(sbErr.message || "Signup failed");
+          } else {
+            const fallbackUser = {
+              id: sbAuth.user?.id || `usr-${Date.now()}`,
+              name: name || email.split("@")[0],
+              email,
+              phone,
+              passportNum,
+              trackId,
+              role: "user"
+            };
+            localStorage.setItem("consul_client_session", JSON.stringify(fallbackUser));
+            setUser(fallbackUser);
+            setIsLoggedIn(true);
+            setSuccessMsg("Account registered successfully! Welcome to your Client Portal.");
+            saveUserAccountSupabaseClient(fallbackUser).catch(() => {});
+            setPassword("");
+            setConfirmPassword("");
+          }
+        } else {
+          const { data: sbAuth, error: sbErr } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          });
+          if (sbAuth?.user) {
+            const fallbackUser = {
+              id: sbAuth.user.id,
+              name: sbAuth.user.user_metadata?.name || email.split("@")[0],
+              email: sbAuth.user.email,
+              phone: sbAuth.user.user_metadata?.phone || "",
+              role: "user"
+            };
+            localStorage.setItem("consul_client_session", JSON.stringify(fallbackUser));
+            setUser(fallbackUser);
+            setIsLoggedIn(true);
+            setSuccessMsg("Welcome back! Login successful.");
+            saveUserAccountSupabaseClient(fallbackUser).catch(() => {});
+            setPassword("");
+            setConfirmPassword("");
+          } else {
+            setErrorMsg(sbErr?.message || data.error || data.message || "Invalid credentials.");
+          }
+        }
       } else {
         setErrorMsg(data.error || data.message || "Authentication failed. Please verify credentials.");
       }
     } catch (err) {
+      // Fallback network error handling with Supabase Auth
+      try {
+        if (authTab === "login") {
+          const { data: sbAuth } = await supabase.auth.signInWithPassword({ email, password });
+          if (sbAuth?.user) {
+            const fallbackUser = {
+              id: sbAuth.user.id,
+              name: sbAuth.user.user_metadata?.name || email.split("@")[0],
+              email: sbAuth.user.email,
+              role: "user"
+            };
+            localStorage.setItem("consul_client_session", JSON.stringify(fallbackUser));
+            setUser(fallbackUser);
+            setIsLoggedIn(true);
+            setSuccessMsg("Welcome back! Login successful.");
+            return;
+          }
+        }
+      } catch (e) {}
       setErrorMsg("Unable to connect to server gateway. Please check your network connection.");
     } finally {
       setLoading(false);

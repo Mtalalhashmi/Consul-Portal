@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { saveApplicationSupabaseClient, saveQuerySupabaseClient, savePaymentSupabaseClient } from "./lib/supabase";
+import { saveApplicationSupabaseClient, saveQuerySupabaseClient, savePaymentSupabaseClient, uploadFileSupabaseClient } from "./lib/supabase";
 import { 
   Briefcase, 
   Search, 
@@ -533,94 +533,83 @@ export default function App() {
     setIsSubmittingApply(true);
 
     try {
-      const formData = new FormData();
-      formData.append("vacancyId", applyingVacancy.id);
-      formData.append("vacancyTitle", applyingVacancy.title);
-      formData.append("country", applyTargetCountry || applyingVacancy.country);
-      formData.append("name", applyName.trim());
-      formData.append("phone", applyPhone.trim());
-      formData.append("email", applyEmail.trim());
-      formData.append("applyingFrom", applyFromCountry);
-      if (applyingVacancy.company) {
-        formData.append("company", applyingVacancy.company);
-      }
+      let uploadedDocPath = "";
+      let uploadedDocUrl = "";
+
+      // 1. Handle file upload to Supabase Storage if file present
       if (applyCv) {
-        formData.append("cv", applyCv);
+        const uploadResult = await uploadFileSupabaseClient(applyCv, "application-documents");
+        if (!uploadResult.success && uploadResult.error) {
+          setApplyError(uploadResult.error);
+          setIsSubmittingApply(false);
+          return;
+        }
+        uploadedDocPath = uploadResult.path || "";
+        uploadedDocUrl = uploadResult.url || "";
       }
 
-      let response = await fetch("/api/applications", {
-        method: "POST",
-        body: formData
+      // 2. Direct save to Supabase Database
+      const appRecordId = `app-${Date.now()}`;
+      const supabaseSave = await saveApplicationSupabaseClient({
+        id: appRecordId,
+        trackingNumber: appRecordId,
+        name: applyName.trim(),
+        fullName: applyName.trim(),
+        email: applyEmail.trim(),
+        phone: applyPhone.trim(),
+        vacancyId: applyingVacancy.id,
+        vacancyTitle: applyingVacancy.title,
+        country: applyTargetCountry || applyingVacancy.country,
+        destinationCountry: applyTargetCountry || applyingVacancy.country,
+        applyingFrom: applyFromCountry,
+        company: applyingVacancy.company || "",
+        recruitmentTarget: applyingVacancy.company || "",
+        documentPath: uploadedDocPath || uploadedDocUrl,
+        cvLink: uploadedDocUrl || uploadedDocPath,
+        status: "Pending"
       });
 
-      let resText = await response.text();
-
-      // Fallback to /api/pre-evaluation if 404 or NOT_FOUND returned
-      if (!response.ok && (response.status === 404 || resText.includes("NOT_FOUND") || resText.trim().startsWith("<"))) {
-        try {
-          response = await fetch("/api/pre-evaluation", {
-            method: "POST",
-            body: formData
-          });
-          resText = await response.text();
-        } catch (fallbackErr) {
-          console.warn("Fallback endpoint error:", fallbackErr);
-        }
-      }
-
-      let data: any = {};
+      // 3. Optional background ping to server API if host runs Node server
       try {
-        data = JSON.parse(resText);
-      } catch (parseErr) {
-        if (resText.includes("NOT_FOUND") || resText.trim().startsWith("<") || response.status === 404) {
-          data = { error: "Application submission service is temporarily unreachable (404 Not Found). Please verify your network connection and try again." };
-        } else {
-          data = { error: resText || "Server returned an unexpected response. Please try again." };
-        }
+        const formData = new FormData();
+        formData.append("vacancyId", applyingVacancy.id);
+        formData.append("vacancyTitle", applyingVacancy.title);
+        formData.append("country", applyTargetCountry || applyingVacancy.country);
+        formData.append("name", applyName.trim());
+        formData.append("phone", applyPhone.trim());
+        formData.append("email", applyEmail.trim());
+        formData.append("applyingFrom", applyFromCountry);
+        if (uploadedDocUrl) formData.append("cvUrl", uploadedDocUrl);
+        if (applyingVacancy.company) formData.append("company", applyingVacancy.company);
+        if (applyCv) formData.append("cv", applyCv);
+
+        fetch("/api/applications", { method: "POST", body: formData }).catch(() => {});
+      } catch (e) {
+        // Non-blocking server ping
       }
 
-      if (response.ok && data.success) {
-        setApplySuccess(true);
-        saveApplicationSupabaseClient({
-          id: data.application?.id || `app-${Date.now()}`,
-          name: applyName.trim(),
-          email: applyEmail.trim(),
-          phone: applyPhone.trim(),
-          vacancyId: applyingVacancy.id,
-          vacancyTitle: applyingVacancy.title,
-          country: applyTargetCountry || applyingVacancy.country,
-          applyingFrom: applyFromCountry,
-          company: applyingVacancy.company || ""
-        }).catch(() => {});
-        setTimeout(() => {
-          setApplyingVacancy(null);
-          setApplySuccess(false);
-          setApplyName("");
-          setApplyPhone("");
-          setApplyEmail("");
-          setApplyCv(null);
-          setApplyError("");
-          setIsSubmittingApply(false);
-          // Push confirmation chat message
-          setChatMessages(prev => [
-            ...prev,
-            {
-              role: "assistant",
-              content: `Thank you for applying to the position of "${applyingVacancy?.title}" in ${applyingVacancy?.country}! Our recruitment panel is reviewing your HEC/MOFA credentials. If you want to prepare for your visa interview or test, ask me anything now!`
-            }
-          ]);
-        }, 3000);
-      } else {
-        let errMsg = data.error || "Submission failed. Please check your inputs and try again.";
-        if (typeof errMsg === "string" && (errMsg.includes("NOT_FOUND") || errMsg.trim().startsWith("<"))) {
-          errMsg = "Application submission service is temporarily unreachable (404 Not Found). Please check backend deployment.";
-        }
-        setApplyError(errMsg);
+      setApplySuccess(true);
+      setTimeout(() => {
+        setApplyingVacancy(null);
+        setApplySuccess(false);
+        setApplyName("");
+        setApplyPhone("");
+        setApplyEmail("");
+        setApplyCv(null);
+        setApplyError("");
         setIsSubmittingApply(false);
-      }
+        // Push confirmation chat message
+        setChatMessages(prev => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Thank you for applying to the position of "${applyingVacancy?.title}" in ${applyingVacancy?.country}! Our recruitment panel is reviewing your HEC/MOFA credentials. If you want to prepare for your visa interview or test, ask me anything now!`
+          }
+        ]);
+      }, 3000);
     } catch (err: any) {
       console.error("Submission exception:", err);
-      setApplyError("Something went wrong connecting to the submission server. Please try again.");
+      setApplyError("Your application could not be saved. Please check your network connection and try again.");
       setIsSubmittingApply(false);
     }
   };

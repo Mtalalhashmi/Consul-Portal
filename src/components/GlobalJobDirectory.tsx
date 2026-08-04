@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { saveApplicationSupabaseClient } from "../lib/supabase";
+import { saveApplicationSupabaseClient, uploadFileSupabaseClient } from "../lib/supabase";
 import { 
   Search, 
   MapPin, 
@@ -805,7 +805,33 @@ export default function GlobalJobDirectory({
     const randomId = `${pfx}-${Math.floor(100000 + Math.random() * 900000)}`;
 
     try {
-      await fetch("/api/applications", {
+      let uploadedDocPath = "";
+      if (attachedFile) {
+        const uploadRes = await uploadFileSupabaseClient(attachedFile, "application-documents");
+        if (uploadRes.success) {
+          uploadedDocPath = uploadRes.url || uploadRes.path || "";
+        }
+      }
+
+      await saveApplicationSupabaseClient({
+        id: randomId,
+        trackingNumber: randomId,
+        name: candidateName,
+        fullName: candidateName,
+        phone: candidatePhone,
+        email: candidateEmail,
+        vacancyId: selectedJobDetails?.id || "custom-job",
+        vacancyTitle: selectedJobDetails?.title || "Employer Sponsored Visa Placement",
+        country: selectedJobDetails?.country || "Schengen",
+        destinationCountry: selectedJobDetails?.country || "Schengen",
+        passportNumber: passportNumber,
+        applyingFrom: "Pakistan",
+        documentPath: uploadedDocPath,
+        cvLink: uploadedDocPath
+      });
+
+      // Optional server ping
+      fetch("/api/applications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -816,32 +842,12 @@ export default function GlobalJobDirectory({
           phone: candidatePhone,
           email: candidateEmail,
           passportNumber: passportNumber,
-          applyingFrom: "Pakistan",
-          cvLink: "",
-          coverLetter: `Passport: ${passportNumber}`,
-          uploadedFile: attachedFile ? {
-            name: attachedFile.name,
-            size: attachedFile.size,
-            type: attachedFile.type
-          } : undefined,
+          cvLink: uploadedDocPath,
           trackingNumber: randomId
         })
-      });
-
-      saveApplicationSupabaseClient({
-        id: randomId,
-        trackingNumber: randomId,
-        name: candidateName,
-        phone: candidatePhone,
-        email: candidateEmail,
-        vacancyId: selectedJobDetails?.id || "custom-job",
-        vacancyTitle: selectedJobDetails?.title || "Employer Sponsored Visa Placement",
-        country: selectedJobDetails?.country || "Schengen",
-        passportNumber: passportNumber,
-        applyingFrom: "Pakistan"
       }).catch(() => {});
     } catch (err) {
-      console.error("Failed to post application to the server:", err);
+      console.error("Application upload/save error:", err);
     }
     
     setApplyReferenceId(randomId);
