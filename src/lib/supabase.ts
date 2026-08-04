@@ -74,9 +74,10 @@ export async function saveApplicationSupabaseClient(appData: any) {
       created_at: appData.createdAt || new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
-    const { error } = await supabase.from("applications").upsert([record], { onConflict: "id" });
-    if (error) {
-      await supabase.from("job_applications").upsert([record], { onConflict: "id" });
+    const { error: err1 } = await supabase.from("applications").upsert([record], { onConflict: "id" });
+    const { error: err2 } = await supabase.from("job_applications").upsert([record], { onConflict: "id" });
+    if (err1 && err2) {
+      console.warn("[Supabase App Save Note]:", err1.message);
     }
     console.log("[Supabase Client] Job application saved to Supabase.");
     return { success: true, record };
@@ -90,21 +91,37 @@ export async function saveUserAccountSupabaseClient(userData: any) {
   try {
     const record = {
       id: userData.id || `usr-${Date.now()}`,
-      name: userData.name || "",
+      user_id: userData.userId || userData.user_id || userData.id,
+      name: userData.name || userData.fullName || "",
+      full_name: userData.fullName || userData.name || "",
       email: userData.email || "",
       phone: userData.phone || "",
-      role: userData.role || "user",
-      status: userData.status || "active",
-      passport_num: userData.passportNum || "",
-      track_id: userData.trackId || "",
-      created_at: new Date().toISOString()
+      country: userData.country || "Pakistan",
+      role: userData.role || "client",
+      status: userData.status || "Active",
+      passport_num: userData.passportNum || userData.passport_num || "",
+      passport_number: userData.passportNum || userData.passport_num || "",
+      track_id: userData.trackId || userData.track_id || "",
+      created_at: userData.createdAt || new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
-    const { error } = await supabase.from("client_accounts").upsert([record], { onConflict: "id" });
-    if (error) {
-      const { error: err2 } = await supabase.from("users").upsert([record], { onConflict: "id" });
-      if (err2) {
-        await supabase.from("clients").upsert([record], { onConflict: "id" });
-      }
+    const { error: err1 } = await supabase.from("client_accounts").upsert([record], { onConflict: "id" });
+    const { error: err2 } = await supabase.from("profiles").upsert([{
+      id: record.id,
+      user_id: record.user_id,
+      full_name: record.full_name,
+      email: record.email,
+      phone: record.phone,
+      country: record.country,
+      role: record.role,
+      status: record.status,
+      created_at: record.created_at,
+      updated_at: record.updated_at
+    }], { onConflict: "id" });
+
+    if (err1 && err2) {
+      await supabase.from("clients").upsert([record], { onConflict: "id" });
+      await supabase.from("users").upsert([record], { onConflict: "id" });
     }
     console.log("[Supabase Client] User account saved to Supabase.");
   } catch (err) {

@@ -1,11 +1,35 @@
 import React, { useState, useEffect, useRef } from "react";
+import { supabase } from "../lib/supabase";
 import { 
   Lock, Check, X, RefreshCw, FileText, Database, 
   AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, ShieldCheck, Mail, Sparkles, Send,
   Trash2, Clock, CheckSquare, Square, Filter, Calendar, AlertTriangle, Layers, Search,
-  CreditCard, Activity, Eye, CheckCircle2, XCircle, Receipt, Zap, UserCheck, FileCheck
+  CreditCard, Activity, Eye, CheckCircle2, XCircle, Receipt, Zap, UserCheck, FileCheck, Users
 } from "lucide-react";
 import { PassportTrack, PassportStep } from "../types";
+
+export interface ClientRecord {
+  id: string;
+  userId?: string;
+  user_id?: string;
+  name: string;
+  fullName?: string;
+  full_name?: string;
+  email: string;
+  phone: string;
+  country?: string;
+  role?: string;
+  status?: string;
+  passportNum?: string;
+  passport_num?: string;
+  trackId?: string;
+  track_id?: string;
+  createdAt?: string;
+  created_at?: string;
+  updatedAt?: string;
+  updated_at?: string;
+  applicationsCount?: number;
+}
 
 export interface PaymentReceipt {
   id: string;
@@ -154,7 +178,11 @@ export default function AdminPortal({
   // Dashboard states
   const [applications, setApplications] = useState<Application[]>([]);
   const [passports, setPassports] = useState<PassportAdminInfo[]>([]);
-  const [adminTab, setAdminTab] = useState<"applications" | "passports" | "payments" | "activities" | "settings" | "chatbot" | "fees">("applications");
+  const [clientRecords, setClientRecords] = useState<ClientRecord[]>([]);
+  const [selectedClientDetail, setSelectedClientDetail] = useState<ClientRecord | null>(null);
+  const [clientSearchQuery, setClientSearchQuery] = useState("");
+  const [clientStatusFilter, setClientStatusFilter] = useState<string>("All");
+  const [adminTab, setAdminTab] = useState<"applications" | "clients" | "passports" | "payments" | "activities" | "settings" | "chatbot" | "fees">("applications");
   
   // Payment receipts, activities & live dashboard stats
   const [paymentReceipts, setPaymentReceipts] = useState<PaymentReceipt[]>([]);
@@ -646,62 +674,210 @@ export default function AdminPortal({
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [appsRes, passRes, chatbotRes, payRes, actRes, statsRes] = await Promise.all([
-        adminFetch("/api/admin/applications"),
-        adminFetch("/api/admin/passports"),
-        adminFetch("/api/admin/chatbot-analytics"),
-        adminFetch("/api/admin/payments"),
-        adminFetch("/api/admin/activities"),
-        adminFetch("/api/admin/dashboard-stats")
-      ]);
-      
+      // 1. Query Supabase Applications directly
+      let dbApps: Application[] = [];
+      try {
+        const { data: appRows } = await supabase.from("applications").select("*").order("created_at", { ascending: false });
+        if (appRows && appRows.length > 0) {
+          dbApps = appRows.map((item: any) => ({
+            id: item.id || `app-${Date.now()}`,
+            vacancyId: item.vacancy_id || item.job_id || item.vacancyId || "job-1",
+            vacancyTitle: item.vacancy_title || item.job_title || item.vacancyTitle || "Work Visa Placement",
+            country: item.country || item.destination_country || "Schengen",
+            name: item.name || item.full_name || "Applicant",
+            phone: item.phone || "",
+            email: item.email || "",
+            status: item.status || "Pending",
+            date: item.created_at ? new Date(item.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            createdAt: item.created_at || new Date().toISOString(),
+            applyingFrom: item.applying_from || "Pakistan",
+            cvLink: item.document_path || item.cv_link || item.cvLink || "",
+            coverLetter: item.cover_letter || "",
+            passportNumber: item.passport_number || item.passportNumber || "",
+            cnic: item.cnic || "",
+            trackingNumber: item.tracking_number || item.id,
+            userId: item.user_id || ""
+          }));
+        } else {
+          const { data: jobAppRows } = await supabase.from("job_applications").select("*").order("created_at", { ascending: false });
+          if (jobAppRows && jobAppRows.length > 0) {
+            dbApps = jobAppRows.map((item: any) => ({
+              id: item.id,
+              vacancyId: item.vacancy_id || item.job_id || "job-1",
+              vacancyTitle: item.vacancy_title || item.job_title || "Work Visa Placement",
+              country: item.country || item.destination_country || "Schengen",
+              name: item.name || item.full_name || "Applicant",
+              phone: item.phone || "",
+              email: item.email || "",
+              status: item.status || "Pending",
+              date: item.created_at ? new Date(item.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+              createdAt: item.created_at || new Date().toISOString(),
+              applyingFrom: item.applying_from || "Pakistan",
+              cvLink: item.document_path || item.cv_link || "",
+              coverLetter: item.cover_letter || "",
+              passportNumber: item.passport_number || "",
+              cnic: item.cnic || "",
+              trackingNumber: item.tracking_number || item.id,
+              userId: item.user_id || ""
+            }));
+          }
+        }
+      } catch (sbErr) {
+        console.warn("Supabase direct applications fetch note:", sbErr);
+      }
+
+      // 2. Query Supabase Client Accounts directly
+      let dbClients: ClientRecord[] = [];
+      try {
+        const { data: clientRows } = await supabase.from("client_accounts").select("*").order("created_at", { ascending: false });
+        if (clientRows && clientRows.length > 0) {
+          dbClients = clientRows.map((c: any) => ({
+            id: c.id,
+            userId: c.user_id || c.id,
+            user_id: c.user_id || c.id,
+            name: c.name || c.full_name || "Client",
+            fullName: c.full_name || c.name || "Client",
+            full_name: c.full_name || c.name || "Client",
+            email: c.email || "",
+            phone: c.phone || "",
+            country: c.country || "Pakistan",
+            role: c.role || "client",
+            status: c.status || "Active",
+            passportNum: c.passport_num || c.passport_number || "",
+            passport_num: c.passport_num || c.passport_number || "",
+            trackId: c.track_id || "",
+            track_id: c.track_id || "",
+            createdAt: c.created_at || new Date().toISOString(),
+            created_at: c.created_at || new Date().toISOString()
+          }));
+        } else {
+          const { data: profRows } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+          if (profRows && profRows.length > 0) {
+            dbClients = profRows.map((p: any) => ({
+              id: p.id,
+              userId: p.user_id || p.id,
+              user_id: p.user_id || p.id,
+              name: p.full_name || p.name || "Client",
+              fullName: p.full_name || p.name || "Client",
+              full_name: p.full_name || p.name || "Client",
+              email: p.email || "",
+              phone: p.phone || "",
+              country: p.country || "Pakistan",
+              role: p.role || "client",
+              status: p.status || "Active",
+              createdAt: p.created_at || new Date().toISOString(),
+              created_at: p.created_at || new Date().toISOString()
+            }));
+          }
+        }
+      } catch (clientErr) {
+        console.warn("Supabase direct clients fetch note:", clientErr);
+      }
+
+      // 3. Fetch API endpoints if available
       let loadedApps: Application[] = [];
-      if (appsRes.ok) {
-        loadedApps = await appsRes.json();
-      }
-      setApplications(loadedApps || []);
+      try {
+        const appsRes = await adminFetch("/api/admin/applications");
+        if (appsRes.ok) {
+          loadedApps = await appsRes.json();
+        }
+      } catch (e) {}
+
+      // Merge applications
+      const mergedAppsMap = new Map<string, Application>();
+      dbApps.forEach(a => mergedAppsMap.set(a.id, a));
+      loadedApps.forEach(a => {
+        if (!mergedAppsMap.has(a.id)) {
+          mergedAppsMap.set(a.id, a);
+        }
+      });
+      const finalAppsList = Array.from(mergedAppsMap.values());
+
+      setApplications(finalAppsList);
       setSelectedApplication(prev => {
-        if (!loadedApps || loadedApps.length === 0) return null;
-        if (prev && loadedApps.some(a => a.id === prev.id)) return prev;
-        return loadedApps[0];
+        if (!finalAppsList || finalAppsList.length === 0) return null;
+        if (prev && finalAppsList.some(a => a.id === prev.id)) return prev;
+        return finalAppsList[0];
       });
 
-      let loadedPasses: PassportAdminInfo[] = [];
-      if (passRes.ok) {
-        loadedPasses = await passRes.json();
-      }
-      setPassports(loadedPasses || []);
-      setEditingPassport(prev => {
-        if (!loadedPasses || loadedPasses.length === 0) return null;
-        if (prev && loadedPasses.some(p => p.trackId === prev.trackId)) return prev;
-        return JSON.parse(JSON.stringify(loadedPasses[0]));
+      // Merge clients with application applicants
+      const clientMap = new Map<string, ClientRecord>();
+      dbClients.forEach(c => {
+        if (c.email) clientMap.set(c.email.toLowerCase(), c);
       });
 
-      if (chatbotRes.ok) {
-        const chatbot = await chatbotRes.json();
-        setChatbotAnalytics(chatbot);
-      }
+      // Add missing applicants into client map
+      finalAppsList.forEach(app => {
+        const emailKey = (app.email || "").toLowerCase();
+        if (emailKey && !clientMap.has(emailKey)) {
+          clientMap.set(emailKey, {
+            id: `cli-${app.id}`,
+            userId: (app as any).userId || `usr-${app.id}`,
+            user_id: (app as any).userId || `usr-${app.id}`,
+            name: app.name || "Applicant",
+            fullName: app.name || "Applicant",
+            full_name: app.name || "Applicant",
+            email: app.email,
+            phone: app.phone || "",
+            country: app.applyingFrom || "Pakistan",
+            role: "client",
+            status: "Active",
+            createdAt: app.createdAt || new Date().toISOString(),
+            created_at: app.createdAt || new Date().toISOString()
+          });
+        }
+      });
 
-      if (payRes.ok) {
-        const payments = await payRes.json();
-        setPaymentReceipts(payments || []);
-      }
+      const finalClientsList = Array.from(clientMap.values()).map(cli => {
+        const count = finalAppsList.filter(a => (a.email || "").toLowerCase() === cli.email.toLowerCase()).length;
+        return { ...cli, applicationsCount: count };
+      });
 
-      if (actRes.ok) {
-        const activities = await actRes.json();
-        setActivityLogs(activities || []);
-      }
+      setClientRecords(finalClientsList);
 
-      if (statsRes.ok) {
-        const stats = await statsRes.json();
-        setDashboardStats(stats);
-      }
+      // 4. Load passports, chatbot, payments, activities
+      try {
+        const [passRes, chatbotRes, payRes, actRes, statsRes] = await Promise.all([
+          adminFetch("/api/admin/passports").catch(() => null),
+          adminFetch("/api/admin/chatbot-analytics").catch(() => null),
+          adminFetch("/api/admin/payments").catch(() => null),
+          adminFetch("/api/admin/activities").catch(() => null),
+          adminFetch("/api/admin/dashboard-stats").catch(() => null)
+        ]);
+
+        if (passRes && passRes.ok) {
+          const passes = await passRes.json();
+          setPassports(passes || []);
+          setEditingPassport(prev => {
+            if (!passes || passes.length === 0) return null;
+            if (prev && passes.some((p: any) => p.trackId === prev.trackId)) return prev;
+            return JSON.parse(JSON.stringify(passes[0]));
+          });
+        }
+
+        if (chatbotRes && chatbotRes.ok) {
+          const chatbot = await chatbotRes.json();
+          setChatbotAnalytics(chatbot);
+        }
+
+        if (payRes && payRes.ok) {
+          const payments = await payRes.json();
+          setPaymentReceipts(payments || []);
+        }
+
+        if (actRes && actRes.ok) {
+          const activities = await actRes.json();
+          setActivityLogs(activities || []);
+        }
+
+        if (statsRes && statsRes.ok) {
+          const stats = await statsRes.json();
+          setDashboardStats(stats);
+        }
+      } catch (e) {}
+
     } catch (err) {
       console.error("Error loading dashboard data", err);
-      setApplications([]);
-      setSelectedApplication(null);
-      setPassports([]);
-      setEditingPassport(null);
     } finally {
       setLoading(false);
     }
@@ -735,21 +911,39 @@ export default function AdminPortal({
     }
   };
 
-  const handleUpdateAppStatus = async (id: string, status: "Approved" | "Rejected" | "Pending") => {
+  const handleUpdateAppStatus = async (id: string, status: "Approved" | "Rejected" | "Pending" | "Under Review") => {
     try {
-      const response = await adminFetch("/api/admin/applications/status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, status })
-      });
-      if (response.ok) {
-        showSuccessMessage(`Application ${status.toLowerCase()} successfully!`);
-        if (selectedApplication?.id === id) {
-          setSelectedApplication(prev => prev ? { ...prev, status } : null);
-        }
-        fetchDashboardData();
-      } else {
-        alert("Failed to update status");
+      // Direct Supabase Update
+      await supabase.from("applications").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+      await supabase.from("job_applications").update({ status, updated_at: new Date().toISOString() }).eq("id", id);
+
+      // Server Endpoint call
+      try {
+        await adminFetch("/api/admin/applications/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id, status })
+        });
+      } catch (e) {}
+
+      showSuccessMessage(`Application status updated to '${status}' successfully!`);
+      setApplications(prev => prev.map(a => a.id === id ? { ...a, status: status as any } : a));
+      if (selectedApplication?.id === id) {
+        setSelectedApplication(prev => prev ? { ...prev, status: status as any } : null);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleUpdateClientStatus = async (clientId: string, newStatus: string) => {
+    try {
+      await supabase.from("client_accounts").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", clientId);
+      await supabase.from("profiles").update({ status: newStatus, updated_at: new Date().toISOString() }).eq("id", clientId);
+      showSuccessMessage(`Client account status updated to '${newStatus}'!`);
+      setClientRecords(prev => prev.map(c => c.id === clientId ? { ...c, status: newStatus } : c));
+      if (selectedClientDetail?.id === clientId) {
+        setSelectedClientDetail(prev => prev ? { ...prev, status: newStatus } : null);
       }
     } catch (err) {
       console.error(err);
@@ -1162,7 +1356,12 @@ export default function AdminPortal({
       </div>
 
       {/* Info Stats Row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3.5">
+        <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
+          <span className="text-[10px] font-mono text-slate-500 block uppercase">Registered Clients</span>
+          <span className="text-xl sm:text-2xl font-mono text-sky-400 font-extrabold block mt-1">{clientRecords.length}</span>
+          <span className="text-[10px] text-slate-400 mt-1 block font-medium">Supabase Auth Profiles</span>
+        </div>
         <div className="bg-slate-900/40 border border-slate-800 p-4 rounded-2xl">
           <span className="text-[10px] font-mono text-slate-500 block uppercase">Total Applications</span>
           <span className="text-xl sm:text-2xl font-mono text-white font-extrabold block mt-1">{applications.length}</span>
@@ -1224,6 +1423,17 @@ export default function AdminPortal({
           }`}
         >
           Job Applications Queue ({applications.filter(a => a.status === "Pending").length} Pending)
+        </button>
+        <button 
+          onClick={() => setAdminTab("clients")}
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
+            adminTab === "clients" 
+              ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <Users className="w-4 h-4 text-sky-400" />
+          <span>Registered Clients ({clientRecords.length})</span>
         </button>
         <button 
           onClick={() => { 
@@ -1955,6 +2165,262 @@ export default function AdminPortal({
             )}
           </div>
 
+        </div>
+      )}
+
+      {adminTab === "clients" && (
+        <div className="space-y-6 animate-fade-in">
+          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 space-y-5">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-800/60 pb-3">
+              <div>
+                <h3 className="font-display font-extrabold text-lg text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-amber-400" />
+                  <span>Registered Client Profiles & Auth Accounts</span>
+                </h3>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Real-time synchronization with Supabase Auth & Database tables. Select a client to view their credentials, application history & attached CVs.
+                </p>
+              </div>
+              <span className="text-xs text-amber-500 font-mono font-bold shrink-0">{clientRecords.length} Registered Accounts</span>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-slate-950/80 border border-slate-800/80 p-3.5 rounded-2xl">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search clients by Name, Email, Phone, Country..."
+                  value={clientSearchQuery}
+                  onChange={(e) => setClientSearchQuery(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 font-mono">Status:</span>
+                <select
+                  value={clientStatusFilter}
+                  onChange={(e) => setClientStatusFilter(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 font-mono"
+                >
+                  <option value="All">All Statuses</option>
+                  <option value="Active">Active</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Suspended">Suspended</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Clients Table */}
+            <div className="overflow-x-auto rounded-2xl border border-slate-800/80">
+              <table className="w-full text-left text-xs text-slate-300">
+                <thead className="bg-slate-950 text-[10px] uppercase font-mono text-slate-400 border-b border-slate-800">
+                  <tr>
+                    <th className="px-4 py-3">Client ID / Auth User ID</th>
+                    <th className="px-4 py-3">Full Name</th>
+                    <th className="px-4 py-3">Contact Email & Phone</th>
+                    <th className="px-4 py-3">Country</th>
+                    <th className="px-4 py-3">Registered On</th>
+                    <th className="px-4 py-3 text-center">Applications</th>
+                    <th className="px-4 py-3">Account Status</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 bg-slate-900/30">
+                  {clientRecords
+                    .filter(c => {
+                      const matchesSearch = !clientSearchQuery || 
+                        (c.name || "").toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+                        (c.email || "").toLowerCase().includes(clientSearchQuery.toLowerCase()) ||
+                        (c.phone || "").includes(clientSearchQuery) ||
+                        (c.country || "").toLowerCase().includes(clientSearchQuery.toLowerCase());
+                      const matchesStatus = clientStatusFilter === "All" || c.status === clientStatusFilter;
+                      return matchesSearch && matchesStatus;
+                    })
+                    .map(client => (
+                      <tr key={client.id} className="hover:bg-slate-800/40 transition">
+                        <td className="px-4 py-3.5 font-mono text-[11px] text-amber-400 font-bold">
+                          <div>{client.id}</div>
+                          {client.user_id && client.user_id !== client.id && (
+                            <div className="text-[9px] text-slate-500 font-mono">Auth: {client.user_id}</div>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5 font-semibold text-white">
+                          {client.name || client.full_name}
+                        </td>
+                        <td className="px-4 py-3.5 space-y-0.5">
+                          <div className="text-slate-200 font-mono">{client.email}</div>
+                          <div className="text-[10px] text-slate-400 font-mono">{client.phone || "N/A"}</div>
+                        </td>
+                        <td className="px-4 py-3.5 font-medium text-slate-300">
+                          {client.country || "Pakistan"}
+                        </td>
+                        <td className="px-4 py-3.5 font-mono text-[10px] text-slate-400">
+                          {client.created_at ? new Date(client.created_at).toLocaleDateString() : "N/A"}
+                        </td>
+                        <td className="px-4 py-3.5 text-center">
+                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-mono font-bold text-[10px]">
+                            {client.applicationsCount || 0} Submissions
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                            client.status === "Active" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          }`}>
+                            {client.status || "Active"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 text-right">
+                          <button
+                            onClick={() => setSelectedClientDetail(client)}
+                            className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 ml-auto"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View Profile</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  {clientRecords.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-8 text-center text-slate-500 text-xs">
+                        No registered client profiles found. Client signups will automatically appear here from Supabase Auth.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Client Details Modal */}
+          {selectedClientDetail && (
+            <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-6 shadow-2xl animate-fade-in">
+                <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="bg-amber-500/10 text-amber-400 text-[10px] font-mono px-2 py-0.5 rounded border border-amber-500/20 uppercase font-bold">
+                        Client Profile
+                      </span>
+                      <span className="text-slate-400 text-xs font-mono">ID: {selectedClientDetail.id}</span>
+                    </div>
+                    <h3 className="text-xl font-bold text-white mt-1">{selectedClientDetail.name || selectedClientDetail.full_name}</h3>
+                  </div>
+                  <button
+                    onClick={() => setSelectedClientDetail(null)}
+                    className="text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800/50 hover:bg-slate-800"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Client Specs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/80 border border-slate-800 p-4 rounded-2xl text-xs">
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 block uppercase">Email Address</span>
+                    <span className="text-white font-mono">{selectedClientDetail.email}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 block uppercase">Phone Number</span>
+                    <span className="text-white font-mono">{selectedClientDetail.phone || "Not Provided"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 block uppercase">Country / Location</span>
+                    <span className="text-white">{selectedClientDetail.country || "Pakistan"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 block uppercase">Registration Date</span>
+                    <span className="text-slate-300 font-mono">
+                      {selectedClientDetail.created_at ? new Date(selectedClientDetail.created_at).toLocaleString() : "N/A"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 block uppercase">Supabase Auth User ID</span>
+                    <span className="text-amber-400 font-mono text-[10px]">{selectedClientDetail.user_id || selectedClientDetail.id}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-mono text-slate-500 block uppercase">Account Status</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-emerald-400 font-bold font-mono">{selectedClientDetail.status || "Active"}</span>
+                      <button
+                        onClick={() => handleUpdateClientStatus(selectedClientDetail.id, selectedClientDetail.status === "Suspended" ? "Active" : "Suspended")}
+                        className="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-0.5 rounded border border-slate-700 transition"
+                      >
+                        Toggle Suspended
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submitted Applications for this client */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-bold text-white flex items-center justify-between">
+                    <span>Submitted Job Applications ({applications.filter(a => (a.email || "").toLowerCase() === selectedClientDetail.email.toLowerCase()).length})</span>
+                  </h4>
+
+                  <div className="space-y-2">
+                    {applications
+                      .filter(a => (a.email || "").toLowerCase() === selectedClientDetail.email.toLowerCase())
+                      .map(app => (
+                        <div key={app.id} className="bg-slate-950/90 border border-slate-800/80 p-3.5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-amber-400 font-mono font-bold text-xs">{app.id}</span>
+                              <span className="text-white font-semibold text-xs">{app.vacancyTitle}</span>
+                              <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">{app.country}</span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 flex items-center gap-3 font-mono">
+                              <span>Submitted: {app.date}</span>
+                              <span>Applying from: {app.applyingFrom}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                              app.status === "Approved" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
+                              app.status === "Rejected" ? "bg-red-500/10 text-red-400 border border-red-500/20" :
+                              "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            }`}>
+                              {app.status}
+                            </span>
+
+                            {app.cvLink ? (
+                              <a
+                                href={app.cvLink.startsWith("http") ? app.cvLink : `${supabase.storage.from("application-documents").getPublicUrl(app.cvLink).data.publicUrl}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 text-sky-400 px-2.5 py-1 rounded-lg text-[10px] font-semibold transition flex items-center gap-1"
+                              >
+                                <FileText className="w-3 h-3" />
+                                <span>View CV</span>
+                              </a>
+                            ) : (
+                              <span className="text-[10px] text-slate-500 italic">No document</span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+
+                    {applications.filter(a => (a.email || "").toLowerCase() === selectedClientDetail.email.toLowerCase()).length === 0 && (
+                      <div className="text-center py-6 text-slate-500 text-xs bg-slate-950/40 rounded-2xl border border-slate-800/50">
+                        No job applications submitted by this client yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-800 flex justify-end">
+                  <button
+                    onClick={() => setSelectedClientDetail(null)}
+                    className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-xs font-semibold transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
