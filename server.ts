@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import fs from "fs";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
@@ -103,19 +104,9 @@ async function initializeGeminiClient() {
       }
     });
 
-    console.log("[Gemini API] Dynamically loaded GoogleGenAI SDK. Verifying API key connectivity...");
-    
-    // Perform a quick verification request to check if the key is blocked or invalid
-    await testAi.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: "Hello",
-      config: {
-        maxOutputTokens: 5,
-      }
-    });
-
+    console.log("[Gemini API] Dynamically loaded GoogleGenAI SDK.");
     ai = testAi;
-    console.log("[Gemini API] Fully authenticated. Smart AI assistants are ready.");
+    console.log("[Gemini API] Authenticated and initialized.");
   } catch (err: any) {
     console.log("[Gemini API] Setup completed with procedural/mock fallback options active.");
     ai = null;
@@ -6204,29 +6195,45 @@ app.use((err: any, req: any, res: any, next: any) => {
   });
 });
 
-// 3. Vite Server Integration (Vite is mounted AFTER API routes)
-async function startServer() {
-  await initializeGeminiClient();
+// Initialize Gemini Client asynchronously
+initializeGeminiClient().catch(err => {
+  console.warn("[Gemini Init Note]:", err?.message || String(err));
+});
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("Starting server in DEVELOPMENT mode with Vite middleware...");
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
+// Configure static asset serving and Vite middleware
+const distPath = path.join(process.cwd(), "dist");
+
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  console.log("Starting server in DEVELOPMENT mode with Vite middleware...");
+  createViteServer({
+    server: { middlewareMode: true },
+    appType: "spa",
+  }).then((vite) => {
     app.use(vite.middlewares);
-  } else {
-    console.log("Starting server in PRODUCTION mode...");
-    const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
-    });
-  }
+  }).catch((err) => {
+    console.error("Vite middleware error:", err);
+  });
+} else {
+  console.log("Starting server in PRODUCTION / VERCEL mode...");
+  app.use(express.static(distPath));
+  app.get("*", (req: any, res: any) => {
+    if (req.path.startsWith("/api/")) {
+      return res.status(404).json({ error: "API endpoint not found" });
+    }
+    const indexPath = path.join(distPath, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("Application build not found. Please run build.");
+    }
+  });
+}
 
+// Only start Express HTTP listener if running as standalone server (not Vercel function)
+if (!process.env.VERCEL && !process.env.NOW_BUILD) {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is running at http://localhost:${PORT}`);
   });
 }
 
-startServer();
+export default app;

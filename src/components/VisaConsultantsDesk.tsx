@@ -658,7 +658,6 @@ export default function VisaConsultantsDesk({
           bookingDate,
           bookingTime,
           bookingTier,
-          clientName,
           clientEmail,
           clientPhone,
           notes: clientNotes
@@ -666,7 +665,7 @@ export default function VisaConsultantsDesk({
       });
 
       saveQuerySupabaseClient({
-        name: clientName || "Valued Client",
+        name: clientEmail ? clientEmail.split("@")[0] : "Valued Client",
         email: clientEmail,
         phone: clientPhone,
         subject: `Consultation Booking: ${selectedConsultant?.name || "Visa Expert"} (${bookingTier})`,
