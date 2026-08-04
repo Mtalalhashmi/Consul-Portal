@@ -839,14 +839,22 @@ export default function AdminPortal({
       try {
         const { data: passRows } = await supabase.from("passports").select("*");
         if (passRows && passRows.length > 0) {
-          const parsedPasses: PassportAdminInfo[] = passRows.map((pr: any) => ({
-            trackId: pr.track_id || pr.id,
-            name: pr.name || pr.full_name || "Client",
-            email: pr.email || "",
-            category: pr.category || "Work Visa",
-            country: pr.country || "Schengen",
-            steps: typeof pr.steps === "string" ? JSON.parse(pr.steps) : (pr.steps || [])
-          }));
+          const parsedPasses: PassportAdminInfo[] = passRows.map((pr: any) => {
+            const steps = typeof pr.steps === "string" ? JSON.parse(pr.steps) : (pr.steps || []);
+            const tFee = steps.reduce((sum: number, s: any) => sum + (Number(s.fee) || 0), 0);
+            const tPaid = steps.filter((s: any) => s.status === "completed" || s.feePaid).reduce((sum: number, s: any) => sum + (Number(s.fee) || 0), 0);
+            return {
+              trackId: pr.track_id || pr.id,
+              name: pr.name || pr.full_name || "Client",
+              email: pr.email || "",
+              passportNum: pr.passport_number || pr.passportNum || "",
+              category: pr.category || "Work Visa",
+              country: pr.country || "Schengen",
+              steps: steps,
+              totalFee: Number(pr.total_fee) || tFee || 0,
+              totalPaid: Number(pr.total_paid) || tPaid || 0
+            };
+          });
           setPassports(parsedPasses);
           setEditingPassport(prev => {
             if (!parsedPasses || parsedPasses.length === 0) return null;
@@ -874,14 +882,18 @@ export default function AdminPortal({
           const parsedPays: PaymentReceipt[] = payRows.map((py: any) => ({
             id: py.id,
             transactionId: py.transaction_id || py.id,
+            trackId: py.track_id || py.id,
+            clientName: py.sender_name || py.client_name || py.clientName || "Client",
+            clientEmail: py.client_email || py.email || "",
+            stepTitle: py.step_title || py.stepTitle || "Fee Verification",
             amount: Number(py.amount) || 0,
             currency: py.currency || "PKR",
             method: py.method || "Bank Transfer",
-            senderName: py.sender_name || py.client_name || "Client",
             status: py.status || "Pending",
             date: py.created_at ? new Date(py.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            timestamp: py.created_at || new Date().toISOString(),
             receiptUrl: py.receipt_url || py.receipt_path || "",
-            notes: py.notes || ""
+            receiptNotes: py.notes || py.receiptNotes || ""
           }));
           setPaymentReceipts(parsedPays);
         } else {
