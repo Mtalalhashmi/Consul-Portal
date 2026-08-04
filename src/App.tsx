@@ -100,8 +100,10 @@ export default function App() {
   const [selectedCountryGuide, setSelectedCountryGuide] = useState<string>("Saudi Arabia");
 
   // Dynamic Settings States
-  const [whatsAppNum, setWhatsAppNum] = useState("16065154971");
-  const [whatsAppDisplay, setWhatsAppDisplay] = useState("+1 (606) 515-4971");
+  const [whatsAppNum, setWhatsAppNum] = useState("12513734858");
+  const [whatsAppDisplay, setWhatsAppDisplay] = useState("+1 (251) 373-4858");
+  const [whatsAppNum2, setWhatsAppNum2] = useState("447848186539");
+  const [whatsAppDisplay2, setWhatsAppDisplay2] = useState("+44 7848 186539");
   const [paymentMethods, setPaymentMethods] = useState<any[]>(PAKISTANI_PAYMENT_METHODS);
 
   // Fetch settings from server on mount with resilient retries
@@ -910,7 +912,7 @@ export default function App() {
               onClick={() => setActiveTab("portal")} 
               className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === "portal" ? "bg-amber-500 text-slate-950 font-bold shadow" : "text-slate-400 hover:text-white"}`}
             >
-              Client Account 👤
+              Login / Sign In 👤
             </button>
             <button 
               id="tab-btn-admin"
@@ -922,36 +924,40 @@ export default function App() {
           </nav>
 
           {/* Call to Action Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button 
               id="consult-ai-btn"
               onClick={() => setIsChatOpen(true)}
-              className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-amber-500/50 hover:bg-slate-800 text-slate-200 hover:text-white transition py-2 px-4 rounded-xl text-xs sm:text-sm font-semibold"
+              className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-amber-500/50 hover:bg-slate-800 text-slate-200 hover:text-white transition py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold"
             >
               <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
               <span>Ask AI Consultant</span>
             </button>
-            <button 
-              id="hotline-btn"
-              onClick={() => {
-                alert(`ConsulPortal Phone & WhatsApp Contact:\nPhone / WhatsApp: ${whatsAppDisplay}\nEmail: process@consulportal.com.pk`);
-              }}
-              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-amber-600/10 hover:from-amber-500/20 hover:to-amber-600/20 text-amber-400 py-2 px-3.5 rounded-xl text-xs font-semibold border border-amber-500/20"
-            >
-              <PhoneCall className="w-3.5 h-3.5" />
-              <span>{whatsAppDisplay}</span>
-            </button>
             <a 
-              id="header-whatsapp-btn"
+              id="header-whatsapp-us-btn"
               href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden lg:flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2 px-3.5 rounded-xl text-xs font-semibold border border-emerald-500/20 transition-all"
+              className="hidden lg:flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2 px-3 rounded-xl text-xs font-semibold border border-emerald-500/20 transition-all font-mono"
+              title="WhatsApp US Line"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-emerald-400">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-emerald-400 shrink-0">
                 <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
               </svg>
-              <span>WhatsApp Chat</span>
+              <span>{whatsAppDisplay}</span>
+            </a>
+            <a 
+              id="header-whatsapp-uk-btn"
+              href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden xl:flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2 px-3 rounded-xl text-xs font-semibold border border-emerald-500/20 transition-all font-mono"
+              title="WhatsApp UK Line"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-emerald-400 shrink-0">
+                <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
+              </svg>
+              <span>{whatsAppDisplay2}</span>
             </a>
 
             {/* Mobile Menu Toggle Button */}
@@ -1058,7 +1064,7 @@ export default function App() {
               onClick={() => { setActiveTab("portal"); setIsMobileMenuOpen(false); }} 
               className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "portal" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white bg-slate-900/30"}`}
             >
-              <span>Client Account 👤</span>
+              <span>Login / Sign In 👤</span>
               <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Secure Portal</span>
             </button>
             <button 
@@ -1069,22 +1075,30 @@ export default function App() {
               <span>Admin Portal 🔐</span>
               <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-amber-400 py-0.5 px-2 rounded-full">Staff Gateway</span>
             </button>
-            <a 
-              id="mobile-whatsapp-btn"
-              href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-600 transition flex items-center justify-between shadow-lg"
-            >
-              <span className="flex items-center gap-2">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                  <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-                </svg>
-                <span>Direct WhatsApp Support</span>
-              </span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-emerald-400 py-0.5 px-2 rounded-full">Chat Active</span>
-            </a>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <a 
+                id="mobile-whatsapp-us-btn"
+                href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-600 transition flex items-center justify-between shadow-lg font-mono"
+              >
+                <span className="truncate">{whatsAppDisplay}</span>
+                <span className="text-[8px] bg-slate-950 text-emerald-400 px-1.5 py-0.5 rounded font-bold">US</span>
+              </a>
+              <a 
+                id="mobile-whatsapp-uk-btn"
+                href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-600 transition flex items-center justify-between shadow-lg font-mono"
+              >
+                <span className="truncate">{whatsAppDisplay2}</span>
+                <span className="text-[8px] bg-slate-950 text-emerald-400 px-1.5 py-0.5 rounded font-bold">UK</span>
+              </a>
+            </div>
           </div>
         )}
       </header>
@@ -3551,20 +3565,30 @@ export default function App() {
                 <p className="text-[11px] leading-relaxed">
                   First St SE, Washington, D.C. 20004
                 </p>
-                <p className="text-[11px] text-amber-400 font-bold pt-1">
-                  Phone: {whatsAppDisplay}
-                </p>
-                <a 
-                  href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 transition-colors"
-                >
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                    <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-                  </svg>
-                  <span>Chat on WhatsApp (Online)</span>
-                </a>
+                <div className="space-y-1 pt-1">
+                  <a 
+                    href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 transition-colors font-mono"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
+                      <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
+                    </svg>
+                    <span>US: {whatsAppDisplay}</span>
+                  </a>
+                  <a 
+                    href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 transition-colors font-mono"
+                  >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
+                      <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
+                    </svg>
+                    <span>UK: {whatsAppDisplay2}</span>
+                  </a>
+                </div>
                 <div className="pt-2">
                   <button 
                     onClick={() => { setActiveTab("admin"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
@@ -3586,23 +3610,42 @@ export default function App() {
       </footer>
 
       {/* FLOATING WHATSAPP BUTTON (Fixed on Right Side) */}
-      <div id="whatsapp-float-container" className="fixed bottom-20 right-3 sm:bottom-24 sm:right-6 z-40">
+      <div id="whatsapp-float-container" className="fixed bottom-20 right-3 sm:bottom-24 sm:right-6 z-40 flex flex-col gap-2 items-end">
         <a 
-          href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%2520services.`}
+          href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
           target="_blank"
           rel="noopener noreferrer"
-          id="whatsapp-floating-btn"
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-2xl hover:bg-emerald-400 hover:scale-110 transition-all duration-300 group relative"
-          title="Chat with us on WhatsApp"
+          id="whatsapp-floating-us-btn"
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-2xl hover:bg-emerald-400 hover:scale-110 transition-all duration-300 group relative"
+          title={`Chat with US WhatsApp (${whatsAppDisplay})`}
         >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 sm:w-8 sm:h-8 text-slate-950">
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950">
             <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
           </svg>
-          <span className="absolute right-14 sm:right-16 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap shadow-xl">
-            Chat on WhatsApp (Online) 💬
+          <span className="absolute right-13 sm:right-14 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap shadow-xl">
+            WhatsApp US ({whatsAppDisplay}) 💬
           </span>
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full border border-slate-950 hidden sm:inline-block">
-            Online
+          <span className="absolute -top-1 -right-1 bg-emerald-700 text-white text-[7px] font-bold px-1 rounded border border-slate-950 font-mono">
+            US
+          </span>
+        </a>
+
+        <a 
+          href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
+          target="_blank"
+          rel="noopener noreferrer"
+          id="whatsapp-floating-uk-btn"
+          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-emerald-600 text-slate-950 flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:scale-110 transition-all duration-300 group relative"
+          title={`Chat with UK WhatsApp (${whatsAppDisplay2})`}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950">
+            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
+          </svg>
+          <span className="absolute right-13 sm:right-14 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap shadow-xl">
+            WhatsApp UK ({whatsAppDisplay2}) 💬
+          </span>
+          <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[7px] font-bold px-1 rounded border border-slate-950 font-mono">
+            UK
           </span>
         </a>
       </div>
@@ -3962,10 +4005,10 @@ export default function App() {
                   {isSubmittingApply ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
-                      <span>Submitting Pre-Evaluation...</span>
+                      <span>Submitting Application...</span>
                     </>
                   ) : (
-                    "Submit Pre-Evaluation"
+                    "Submit Application"
                   )}
                 </button>
 

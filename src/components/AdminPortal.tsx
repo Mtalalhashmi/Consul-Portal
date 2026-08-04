@@ -3183,16 +3183,16 @@ export default function AdminPortal({
               <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-wider">📞 WhatsApp Support Routing</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-mono uppercase block">WhatsApp Country/Number ID (Digits Only)</label>
+                  <label className="text-[10px] text-slate-400 font-mono uppercase block">WhatsApp Primary Country/Number ID (Digits Only)</label>
                   <input 
                     type="text" 
                     required
-                    placeholder="e.g. 16065154971"
+                    placeholder="e.g. 12513734858"
                     value={localWhatsAppNum}
                     onChange={(e) => setLocalWhatsAppNum(e.target.value.replace(/\D/g, ''))}
                     className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
                   />
-                  <span className="text-[10px] text-slate-500 leading-normal block">Used for forming instant `wa.me` links without spaces or symbols (e.g. 16065154971).</span>
+                  <span className="text-[10px] text-slate-500 leading-normal block">Primary US WhatsApp: +1 (251) 373-4858 | UK WhatsApp: +44 7848 186539</span>
                 </div>
 
                 <div className="space-y-1.5">
@@ -3200,7 +3200,7 @@ export default function AdminPortal({
                   <input 
                     type="text" 
                     required
-                    placeholder="e.g. +1 (606) 515-4971"
+                    placeholder="e.g. +1 (251) 373-4858"
                     value={localWhatsAppDisplay}
                     onChange={(e) => setLocalWhatsAppDisplay(e.target.value)}
                     className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500"
