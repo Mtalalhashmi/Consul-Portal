@@ -43,6 +43,7 @@ import {
 import { VACANCIES, PARTNERS, REVIEWS, CITY_CARDS, PAKISTANI_PAYMENT_METHODS } from "./data";
 import { getJobImageByTitle } from "./utils/jobImages";
 import { Vacancy, PassportTrack, FlightOffer, FlightSearch } from "./types";
+import { AnimatedCounter } from "./components/AnimatedCounter";
 import AdminPortal from "./components/AdminPortal";
 import { BrandLogoDispatcher } from "./components/BrandLogos";
 import GlobalJobDirectory from "./components/GlobalJobDirectory";
@@ -306,16 +307,16 @@ export default function App() {
   };
 
   // Fetch passport status from backend API
-  const handleTrackPassport = async (idToTrack: string, emailToTrack?: string) => {
+  const handleTrackPassport = async (idToTrack: string, refToTrack?: string) => {
     const cleanId = (idToTrack || "").trim();
-    const cleanEmail = (emailToTrack || trackingEmail || "").trim();
+    const cleanRef = (refToTrack || trackingEmail || "").trim();
     
     if (!cleanId) {
       setTrackError("Please enter a valid passport or tracking ID.");
       return;
     }
-    if (!cleanEmail) {
-      setTrackError("Please enter your registered email address.");
+    if (!cleanRef) {
+      setTrackError("Please enter your file reference number.");
       return;
     }
     
@@ -323,10 +324,10 @@ export default function App() {
     setTrackError("");
     setPaymentSuccessMsg("");
     try {
-      const response = await fetch(`/api/passport/track?trackId=${encodeURIComponent(cleanId)}&email=${encodeURIComponent(cleanEmail)}`);
+      const response = await fetch(`/api/passport/track?trackId=${encodeURIComponent(cleanId)}&refNum=${encodeURIComponent(cleanRef)}&email=${encodeURIComponent(cleanRef)}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Access Denied: Registered email or Passport/Tracking ID mismatch.");
+        throw new Error(errorData.error || "Access Denied: Reference number or Passport/Tracking ID mismatch.");
       }
       const data = await response.json();
       setTrackData(data);
@@ -1577,7 +1578,9 @@ export default function App() {
               {/* Verified Trust Badges */}
               <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-900 max-w-lg">
                 <div>
-                  <h3 className="text-2xl font-bold text-white font-display">2,445+</h3>
+                  <h3 className="text-2xl font-bold text-white font-display">
+                    <AnimatedCounter target={2445} suffix="+" />
+                  </h3>
                   <p className="text-xs text-slate-400">Successful Reviews</p>
                 </div>
                 <div>
@@ -1612,14 +1615,14 @@ export default function App() {
                 <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-3">
                   <div>
                     <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
-                      Registered Email Address
+                      File Reference Number
                     </label>
                     <input 
-                      type="email" 
+                      type="text" 
                       value={trackingEmail}
                       onChange={(e) => setTrackingEmail(e.target.value)}
-                      placeholder="e.g. adnan@gmail.com"
-                      className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs w-full focus:outline-none focus:border-amber-500 text-slate-100"
+                      placeholder="e.g. REF-849201"
+                      className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs w-full focus:outline-none focus:border-amber-500 text-slate-100 font-mono"
                     />
                   </div>
                   <div>
@@ -2083,14 +2086,14 @@ export default function App() {
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
                       <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-widest">
-                        Registered Email Address
+                        File Reference Number
                       </label>
                       <input 
-                        type="email" 
+                        type="text" 
                         value={trackingEmail}
                         onChange={(e) => setTrackingEmail(e.target.value)}
-                        placeholder="candidate@email.com"
-                        className="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs w-full focus:outline-none focus:border-amber-500 text-slate-200"
+                        placeholder="e.g. REF-849201"
+                        className="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs w-full focus:outline-none focus:border-amber-500 text-slate-200 font-mono"
                       />
                     </div>
                     <div className="space-y-1">
@@ -2232,7 +2235,7 @@ export default function App() {
               <div className="text-center max-w-2xl mx-auto space-y-2">
                 <span className="text-xs font-mono text-amber-500 uppercase tracking-widest">Candidate Voices</span>
                 <h2 className="text-3xl font-display font-extrabold text-white">
-                  Trusted by Over 2,445 Applicants
+                  Trusted by Over <AnimatedCounter target={2445} suffix="+" /> Applicants
                 </h2>
                 <p className="text-sm text-slate-400">
                   Read genuine feedback from candidates who found vacancies and successfully tracked and stamped their passports.
@@ -2291,7 +2294,9 @@ export default function App() {
                   </div>
                 </div>
                 <div className="text-right sm:text-right text-center">
-                  <span className="text-2xl font-black text-amber-400 font-display">2,445 / 2,450</span>
+                  <span className="text-2xl font-black text-amber-400 font-display">
+                    <AnimatedCounter target={2445} /> / 2,450
+                  </span>
                   <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Perfect Files Complete</p>
                 </div>
               </div>
@@ -2650,14 +2655,14 @@ export default function App() {
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-mono text-slate-400 uppercase">
-                      Candidate Registered Email
+                      File Reference Number (Issued by Admin)
                     </label>
                     <input 
-                      type="email" 
+                      type="text" 
                       value={trackingEmail}
                       onChange={(e) => setTrackingEmail(e.target.value)}
-                      placeholder="e.g. adnan@gmail.com"
-                      className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 w-full"
+                      placeholder="e.g. REF-849201"
+                      className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500 text-slate-100 font-mono w-full"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2707,6 +2712,12 @@ export default function App() {
                     <div>
                       <span className="text-[10px] font-mono text-slate-400">PASSPORT OWNER</span>
                       <h3 className="font-display font-extrabold text-xl text-white">{trackData.name}</h3>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-mono text-slate-400 block text-right">REF NUMBER</span>
+                      <span className="font-mono text-xs text-amber-300 font-bold bg-amber-500/10 px-2.5 py-1 rounded border border-amber-500/20 block text-right">
+                        {trackData.referenceNumber || trackData.email || "N/A"}
+                      </span>
                     </div>
                     <div>
                       <span className="text-[10px] font-mono text-slate-400 block text-right">PASSPORT NO</span>

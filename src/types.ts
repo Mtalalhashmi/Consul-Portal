@@ -26,6 +26,7 @@ export interface PassportTrack {
   passportNum: string;
   country: string;
   category: string;
+  referenceNumber?: string;
   email?: string;
   trackId?: string;
   steps: PassportStep[];

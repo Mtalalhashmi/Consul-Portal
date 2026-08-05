@@ -121,6 +121,7 @@ const PREDEFINED_PASSPORTS: Record<string, {
   passportNum: string;
   country: string;
   category: string;
+  referenceNumber?: string;
   email?: string;
   steps: { title: string; desc: string; status: "completed" | "current" | "pending"; fee: number; feePaid: boolean }[];
   totalFee: number;
@@ -190,6 +191,7 @@ function getDeterministicPassport(trackId: string) {
     passportNum: string;
     country: string;
     category: string;
+    referenceNumber?: string;
     email?: string;
     steps: { title: string; desc: string; status: "completed" | "current" | "pending"; fee: number; feePaid: boolean }[];
     totalFee: number;
@@ -200,6 +202,7 @@ function getDeterministicPassport(trackId: string) {
     passportNum,
     country,
     category,
+    referenceNumber: "REF-" + (100000 + (absHash % 899999)),
     steps,
     totalFee,
     totalPaid,
@@ -4166,7 +4169,7 @@ app.get("/api/admin/passports", (req, res) => {
 // Admin endpoint to update passport step status and fees
 app.post("/api/admin/passports/update", (req, res) => {
   try {
-    const { trackId, steps, name, category, country, passportNum, email, cnic, isPremium } = req.body || {};
+    const { trackId, steps, name, category, country, passportNum, email, referenceNumber, refNum, cnic, isPremium } = req.body || {};
     if (!trackId) {
       return res.status(400).json({ error: "Reference Track ID is required." });
     }
@@ -4180,6 +4183,7 @@ app.post("/api/admin/passports/update", (req, res) => {
     if (category) passport.category = category;
     if (country) passport.country = country;
     if (email) passport.email = String(email).toLowerCase().trim();
+    if (referenceNumber || refNum) passport.referenceNumber = String(referenceNumber || refNum).toUpperCase().trim();
     if (cnic !== undefined) (passport as any).cnic = cnic;
     if (isPremium !== undefined) passport.isPremium = isPremium;
 
@@ -4284,23 +4288,41 @@ app.get("/api/admin/dashboard-stats", (req, res) => {
 // Passport tracking status endpoint
 app.get("/api/passport/track", (req, res) => {
   try {
-    const { trackId, email } = req.query;
-    if (!trackId || typeof trackId !== "string" || !trackId.trim()) {
-      return res.status(400).json({ error: "Tracking ID or Passport Number is required" });
+    const { trackId, email, refNum } = req.query;
+    const searchVal = (typeof trackId === "string" && trackId.trim()) || 
+                      (typeof refNum === "string" && refNum.trim()) || 
+                      (typeof email === "string" && email.trim()) || "";
+    
+    if (!searchVal) {
+      return res.status(400).json({ error: "Tracking ID, Passport Number, or Reference Number is required" });
     }
 
-    const upperId = trackId.toUpperCase().trim();
-    const cleanEmail = typeof email === "string" ? email.toLowerCase().trim() : "";
+    const upperId = searchVal.toUpperCase().trim();
+    const cleanRef = typeof refNum === "string" ? refNum.toUpperCase().trim() : (typeof email === "string" ? email.toUpperCase().trim() : "");
 
-    // Find user or application
+    // Check predefined passports first by key or referenceNumber
+    let matchedPassportKey = Object.keys(PREDEFINED_PASSPORTS).find(key => {
+      const p = PREDEFINED_PASSPORTS[key];
+      return key.toUpperCase() === upperId || 
+             p.passportNum?.toUpperCase() === upperId || 
+             p.referenceNumber?.toUpperCase() === upperId ||
+             (cleanRef && p.referenceNumber?.toUpperCase() === cleanRef);
+    });
+
+    const data = matchedPassportKey ? PREDEFINED_PASSPORTS[matchedPassportKey] : getDeterministicPassport(upperId);
+    if (!data.referenceNumber) {
+      data.referenceNumber = cleanRef || ("REF-" + Math.floor(100000 + Math.random() * 900000));
+    }
+
+    // Find user or application for name enrichment
     const matchedUser = USER_ACCOUNTS.find(u => 
-      (cleanEmail && u.email.toLowerCase() === cleanEmail) ||
+      (cleanRef && (u.email?.toUpperCase() === cleanRef || u.trackId?.toUpperCase() === cleanRef)) ||
       u.passportNum?.toUpperCase().trim() === upperId ||
       u.trackId?.toUpperCase().trim() === upperId
     );
 
     const matchedApp = APPLICATIONS.find(a => 
-      (cleanEmail && a.email.toLowerCase() === cleanEmail) ||
+      (cleanRef && (a.email?.toUpperCase() === cleanRef || a.id?.toUpperCase() === cleanRef)) ||
       a.id.toUpperCase().trim() === upperId ||
       a.trackingNumber?.toUpperCase().trim() === upperId ||
       a.passportNumber?.toUpperCase().trim() === upperId
@@ -4308,7 +4330,6 @@ app.get("/api/passport/track", (req, res) => {
 
     TRACKED_IDS.add(upperId);
 
-    const data = getDeterministicPassport(upperId);
     if (matchedUser) {
       data.name = matchedUser.name;
       if (matchedUser.passportNum) {

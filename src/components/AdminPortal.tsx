@@ -4,7 +4,7 @@ import {
   Lock, Check, X, RefreshCw, FileText, Database, 
   AlertCircle, TrendingUp, PlusCircle, User, Globe, Sliders, LogOut, DollarSign, ArrowRight, ShieldAlert, ShieldCheck, Mail, Sparkles, Send,
   Trash2, Clock, CheckSquare, Square, Filter, Calendar, AlertTriangle, Layers, Search,
-  CreditCard, Activity, Eye, CheckCircle2, XCircle, Receipt, Zap, UserCheck, FileCheck, Users
+  CreditCard, Activity, Eye, CheckCircle2, XCircle, Receipt, Zap, UserCheck, FileCheck, Users, Hash
 } from "lucide-react";
 import { PassportTrack, PassportStep } from "../types";
 
@@ -574,7 +574,9 @@ export default function AdminPortal({
   const [newPassportNum, setNewPassportNum] = useState("");
   const [newCategory, setNewCategory] = useState("");
   const [newCountry, setNewCountry] = useState("");
-  const [newEmail, setNewEmail] = useState("");
+  const [newRefNum, setNewRefNum] = useState(() => "REF-" + Math.floor(100000 + Math.random() * 900000));
+
+  const generateRandomRefNum = () => "REF-" + Math.floor(100000 + Math.random() * 900000);
 
   // Auto-select initial item whenever lists populate and none is selected
   useEffect(() => {
@@ -847,6 +849,7 @@ export default function AdminPortal({
               trackId: pr.track_id || pr.id,
               name: pr.name || pr.full_name || "Client",
               email: pr.email || "",
+              referenceNumber: pr.reference_number || pr.ref_num || pr.referenceNumber || pr.email || "REF-" + Math.floor(100000 + Math.random() * 900000),
               passportNum: pr.passport_number || pr.passportNum || "",
               category: pr.category || "Work Visa",
               country: pr.country || "Schengen",
@@ -1193,12 +1196,14 @@ export default function AdminPortal({
     if (!editingPassport) return;
 
     try {
+      const refToSave = editingPassport.referenceNumber || editingPassport.email || "REF-PASSPORT";
       // Direct Supabase Upsert
       await supabase.from("passports").upsert({
         id: editingPassport.trackId,
         track_id: editingPassport.trackId,
         name: editingPassport.name,
-        email: editingPassport.email,
+        email: refToSave,
+        reference_number: refToSave,
         category: editingPassport.category,
         country: editingPassport.country,
         steps: editingPassport.steps,
@@ -1212,7 +1217,9 @@ export default function AdminPortal({
           body: JSON.stringify({
             trackId: editingPassport.trackId,
             name: editingPassport.name,
-            email: editingPassport.email,
+            email: refToSave,
+            referenceNumber: refToSave,
+            refNum: refToSave,
             category: editingPassport.category,
             country: editingPassport.country,
             steps: editingPassport.steps
@@ -1220,7 +1227,7 @@ export default function AdminPortal({
         });
       } catch (e) {}
 
-      showSuccessMessage(`Passport file ${editingPassport.trackId} updated successfully!`);
+      showSuccessMessage(`Passport file ${editingPassport.trackId} updated successfully with Ref #: ${refToSave}!`);
       setEditingPassport(null);
       fetchDashboardData();
     } catch (err) {
@@ -1234,6 +1241,8 @@ export default function AdminPortal({
       alert("Please fill in all mandatory fields");
       return;
     }
+
+    const assignedRefNum = newRefNum || generateRandomRefNum();
 
     const defaultSteps = [
       { 
@@ -1265,7 +1274,8 @@ export default function AdminPortal({
         id: newTrackId,
         track_id: newTrackId,
         name: newClientName,
-        email: newEmail,
+        email: assignedRefNum,
+        reference_number: assignedRefNum,
         passport_number: newPassportNum,
         category: newCategory || "Work Visa Professional",
         country: newCountry,
@@ -1281,7 +1291,9 @@ export default function AdminPortal({
           body: JSON.stringify({
             trackId: newTrackId,
             name: newClientName,
-            email: newEmail,
+            email: assignedRefNum,
+            referenceNumber: assignedRefNum,
+            refNum: assignedRefNum,
             passportNum: newPassportNum,
             category: newCategory || "Work Visa Professional",
             country: newCountry,
@@ -1290,13 +1302,13 @@ export default function AdminPortal({
         });
       } catch (e) {}
 
-      showSuccessMessage(`New passport track file ${newTrackId} generated successfully! ${newEmail ? `Notification email dispatched to ${newEmail}` : ""}`);
+      showSuccessMessage(`New passport tracking file ${newTrackId} generated successfully! Reference Number: ${assignedRefNum}`);
       setNewTrackId("");
       setNewClientName("");
       setNewPassportNum("");
       setNewCategory("");
       setNewCountry("");
-      setNewEmail("");
+      setNewRefNum(generateRandomRefNum());
       fetchDashboardData();
     } catch (err: any) {
       console.error("Error creating file:", err);
@@ -2560,7 +2572,10 @@ export default function AdminPortal({
                        }`}
                      >
                       <td className="py-3 px-2 font-mono font-bold text-amber-400">{pass.trackId}</td>
-                      <td className="py-3 px-2 font-bold text-white">{pass.name}</td>
+                      <td className="py-3 px-2">
+                        <div className="font-bold text-white">{pass.name}</div>
+                        <div className="text-[10px] font-mono text-amber-300/80">Ref #: {pass.referenceNumber || pass.email || "N/A"}</div>
+                      </td>
                       <td className="py-3 px-2 text-slate-300">{pass.country}</td>
                       <td className="py-3 px-2 text-slate-400">
                         {pass.steps.filter(s => s.status === "completed").length}/3 Done
@@ -2649,17 +2664,36 @@ export default function AdminPortal({
                 </div>
 
                 <div className="col-span-2 space-y-1">
-                  <label className="block text-[9px] font-mono text-slate-400 uppercase flex items-center gap-1">
-                    <Mail className="w-2.5 h-2.5 text-amber-400" />
-                    <span>Candidate Gmail / Email Address (Auto-Dispatches Updates)</span>
+                  <label className="block text-[9px] font-mono text-slate-400 uppercase flex items-center justify-between">
+                    <span className="flex items-center gap-1 text-amber-400 font-bold">
+                      <Hash className="w-2.5 h-2.5" />
+                      <span>File Reference Number (For Tracking Verification)</span>
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={() => setNewRefNum(generateRandomRefNum())}
+                      className="text-[9px] text-amber-400 hover:underline font-mono"
+                    >
+                      ⚡ Auto-Generate Ref #
+                    </button>
                   </label>
-                  <input 
-                    type="email" 
-                    placeholder="candidate.email@gmail.com"
-                    value={newEmail}
-                    onChange={(e) => setNewEmail(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white w-full focus:outline-none focus:border-amber-500 font-mono"
-                  />
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. REF-849201"
+                      value={newRefNum}
+                      onChange={(e) => setNewRefNum(e.target.value.toUpperCase())}
+                      className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white w-full focus:outline-none focus:border-amber-500 font-mono text-amber-300 font-bold"
+                    />
+                    <button 
+                      type="button"
+                      onClick={() => setNewRefNum(generateRandomRefNum())}
+                      className="bg-slate-800 hover:bg-slate-700 text-amber-400 font-mono text-[10px] px-3 rounded-lg border border-slate-700 whitespace-nowrap"
+                    >
+                      Generate
+                    </button>
+                  </div>
                 </div>
 
                 <button 
@@ -2725,16 +2759,22 @@ export default function AdminPortal({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-mono text-slate-400 uppercase flex items-center gap-1">
-                      <Mail className="w-2.5 h-2.5 text-amber-400" />
-                      <span>Candidate Gmail / Email Address</span>
+                    <label className="block text-[10px] font-mono text-slate-400 uppercase flex items-center justify-between">
+                      <span className="flex items-center gap-1 text-amber-400 font-bold">
+                        <Hash className="w-2.5 h-2.5" />
+                        <span>File Reference Number</span>
+                      </span>
                     </label>
                     <input 
-                      type="email"
-                      placeholder="candidate.email@gmail.com"
-                      value={editingPassport.email || ""}
-                      onChange={(e) => setEditingPassport({ ...editingPassport, email: e.target.value })}
-                      className="bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                      type="text"
+                      placeholder="e.g. REF-849201"
+                      value={editingPassport.referenceNumber || editingPassport.email || ""}
+                      onChange={(e) => setEditingPassport({ 
+                        ...editingPassport, 
+                        referenceNumber: e.target.value.toUpperCase(),
+                        email: e.target.value
+                      })}
+                      className="bg-slate-950 border border-slate-850 rounded-xl p-2.5 text-amber-300 font-bold w-full focus:outline-none focus:border-amber-500 font-mono"
                     />
                   </div>
                 </div>
