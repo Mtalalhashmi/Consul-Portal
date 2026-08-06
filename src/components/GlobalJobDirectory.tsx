@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { saveApplicationSupabaseClient, uploadFileSupabaseClient } from "../lib/supabase";
+import { saveStoredApplication } from "../lib/dataStore";
 import { 
   Search, 
   MapPin, 
@@ -813,7 +814,7 @@ export default function GlobalJobDirectory({
         }
       }
 
-      await saveApplicationSupabaseClient({
+      const appPayload = {
         id: randomId,
         trackingNumber: randomId,
         name: candidateName,
@@ -827,8 +828,14 @@ export default function GlobalJobDirectory({
         passportNumber: passportNumber,
         applyingFrom: "Pakistan",
         documentPath: uploadedDocPath,
-        cvLink: uploadedDocPath
-      });
+        cvLink: uploadedDocPath,
+        status: "Pending",
+        date: new Date().toISOString().split("T")[0],
+        createdAt: new Date().toISOString()
+      };
+
+      await saveStoredApplication(appPayload);
+      await saveApplicationSupabaseClient(appPayload);
 
       // Optional server ping
       fetch("/api/applications", {

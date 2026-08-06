@@ -6,7 +6,8 @@ import {
   getStoredClients, saveStoredClient,
   getStoredPayments, saveStoredPayment,
   getStoredActivities, addStoredActivity,
-  getStoredSettings, saveStoredSettings
+  getStoredSettings, saveStoredSettings,
+  fetchDocsFromFirestore
 } from "../lib/dataStore";
 import { 
   Lock, Check, X, RefreshCw, FileText, Database, 
@@ -56,6 +57,7 @@ export interface PaymentReceipt {
   date: string;
   timestamp: string;
   receiptNotes?: string;
+  receiptUrl?: string;
 }
 
 export interface ActivityLog {
@@ -687,7 +689,7 @@ export default function AdminPortal({
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      // 1. Query Supabase Applications directly
+      // 1. Fetch Applications from all sources
       let dbApps: Application[] = [];
       try {
         const { data: appRows } = await supabase.from("applications").select("*").order("created_at", { ascending: false });
@@ -739,7 +741,96 @@ export default function AdminPortal({
         console.warn("Supabase direct applications fetch note:", sbErr);
       }
 
-      // 2. Query Supabase Client Accounts directly
+      let loadedApps: Application[] = [];
+      try {
+        const appsRes = await adminFetch("/api/admin/applications");
+        if (appsRes.ok) {
+          loadedApps = await appsRes.json();
+        }
+      } catch (e) {}
+
+      const localApps = getStoredApplications();
+      const firestoreApps = await fetchDocsFromFirestore("applications").catch(() => []);
+
+      const mergedAppsMap = new Map<string, Application>();
+
+      // Demo fallback
+      const demoApps: Application[] = [
+        {
+          id: "app-demo-1",
+          vacancyId: "job-1",
+          vacancyTitle: "Senior Civil Site Engineer",
+          country: "Saudi Arabia",
+          name: "Adnan Khan",
+          phone: "+92 300 1234567",
+          email: "adnan.k@gmail.com",
+          status: "Approved",
+          date: new Date().toISOString().split("T")[0],
+          createdAt: new Date().toISOString(),
+          applyingFrom: "Pakistan",
+          cvLink: "",
+          coverLetter: "Interested in Aramco Civil Site position.",
+          passportNumber: "PK8492011",
+          cnic: "35202-1234567-1",
+          trackingNumber: "SA-849201"
+        },
+        {
+          id: "app-demo-2",
+          vacancyId: "job-2",
+          vacancyTitle: "Renewable Energy Specialist",
+          country: "Germany",
+          name: "Zara Malik",
+          phone: "+92 321 9876543",
+          email: "zara.malik@outlook.com",
+          status: "Pending",
+          date: new Date().toISOString().split("T")[0],
+          createdAt: new Date().toISOString(),
+          applyingFrom: "Pakistan",
+          cvLink: "",
+          coverLetter: "Electrical engineer eager to relocate to Frankfurt.",
+          passportNumber: "PK9102834",
+          cnic: "35201-7654321-2",
+          trackingNumber: "EU-910283"
+        }
+      ];
+
+      demoApps.forEach(a => mergedAppsMap.set(a.id, a));
+      dbApps.forEach(a => mergedAppsMap.set(a.id, a));
+      loadedApps.forEach(a => mergedAppsMap.set(a.id, a));
+      firestoreApps.forEach((fa: any) => {
+        const id = fa.id || fa.trackingNumber;
+        if (id) {
+          mergedAppsMap.set(id, {
+            id,
+            vacancyId: fa.vacancyId || "job-1",
+            vacancyTitle: fa.vacancyTitle || "Visa Placement",
+            country: fa.targetCountry || fa.country || "Schengen",
+            name: fa.applicantName || fa.name || "Applicant",
+            phone: fa.phone || "",
+            email: fa.applicantEmail || fa.email || "",
+            status: fa.status || "Pending",
+            date: fa.createdAt ? new Date(fa.createdAt).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+            createdAt: fa.createdAt || new Date().toISOString(),
+            applyingFrom: fa.applyingFrom || "Pakistan",
+            cvLink: fa.cvLink || "",
+            coverLetter: fa.coverLetter || "",
+            passportNumber: fa.passportNumber || "",
+            cnic: fa.cnic || "",
+            trackingNumber: id
+          });
+        }
+      });
+      localApps.forEach(a => mergedAppsMap.set(a.id, a));
+
+      const finalAppsList = Array.from(mergedAppsMap.values());
+      setApplications(finalAppsList);
+      setSelectedApplication(prev => {
+        if (!finalAppsList || finalAppsList.length === 0) return null;
+        if (prev && finalAppsList.some(a => a.id === prev.id)) return prev;
+        return finalAppsList[0];
+      });
+
+      // 2. Query Client Accounts
       let dbClients: ClientRecord[] = [];
       try {
         const { data: clientRows } = await supabase.from("client_accounts").select("*").order("created_at", { ascending: false });
@@ -787,39 +878,40 @@ export default function AdminPortal({
         console.warn("Supabase direct clients fetch note:", clientErr);
       }
 
-      // 3. Fetch API endpoints if available
-      let loadedApps: Application[] = [];
-      try {
-        const appsRes = await adminFetch("/api/admin/applications");
-        if (appsRes.ok) {
-          loadedApps = await appsRes.json();
-        }
-      } catch (e) {}
-
-      // Merge applications
-      const mergedAppsMap = new Map<string, Application>();
-      dbApps.forEach(a => mergedAppsMap.set(a.id, a));
-      loadedApps.forEach(a => {
-        if (!mergedAppsMap.has(a.id)) {
-          mergedAppsMap.set(a.id, a);
-        }
-      });
-      const finalAppsList = Array.from(mergedAppsMap.values());
-
-      setApplications(finalAppsList);
-      setSelectedApplication(prev => {
-        if (!finalAppsList || finalAppsList.length === 0) return null;
-        if (prev && finalAppsList.some(a => a.id === prev.id)) return prev;
-        return finalAppsList[0];
-      });
-
-      // Merge clients with application applicants
       const clientMap = new Map<string, ClientRecord>();
       dbClients.forEach(c => {
         if (c.email) clientMap.set(c.email.toLowerCase(), c);
       });
 
-      // Add missing applicants into client map
+      const localClients = getStoredClients();
+      localClients.forEach(c => {
+        if (c.email) clientMap.set(c.email.toLowerCase(), c);
+      });
+
+      const firestoreUsers = await fetchDocsFromFirestore("users").catch(() => []);
+      firestoreUsers.forEach((fu: any) => {
+        if (fu.email) {
+          const emailKey = fu.email.toLowerCase();
+          if (!clientMap.has(emailKey)) {
+            clientMap.set(emailKey, {
+              id: fu.id || `cli-${Date.now()}`,
+              userId: fu.id || `usr-${Date.now()}`,
+              user_id: fu.id || `usr-${Date.now()}`,
+              name: fu.name || fu.fullName || "Client",
+              fullName: fu.fullName || fu.name || "Client",
+              full_name: fu.fullName || fu.name || "Client",
+              email: fu.email,
+              phone: fu.phone || "",
+              country: fu.country || "Pakistan",
+              role: fu.role || "client",
+              status: fu.status || "Active",
+              createdAt: fu.createdAt || new Date().toISOString(),
+              created_at: fu.createdAt || new Date().toISOString()
+            });
+          }
+        }
+      });
+
       finalAppsList.forEach(app => {
         const emailKey = (app.email || "").toLowerCase();
         if (emailKey && !clientMap.has(emailKey)) {
@@ -848,78 +940,209 @@ export default function AdminPortal({
 
       setClientRecords(finalClientsList);
 
-      // 4. Load passports directly from Supabase
+      // 3. Load Passports from all sources
+      const mergedPassportsMap = new Map<string, PassportAdminInfo>();
+
+      const demoPassports: PassportAdminInfo[] = [
+        {
+          trackId: "SA-849201",
+          name: "Adnan Khan",
+          email: "adnan.k@gmail.com",
+          referenceNumber: "REF-849201",
+          passportNum: "PK8492011",
+          category: "Work Visa - Engineering",
+          country: "Saudi Arabia",
+          steps: [
+            { title: "Step 1: Document Submission", desc: "MOFA & HEC Attestation", status: "completed", fee: 15000, feePaid: true },
+            { title: "Step 2: Embassy Processing", desc: "Biometrics & Medical", status: "completed", fee: 35000, feePaid: true },
+            { title: "Step 3: Passport Stamping", desc: "Visa Vignette Stamping", status: "current", fee: 15000, feePaid: false }
+          ],
+          totalFee: 65000,
+          totalPaid: 50000
+        },
+        {
+          trackId: "EU-910283",
+          name: "Zara Malik",
+          email: "zara.malik@outlook.com",
+          referenceNumber: "REF-910283",
+          passportNum: "PK9102834",
+          category: "Work Visa - Renewable Energy",
+          country: "Germany",
+          steps: [
+            { title: "Step 1: Document Submission", desc: "ZAB Evaluation", status: "completed", fee: 20000, feePaid: true },
+            { title: "Step 2: Embassy Processing", desc: "Consular Interview", status: "current", fee: 40000, feePaid: false },
+            { title: "Step 3: Passport Stamping", desc: "Schengen Visa Entry Stamping", status: "pending", fee: 20000, feePaid: false }
+          ],
+          totalFee: 80000,
+          totalPaid: 20000
+        }
+      ];
+
+      demoPassports.forEach(p => mergedPassportsMap.set(p.trackId, p));
+
       try {
         const { data: passRows } = await supabase.from("passports").select("*");
         if (passRows && passRows.length > 0) {
-          const parsedPasses: PassportAdminInfo[] = passRows.map((pr: any) => {
+          passRows.forEach((pr: any) => {
             const steps = typeof pr.steps === "string" ? JSON.parse(pr.steps) : (pr.steps || []);
             const tFee = steps.reduce((sum: number, s: any) => sum + (Number(s.fee) || 0), 0);
             const tPaid = steps.filter((s: any) => s.status === "completed" || s.feePaid).reduce((sum: number, s: any) => sum + (Number(s.fee) || 0), 0);
-            return {
-              trackId: pr.track_id || pr.id,
-              name: pr.name || pr.full_name || "Client",
-              email: pr.email || "",
-              referenceNumber: pr.reference_number || pr.ref_num || pr.referenceNumber || pr.email || "REF-" + Math.floor(100000 + Math.random() * 900000),
-              passportNum: pr.passport_number || pr.passportNum || "",
-              category: pr.category || "Work Visa",
-              country: pr.country || "Schengen",
-              steps: steps,
-              totalFee: Number(pr.total_fee) || tFee || 0,
-              totalPaid: Number(pr.total_paid) || tPaid || 0
-            };
+            const tId = pr.track_id || pr.id;
+            if (tId) {
+              mergedPassportsMap.set(tId, {
+                trackId: tId,
+                name: pr.name || pr.full_name || "Client",
+                email: pr.email || "",
+                referenceNumber: pr.reference_number || pr.ref_num || pr.referenceNumber || pr.email || "REF-" + Math.floor(100000 + Math.random() * 900000),
+                passportNum: pr.passport_number || pr.passportNum || "",
+                category: pr.category || "Work Visa",
+                country: pr.country || "Schengen",
+                steps: steps,
+                totalFee: Number(pr.total_fee) || tFee || 0,
+                totalPaid: Number(pr.total_paid) || tPaid || 0
+              });
+            }
           });
-          setPassports(parsedPasses);
-          setEditingPassport(prev => {
-            if (!parsedPasses || parsedPasses.length === 0) return null;
-            if (prev && parsedPasses.some((p: any) => p.trackId === prev.trackId)) return prev;
-            return JSON.parse(JSON.stringify(parsedPasses[0]));
-          });
-        } else {
-          const passRes = await adminFetch("/api/admin/passports").catch(() => null);
-          if (passRes && passRes.ok) {
-            const passes = await passRes.json();
-            setPassports(passes || []);
-            setEditingPassport(prev => {
-              if (!passes || passes.length === 0) return null;
-              if (prev && passes.some((p: any) => p.trackId === prev.trackId)) return prev;
-              return JSON.parse(JSON.stringify(passes[0]));
-            });
-          }
         }
       } catch (pErr) {}
 
-      // 5. Load payments directly from Supabase
+      try {
+        const passRes = await adminFetch("/api/admin/passports").catch(() => null);
+        if (passRes && passRes.ok) {
+          const passes = await passRes.json();
+          if (Array.isArray(passes)) {
+            passes.forEach((p: PassportAdminInfo) => {
+              if (p.trackId) mergedPassportsMap.set(p.trackId, p);
+            });
+          }
+        }
+      } catch (aErr) {}
+
+      const firestorePassports = await fetchDocsFromFirestore("passports").catch(() => []);
+      firestorePassports.forEach((fp: any) => {
+        const key = fp.trackId || fp.id;
+        if (key) {
+          mergedPassportsMap.set(key, {
+            trackId: key,
+            name: fp.candidateName || fp.name || "Candidate",
+            email: fp.candidateEmail || fp.email || "",
+            referenceNumber: fp.referenceNumber || key,
+            passportNum: fp.passportNum || fp.passport_number || "",
+            category: fp.category || "Work Visa",
+            country: fp.country || "Schengen",
+            steps: fp.steps || [],
+            totalFee: fp.totalFee || 0,
+            totalPaid: fp.totalPaid || 0
+          });
+        }
+      });
+
+      const localPassports = getStoredPassports();
+      localPassports.forEach((lp: PassportAdminInfo) => {
+        if (lp.trackId) mergedPassportsMap.set(lp.trackId, lp);
+      });
+
+      const finalPassportsList = Array.from(mergedPassportsMap.values());
+      setPassports(finalPassportsList);
+      setEditingPassport(prev => {
+        if (!finalPassportsList || finalPassportsList.length === 0) return null;
+        if (prev && finalPassportsList.some(p => p.trackId === prev.trackId)) return prev;
+        return JSON.parse(JSON.stringify(finalPassportsList[0]));
+      });
+
+      // 4. Load Payments from all sources
+      const mergedPaymentsMap = new Map<string, PaymentReceipt>();
+
+      const demoPayments: PaymentReceipt[] = [
+        {
+          id: "pay-demo-1",
+          transactionId: "TXN-849201",
+          trackId: "SA-849201",
+          clientName: "Adnan Khan",
+          clientEmail: "adnan.k@gmail.com",
+          stepTitle: "Step 1: Document Submission",
+          amount: 15000,
+          currency: "PKR",
+          method: "EasyPaisa",
+          status: "Verified",
+          date: new Date().toISOString().split("T")[0],
+          timestamp: new Date().toISOString(),
+          receiptUrl: "",
+          receiptNotes: "Payment verified by finance department."
+        }
+      ];
+
+      demoPayments.forEach(p => mergedPaymentsMap.set(p.id, p));
+
       try {
         const { data: payRows } = await supabase.from("payments").select("*").order("created_at", { ascending: false });
         if (payRows && payRows.length > 0) {
-          const parsedPays: PaymentReceipt[] = payRows.map((py: any) => ({
-            id: py.id,
-            transactionId: py.transaction_id || py.id,
-            trackId: py.track_id || py.id,
-            clientName: py.sender_name || py.client_name || py.clientName || "Client",
-            clientEmail: py.client_email || py.email || "",
-            stepTitle: py.step_title || py.stepTitle || "Fee Verification",
-            amount: Number(py.amount) || 0,
-            currency: py.currency || "PKR",
-            method: py.method || "Bank Transfer",
-            status: py.status || "Pending",
-            date: py.created_at ? new Date(py.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
-            timestamp: py.created_at || new Date().toISOString(),
-            receiptUrl: py.receipt_url || py.receipt_path || "",
-            receiptNotes: py.notes || py.receiptNotes || ""
-          }));
-          setPaymentReceipts(parsedPays);
-        } else {
-          const payRes = await adminFetch("/api/admin/payments").catch(() => null);
-          if (payRes && payRes.ok) {
-            const payments = await payRes.json();
-            setPaymentReceipts(payments || []);
-          }
+          payRows.forEach((py: any) => {
+            if (py.id) {
+              mergedPaymentsMap.set(py.id, {
+                id: py.id,
+                transactionId: py.transaction_id || py.id,
+                trackId: py.track_id || py.id,
+                clientName: py.sender_name || py.client_name || py.clientName || "Client",
+                clientEmail: py.client_email || py.email || "",
+                stepTitle: py.step_title || py.stepTitle || "Fee Verification",
+                amount: Number(py.amount) || 0,
+                currency: py.currency || "PKR",
+                method: py.method || "Bank Transfer",
+                status: py.status || "Pending",
+                date: py.created_at ? new Date(py.created_at).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+                timestamp: py.created_at || new Date().toISOString(),
+                receiptUrl: py.receipt_url || py.receipt_path || "",
+                receiptNotes: py.notes || py.receiptNotes || ""
+              });
+            }
+          });
         }
       } catch (payErr) {}
 
-      // 6. Load chatbot analytics, activities, stats
+      try {
+        const payRes = await adminFetch("/api/admin/payments").catch(() => null);
+        if (payRes && payRes.ok) {
+          const payments = await payRes.json();
+          if (Array.isArray(payments)) {
+            payments.forEach((p: PaymentReceipt) => {
+              if (p.id) mergedPaymentsMap.set(p.id, p);
+            });
+          }
+        }
+      } catch (payApiErr) {}
+
+      const firestorePayments = await fetchDocsFromFirestore("payments").catch(() => []);
+      firestorePayments.forEach((fp: any) => {
+        if (fp.id) {
+          mergedPaymentsMap.set(fp.id, {
+            id: fp.id,
+            transactionId: fp.transactionId || fp.id,
+            trackId: fp.trackId || fp.id,
+            clientName: fp.clientName || "Client",
+            clientEmail: fp.clientEmail || fp.email || "",
+            stepTitle: fp.stepTitle || "Verification Fee",
+            amount: Number(fp.amount) || 0,
+            currency: fp.currency || "PKR",
+            method: fp.method || "Bank Transfer",
+            status: fp.status || "Pending",
+            date: fp.date || new Date().toISOString().split("T")[0],
+            timestamp: fp.timestamp || new Date().toISOString(),
+            receiptUrl: fp.receiptUrl || "",
+            receiptNotes: fp.receiptNotes || ""
+          });
+        }
+      });
+
+      const localPayments = getStoredPayments();
+      localPayments.forEach((lp: PaymentReceipt) => {
+        if (lp.id) mergedPaymentsMap.set(lp.id, lp);
+      });
+
+      const finalPaymentsList = Array.from(mergedPaymentsMap.values());
+      setPaymentReceipts(finalPaymentsList);
+
+      // 5. Load Chatbot Analytics, Activities & Stats
       try {
         const [chatbotRes, actRes, statsRes] = await Promise.all([
           adminFetch("/api/admin/chatbot-analytics").catch(() => null),
@@ -932,9 +1155,17 @@ export default function AdminPortal({
           setChatbotAnalytics(chatbot);
         }
 
+        const localActivities = getStoredActivities();
         if (actRes && actRes.ok) {
           const activities = await actRes.json();
-          setActivityLogs(activities || []);
+          const combinedActsMap = new Map();
+          localActivities.forEach(a => combinedActsMap.set(a.id, a));
+          if (Array.isArray(activities)) {
+            activities.forEach(a => combinedActsMap.set(a.id, a));
+          }
+          setActivityLogs(Array.from(combinedActsMap.values()));
+        } else if (localActivities.length > 0) {
+          setActivityLogs(localActivities);
         }
 
         if (statsRes && statsRes.ok) {
