@@ -59,6 +59,9 @@ import CurrencyConverter from "./components/CurrencyConverter";
 import FlightBookingDesk from "./components/FlightBookingDesk";
 import VisaConsultantsDesk from "./components/VisaConsultantsDesk";
 import AiEmployeesHub from "./components/AiEmployeesHub";
+import VisaExpensesPage from "./components/VisaExpensesPage";
+import AiMatchEvaluator from "./components/AiMatchEvaluator";
+import AgencyB2BPortal from "./components/AgencyB2BPortal";
 // @ts-ignore
 import qatarPlaneImg from "./assets/images/qatar_airways_plane_1783877120077.jpg";
 // @ts-ignore
@@ -94,7 +97,7 @@ const getVacancyTags = (vacancyId: string): string[] => {
 
 export default function App() {
   // Navigation / Tabs State
-  const [activeTab, setActiveTab] = useState<"home" | "vacancies" | "tracker" | "flights" | "portal" | "admin" | "ai-showcase" | "girls-jobs" | "country-picker" | "currency" | "consultants" | "ai-employees">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "vacancies" | "tracker" | "flights" | "portal" | "admin" | "ai-showcase" | "girls-jobs" | "country-picker" | "currency" | "consultants" | "ai-employees" | "visa-expenses" | "ai-evaluator" | "agency-b2b">("home");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Country Guide State
@@ -147,9 +150,21 @@ export default function App() {
   const [aiSearchResponse, setAiSearchResponse] = useState<string | null>(null);
   const [isAiSearching, setIsAiSearching] = useState(false);
 
-  // Live Passport Tracking States
-  const [trackingId, setTrackingId] = useState("");
-  const [trackingEmail, setTrackingEmail] = useState("");
+  // Live Passport Tracking States (with browser session persistence)
+  const [trackingId, setTrackingId] = useState<string>(() => {
+    try {
+      return localStorage.getItem("saved_tracking_id") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [trackingEmail, setTrackingEmail] = useState<string>(() => {
+    try {
+      return localStorage.getItem("saved_tracking_ref") || "";
+    } catch {
+      return "";
+    }
+  });
   const [trackData, setTrackData] = useState<PassportTrack | null>(null);
   const [trackError, setTrackError] = useState("");
   const [trackingLoading, setTrackingLoading] = useState(false);
@@ -244,6 +259,19 @@ export default function App() {
     }
   }, [applyingVacancy]);
 
+  // Restore tracked passport progress on page refresh / load
+  useEffect(() => {
+    try {
+      const savedId = localStorage.getItem("saved_tracking_id");
+      const savedRef = localStorage.getItem("saved_tracking_ref");
+      if (savedId && savedRef) {
+        handleTrackPassport(savedId, savedRef);
+      }
+    } catch (e) {
+      console.warn("Could not read tracking session from localStorage", e);
+    }
+  }, []);
+
   const renderFormattedResponse = (text: string) => {
     if (!text) return null;
     const regex = /\[Go to ([a-zA-Z-]+)\]/g;
@@ -331,12 +359,34 @@ export default function App() {
       }
       const data = await response.json();
       setTrackData(data);
+
+      // Persist browser session so refreshed state retains tracked passport progress
+      try {
+        localStorage.setItem("saved_tracking_id", cleanId);
+        localStorage.setItem("saved_tracking_ref", cleanRef);
+      } catch (e) {
+        console.warn("Could not save tracking session to localStorage", e);
+      }
     } catch (err: any) {
       setTrackError(err.message || "Something went wrong tracking passport.");
       setTrackData(null);
     } finally {
       setTrackingLoading(false);
     }
+  };
+
+  // Clear saved tracking session
+  const handleClearTrackingSession = () => {
+    try {
+      localStorage.removeItem("saved_tracking_id");
+      localStorage.removeItem("saved_tracking_ref");
+    } catch (e) {
+      console.warn("Could not clear tracking session from localStorage", e);
+    }
+    setTrackingId("");
+    setTrackingEmail("");
+    setTrackData(null);
+    setTrackError("");
   };
 
   // Process payment on backend API
@@ -869,6 +919,30 @@ export default function App() {
               <span>Currency Desk 💱</span>
             </button>
             <button 
+              id="tab-btn-visa-expenses"
+              onClick={() => setActiveTab("visa-expenses")} 
+              className={`px-4 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5 ${activeTab === "visa-expenses" ? "bg-amber-500 text-slate-950 font-bold shadow-lg" : "bg-amber-500/10 text-amber-300 border border-amber-500/25 hover:bg-amber-500/20"}`}
+            >
+              <span>3-Step Fees & Expenses 💳</span>
+              <span className="text-[9px] bg-slate-950 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30 font-mono uppercase font-bold">Calculator</span>
+            </button>
+            <button 
+              id="tab-btn-ai-evaluator"
+              onClick={() => setActiveTab("ai-evaluator")} 
+              className={`px-4 py-2.5 rounded-lg text-sm font-extrabold transition flex items-center gap-1.5 ${activeTab === "ai-evaluator" ? "bg-amber-500 text-slate-950 font-bold shadow-lg" : "bg-amber-500/10 text-amber-400 border border-amber-500/25 hover:bg-amber-500/20"}`}
+            >
+              <span>AI Smart Evaluator 🤖</span>
+              <span className="text-[9px] bg-slate-950 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30 font-mono uppercase font-bold">99.4% Sync</span>
+            </button>
+            <button 
+              id="tab-btn-agency-b2b"
+              onClick={() => setActiveTab("agency-b2b")} 
+              className={`px-4 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5 ${activeTab === "agency-b2b" ? "bg-blue-600 text-white shadow-lg" : "bg-blue-950/40 text-blue-300 border border-blue-500/30 hover:bg-blue-900/40"}`}
+            >
+              <span>Agency B2B Portal 🏢</span>
+              <span className="text-[9px] bg-slate-950 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 font-mono uppercase font-bold">Demand Letters</span>
+            </button>
+            <button 
               id="tab-btn-tracker"
               onClick={() => setActiveTab("tracker")} 
               className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === "tracker" ? "bg-slate-800 text-white shadow" : "text-slate-400 hover:text-white"}`}
@@ -1021,6 +1095,30 @@ export default function App() {
             >
               <span>Currency Desk 💱</span>
               <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-amber-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Live Rates</span>
+            </button>
+            <button 
+              id="mobile-tab-btn-visa-expenses"
+              onClick={() => { setActiveTab("visa-expenses"); setIsMobileMenuOpen(false); }} 
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "visa-expenses" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-300 hover:text-amber-200 bg-amber-950/30 border border-amber-500/30"}`}
+            >
+              <span>3-Step Fees & Expenses 💳</span>
+              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Calculator</span>
+            </button>
+            <button 
+              id="mobile-tab-btn-ai-evaluator"
+              onClick={() => { setActiveTab("ai-evaluator"); setIsMobileMenuOpen(false); }} 
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-between ${activeTab === "ai-evaluator" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-300 hover:text-amber-200 bg-amber-950/30 border border-amber-500/30"}`}
+            >
+              <span>AI Smart Evaluator 🤖</span>
+              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-emerald-400 py-0.5 px-2 rounded-full font-bold">99.4% Sync</span>
+            </button>
+            <button 
+              id="mobile-tab-btn-agency-b2b"
+              onClick={() => { setActiveTab("agency-b2b"); setIsMobileMenuOpen(false); }} 
+              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "agency-b2b" ? "bg-blue-600 text-white font-bold" : "text-blue-300 hover:text-blue-200 bg-blue-950/30 border border-blue-500/30"}`}
+            >
+              <span>Agency B2B Portal 🏢</span>
+              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-blue-400 py-0.5 px-2 rounded-full font-bold">Demand Letters</span>
             </button>
             <button 
               id="mobile-tab-btn-tracker"
@@ -1786,7 +1884,11 @@ export default function App() {
                  activeTab === "flights" ? "Flight Booking Desk" : 
                  activeTab === "portal" ? "Client Secure Portal" : 
                  activeTab === "ai-showcase" ? "AI Integration Showcase & Simulator" :
-                 activeTab === "girls-jobs" ? "Girls Jobs Abroad 🌸" : activeTab === "country-picker" ? "Country Explorer Integration Sandbox 🌐" :
+                 activeTab === "girls-jobs" ? "Girls Jobs Abroad 🌸" : 
+                 activeTab === "country-picker" ? "Country Explorer Integration Sandbox 🌐" :
+                 activeTab === "visa-expenses" ? "Visa Expense & 3-Step Fee Schedule Calculator 💳" :
+                 activeTab === "ai-evaluator" ? "AI Smart Eligibility Evaluator & Interview Simulator 🤖" :
+                 activeTab === "agency-b2b" ? "Licensed Overseas Agency B2B Requisition Portal 🏢" :
                  "Admin Staff Gateway"}
               </span>
             </div>
@@ -2652,6 +2754,20 @@ export default function App() {
               </div>
 
               <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 max-w-3xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[11px] text-emerald-400 font-mono">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Browser Session Persistence Active</span>
+                  </div>
+                  {(trackingId || trackData) && (
+                    <button
+                      onClick={handleClearTrackingSession}
+                      className="text-[11px] font-mono text-slate-400 hover:text-rose-400 underline transition cursor-pointer"
+                    >
+                      Clear Saved Session
+                    </button>
+                  )}
+                </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="block text-xs font-mono text-slate-400 uppercase">
@@ -2682,7 +2798,7 @@ export default function App() {
                   <button 
                     onClick={() => handleTrackPassport(trackingId, trackingEmail)}
                     disabled={trackingLoading}
-                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold py-3.5 px-8 rounded-xl text-xs uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-2 shadow"
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold py-3.5 px-8 rounded-xl text-xs uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-2 shadow cursor-pointer"
                   >
                     {trackingLoading ? "Authenticating Ledger..." : "🔐 Securely Authenticate & Search Ledger"}
                   </button>
@@ -3492,6 +3608,45 @@ export default function App() {
         {activeTab === "currency" && (
           <div className="animate-fade-in">
             <CurrencyConverter />
+          </div>
+        )}
+
+        {/* TAB 9: VISA EXPENSES & 3-STEP FEE CALCULATOR PAGE */}
+        {activeTab === "visa-expenses" && (
+          <div className="animate-fade-in">
+            <VisaExpensesPage 
+              whatsAppNum={whatsAppNum}
+              whatsAppDisplay={whatsAppDisplay}
+              onNavigateToTracker={(tId) => {
+                if (tId) setTrackingId(tId);
+                setActiveTab("tracker");
+              }}
+              onOpenPaymentModal={(stepTitle, amountPkr) => {
+                setActiveTab("tracker");
+                handleTrackPassport(trackingId || "PK8492019", trackingEmail || "REF-849201");
+              }}
+            />
+          </div>
+        )}
+
+        {/* TAB 10: AI MATCH EVALUATOR & EMBASSY INTERVIEW SIMULATOR */}
+        {activeTab === "ai-evaluator" && (
+          <div className="animate-fade-in">
+            <AiMatchEvaluator 
+              whatsAppNum={whatsAppNum}
+              whatsAppDisplay={whatsAppDisplay}
+              onNavigateToVacancies={() => setActiveTab("vacancies")}
+            />
+          </div>
+        )}
+
+        {/* TAB 11: AGENCY B2B EMPLOYER & DEMAND LETTER PORTAL */}
+        {activeTab === "agency-b2b" && (
+          <div className="animate-fade-in">
+            <AgencyB2BPortal 
+              whatsAppNum={whatsAppNum}
+              whatsAppDisplay={whatsAppDisplay}
+            />
           </div>
         )}
 

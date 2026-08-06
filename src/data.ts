@@ -176,7 +176,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-05-2",
-    title: "Senior Electrical & Solar Engineer",
+    title: "Solar Array Project Manager",
     company: "Dubai Power Solutions",
     country: "United Arab Emirates",
     region: "Gulf",
@@ -212,7 +212,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-06-2",
-    title: "Schengen Logistics & Warehouse Lead",
+    title: "Automotive Freight Operations Specialist",
     company: "Milan Logistics Hub SpA",
     country: "Italy",
     region: "Schengen",
@@ -248,7 +248,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-07-2",
-    title: "Schengen Logistics & Warehouse Lead",
+    title: "Doha Port & Cargo Clearing Coordinator",
     company: "Doha Cargo Gateways",
     country: "Qatar",
     region: "Gulf",
@@ -284,7 +284,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-08-2",
-    title: "Retail Stores Deputy Manager",
+    title: "Boutique Sales & Store Operations Manager",
     company: "Marina Mall Luxury Outlets",
     country: "Kuwait",
     region: "Gulf",
@@ -320,7 +320,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-09-2",
-    title: "Cloud Infrastructure Architect",
+    title: "Fintech Cloud Security Lead",
     company: "London FinTech Labs",
     country: "United Kingdom",
     region: "Europe",
@@ -356,7 +356,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-10-2",
-    title: "Hospitality Services Coordinator",
+    title: "Resort Guest Relations & Hospitality Manager",
     company: "Iberia Grand Resorts",
     country: "Spain",
     region: "Schengen",
@@ -392,7 +392,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-11-2",
-    title: "Schengen Logistics & Warehouse Lead",
+    title: "Rotterdam Container Terminal Supervisor",
     company: "Rotterdam Euro-Gateway NV",
     country: "Netherlands",
     region: "Schengen",
@@ -428,7 +428,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-12-2",
-    title: "Registered Nursing Specialist",
+    title: "Clinical ICU Care Nurse",
     company: "Zurich Private Medical Care",
     country: "Switzerland",
     region: "Schengen",
@@ -464,7 +464,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-13-2",
-    title: "Industrial Construction Supervisor",
+    title: "Heavy Marine Infrastructure Site Manager",
     company: "Sohar Marine Infrastructure LLC",
     country: "Oman",
     region: "Gulf",
@@ -500,7 +500,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-14-2",
-    title: "Registered Nursing Specialist",
+    title: "Rehabilitation & Wellness Specialist Nurse",
     company: "Vienna Care & Clinical Partners",
     country: "Austria",
     region: "Schengen",
@@ -536,7 +536,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-15-2",
-    title: "Industrial Construction Supervisor",
+    title: "Structural Steel Construction Lead",
     company: "Brussels Dev Alliance SA",
     country: "Belgium",
     region: "Schengen",
@@ -572,7 +572,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-16-2",
-    title: "Registered Nursing Specialist",
+    title: "Geriatric & Palliative Nurse Coordinator",
     company: "Svea Health Partners",
     country: "Sweden",
     region: "Schengen",
@@ -608,7 +608,7 @@ export const VACANCIES: Vacancy[] = [
   },
   {
     id: "v-17-2",
-    title: "HVAC & Climate Control Specialist",
+    title: "Commercial Chiller & HVAC Maintenance Specialist",
     company: "Bahrain Air Conditioning Contracting",
     country: "Bahrain",
     region: "Gulf",

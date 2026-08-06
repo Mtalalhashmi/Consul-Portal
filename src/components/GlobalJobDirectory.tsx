@@ -234,7 +234,7 @@ const STATIC_PRESEEDED_JOBS: JobCardDetail[] = [
   },
   {
     id: "static-job-04",
-    title: "Schengen Logistics & Warehouse Lead",
+    title: "European Parcel Dispatch & Cross-Dock Specialist",
     companyName: "DHL Supply Chains",
     companyLogo: "D",
     jobImage: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=600",
