@@ -4289,56 +4289,123 @@ app.get("/api/admin/dashboard-stats", (req, res) => {
 app.get("/api/passport/track", (req, res) => {
   try {
     const { trackId, email, refNum } = req.query;
-    const searchVal = (typeof trackId === "string" && trackId.trim()) || 
-                      (typeof refNum === "string" && refNum.trim()) || 
-                      (typeof email === "string" && email.trim()) || "";
-    
+    const rawTrackId = typeof trackId === "string" ? trackId.trim() : "";
+    const rawRefNum = typeof refNum === "string" ? refNum.trim() : "";
+    const rawEmail = typeof email === "string" ? email.trim() : "";
+
+    const searchVal = rawTrackId || rawRefNum || rawEmail || "";
     if (!searchVal) {
       return res.status(400).json({ error: "Tracking ID, Passport Number, or Reference Number is required" });
     }
 
-    const upperId = searchVal.toUpperCase().trim();
-    const cleanRef = typeof refNum === "string" ? refNum.toUpperCase().trim() : (typeof email === "string" ? email.toUpperCase().trim() : "");
+    const upperSearch = searchVal.toUpperCase().trim();
+    const upperRef = (rawRefNum || rawEmail || rawTrackId).toUpperCase().trim();
 
-    // Check predefined passports first by key or referenceNumber
-    let matchedPassportKey = Object.keys(PREDEFINED_PASSPORTS).find(key => {
+    // 1. Search in PREDEFINED_PASSPORTS
+    let matchedKey = Object.keys(PREDEFINED_PASSPORTS).find(key => {
       const p = PREDEFINED_PASSPORTS[key];
-      return key.toUpperCase() === upperId || 
-             p.passportNum?.toUpperCase() === upperId || 
-             p.referenceNumber?.toUpperCase() === upperId ||
-             (cleanRef && p.referenceNumber?.toUpperCase() === cleanRef);
+      return key.toUpperCase().trim() === upperSearch ||
+             key.toUpperCase().trim() === upperRef ||
+             p.passportNum?.toUpperCase().trim() === upperSearch ||
+             p.passportNum?.toUpperCase().trim() === upperRef ||
+             p.referenceNumber?.toUpperCase().trim() === upperSearch ||
+             p.referenceNumber?.toUpperCase().trim() === upperRef ||
+             p.email?.toUpperCase().trim() === upperSearch ||
+             p.email?.toUpperCase().trim() === upperRef;
     });
 
-    const data = matchedPassportKey ? PREDEFINED_PASSPORTS[matchedPassportKey] : getDeterministicPassport(upperId);
-    if (!data.referenceNumber) {
-      data.referenceNumber = cleanRef || ("REF-" + Math.floor(100000 + Math.random() * 900000));
-    }
-
-    // Find user or application for name enrichment
-    const matchedUser = USER_ACCOUNTS.find(u => 
-      (cleanRef && (u.email?.toUpperCase() === cleanRef || u.trackId?.toUpperCase() === cleanRef)) ||
-      u.passportNum?.toUpperCase().trim() === upperId ||
-      u.trackId?.toUpperCase().trim() === upperId
-    );
-
+    // 2. Search in APPLICATIONS
     const matchedApp = APPLICATIONS.find(a => 
-      (cleanRef && (a.email?.toUpperCase() === cleanRef || a.id?.toUpperCase() === cleanRef)) ||
-      a.id.toUpperCase().trim() === upperId ||
-      a.trackingNumber?.toUpperCase().trim() === upperId ||
-      a.passportNumber?.toUpperCase().trim() === upperId
+      a.id.toUpperCase().trim() === upperSearch ||
+      a.id.toUpperCase().trim() === upperRef ||
+      a.trackingNumber?.toUpperCase().trim() === upperSearch ||
+      a.trackingNumber?.toUpperCase().trim() === upperRef ||
+      a.passportNumber?.toUpperCase().trim() === upperSearch ||
+      a.passportNumber?.toUpperCase().trim() === upperRef ||
+      a.email.toUpperCase().trim() === upperSearch ||
+      a.email.toUpperCase().trim() === upperRef ||
+      (a.cnic && a.cnic.trim() === searchVal)
     );
 
-    TRACKED_IDS.add(upperId);
+    // 3. Search in USER_ACCOUNTS
+    const matchedUser = USER_ACCOUNTS.find(u =>
+      (u.trackId && u.trackId.toUpperCase().trim() === upperSearch) ||
+      (u.trackId && u.trackId.toUpperCase().trim() === upperRef) ||
+      (u.passportNum && u.passportNum.toUpperCase().trim() === upperSearch) ||
+      (u.passportNum && u.passportNum.toUpperCase().trim() === upperRef) ||
+      (u.email && u.email.toUpperCase().trim() === upperSearch) ||
+      (u.email && u.email.toUpperCase().trim() === upperRef)
+    );
 
-    if (matchedUser) {
-      data.name = matchedUser.name;
-      if (matchedUser.passportNum) {
-        data.passportNum = matchedUser.passportNum;
-      }
+    let data: any = null;
+
+    if (matchedKey) {
+      data = PREDEFINED_PASSPORTS[matchedKey];
     } else if (matchedApp) {
-      data.name = matchedApp.name;
+      const appKey = (matchedApp.trackingNumber || matchedApp.id).toUpperCase().trim();
+      if (PREDEFINED_PASSPORTS[appKey]) {
+        data = PREDEFINED_PASSPORTS[appKey];
+      } else {
+        data = {
+          trackId: matchedApp.trackingNumber || matchedApp.id,
+          name: matchedApp.name,
+          email: matchedApp.email,
+          referenceNumber: "REF-" + (matchedApp.trackingNumber || matchedApp.id).replace(/[^a-zA-Z0-9]/g, "").toUpperCase(),
+          passportNum: matchedApp.passportNumber || "PK-849201",
+          category: matchedApp.vacancyTitle || "Work Visa Placement",
+          country: matchedApp.country || "Schengen Europe",
+          steps: [
+            { title: "Step 1: Application & Document Verification", desc: "Verification of credentials and passport dossier.", status: "completed", fee: 15000, feePaid: true },
+            { title: "Step 2: Embassy Processing & Biometrics", desc: "Embassy appointment, medical clearance, and biometric capture.", status: "current", fee: 35000, feePaid: false },
+            { title: "Step 3: Passport Stamping & Dispatch", desc: "Visa vignette endorsement and passport delivery.", status: "pending", fee: 15000, feePaid: false }
+          ],
+          totalFee: 65000,
+          totalPaid: 15000
+        };
+        PREDEFINED_PASSPORTS[appKey] = data;
+      }
+    } else if (matchedUser) {
+      const userKey = (matchedUser.trackId || matchedUser.id).toUpperCase().trim();
+      if (PREDEFINED_PASSPORTS[userKey]) {
+        data = PREDEFINED_PASSPORTS[userKey];
+      } else {
+        data = {
+          trackId: matchedUser.trackId || "PK-78601",
+          name: matchedUser.name,
+          email: matchedUser.email,
+          referenceNumber: "REF-" + (matchedUser.trackId || "78601").replace(/[^a-zA-Z0-9]/g, "").toUpperCase(),
+          passportNum: matchedUser.passportNum || "PK-78601",
+          category: "Work Visa Professional",
+          country: "Saudi Arabia",
+          steps: [
+            { title: "Step 1: Document Submission & Attestation", desc: "MOFA & HEC attestation completed.", status: "completed", fee: 15000, feePaid: true },
+            { title: "Step 2: Embassy Processing & Medical", desc: "GAMCA medical clearance and visa endorsement.", status: "current", fee: 35000, feePaid: false },
+            { title: "Step 3: Passport Stamping & Dispatch", desc: "Visa vignette stamping and flight ticketing.", status: "pending", fee: 15000, feePaid: false }
+          ],
+          totalFee: 65000,
+          totalPaid: 15000
+        };
+        PREDEFINED_PASSPORTS[userKey] = data;
+      }
+    } else {
+      // Fallback: generate deterministic passport so search NEVER fails for any input!
+      data = getDeterministicPassport(upperSearch);
     }
 
+    if (!data.referenceNumber) {
+      data.referenceNumber = upperRef || ("REF-" + upperSearch.replace(/[^a-zA-Z0-9]/g, ""));
+    }
+
+    // Enrich name/passportNum if matched user/app exists
+    if (matchedUser) {
+      if (matchedUser.name) data.name = matchedUser.name;
+      if (matchedUser.passportNum) data.passportNum = matchedUser.passportNum;
+    } else if (matchedApp) {
+      if (matchedApp.name) data.name = matchedApp.name;
+      if (matchedApp.passportNumber) data.passportNum = matchedApp.passportNumber;
+    }
+
+    TRACKED_IDS.add(upperSearch);
     return res.json(data);
   } catch (err: any) {
     return res.status(500).json({ error: "Failed to fetch tracking details: " + (err?.message || String(err)) });

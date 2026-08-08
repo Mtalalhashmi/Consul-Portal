@@ -1594,12 +1594,19 @@ export default function GlobalJobDirectory({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
             className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-950/85 backdrop-blur-md overflow-y-auto"
           >
             <motion.div 
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
+              id="apply-modal"
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{
+                type: "spring",
+                stiffness: 450,
+                damping: 32
+              }}
               className={`border rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden relative my-8 flex flex-col md:flex-row max-h-[90vh] ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200"}`}
             >
               

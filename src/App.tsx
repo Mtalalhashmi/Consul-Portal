@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { saveApplicationSupabaseClient, saveQuerySupabaseClient, savePaymentSupabaseClient, uploadFileSupabaseClient } from "./lib/supabase";
 import { 
   Briefcase, 
@@ -336,15 +337,15 @@ export default function App() {
 
   // Fetch passport status from backend API
   const handleTrackPassport = async (idToTrack: string, refToTrack?: string) => {
-    const cleanId = (idToTrack || "").trim();
-    const cleanRef = (refToTrack || trackingEmail || "").trim();
+    const rawId = (idToTrack || "").trim();
+    const rawRef = (refToTrack || trackingEmail || "").trim();
+
+    // Auto-fallback so candidate is never blocked when entering any single reference or passport ID
+    const cleanId = rawId || rawRef;
+    const cleanRef = rawRef || rawId;
     
     if (!cleanId) {
-      setTrackError("Please enter a valid passport or tracking ID.");
-      return;
-    }
-    if (!cleanRef) {
-      setTrackError("Please enter your file reference number.");
+      setTrackError("Please enter a valid Passport Number, Tracking ID, or Reference Number.");
       return;
     }
     
@@ -355,10 +356,14 @@ export default function App() {
       const response = await fetch(`/api/passport/track?trackId=${encodeURIComponent(cleanId)}&refNum=${encodeURIComponent(cleanRef)}&email=${encodeURIComponent(cleanRef)}`);
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Access Denied: Reference number or Passport/Tracking ID mismatch.");
+        throw new Error(errorData.error || "Unable to locate passport tracking dossier. Please verify your reference details.");
       }
       const data = await response.json();
       setTrackData(data);
+
+      // Synchronize input fields so user sees what was searched
+      if (!trackingId && cleanId) setTrackingId(cleanId);
+      if (!trackingEmail && cleanRef) setTrackingEmail(cleanRef);
 
       // Persist browser session so refreshed state retains tracked passport progress
       try {
@@ -3981,15 +3986,33 @@ export default function App() {
       </div>
 
       {/* MODAL 1: VISA OR JOB APPLY FORM */}
-      {applyingVacancy && (
-        <div id="apply-modal" className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 relative animate-in zoom-in-95 duration-150">
-            <button 
-              onClick={() => setApplyingVacancy(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+      <AnimatePresence>
+        {applyingVacancy && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              id="apply-modal"
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              transition={{
+                type: "spring",
+                stiffness: 450,
+                damping: 32
+              }}
+              className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 relative"
             >
-              <X className="w-5 h-5" />
-            </button>
+              <button 
+                onClick={() => setApplyingVacancy(null)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-white transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
             <div>
               <span className="text-[10px] font-mono uppercase text-amber-400">Escrow Direct Application</span>
@@ -4181,9 +4204,10 @@ export default function App() {
               </form>
             )}
 
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* MODAL 2: LOCAL PAKISTANI ESCROW PAYMENT DIALOG */}
       {paymentStepIndex !== null && trackData && (

@@ -1460,10 +1460,11 @@ export default function AdminPortal({
     if (!editingPassport) return;
 
     try {
-      const refToSave = editingPassport.referenceNumber || editingPassport.email || "REF-PASSPORT";
+      const refToSave = editingPassport.referenceNumber || ("REF-" + editingPassport.trackId.replace(/[^a-zA-Z0-9]/g, "").toUpperCase());
+      const emailToSave = editingPassport.email || "";
       const passportToSave = {
         ...editingPassport,
-        email: refToSave,
+        email: emailToSave,
         referenceNumber: refToSave
       };
       await saveStoredPassport(passportToSave);
@@ -1473,7 +1474,7 @@ export default function AdminPortal({
         id: editingPassport.trackId,
         track_id: editingPassport.trackId,
         name: editingPassport.name,
-        email: refToSave,
+        email: emailToSave,
         reference_number: refToSave,
         category: editingPassport.category,
         country: editingPassport.country,
@@ -1488,7 +1489,7 @@ export default function AdminPortal({
           body: JSON.stringify({
             trackId: editingPassport.trackId,
             name: editingPassport.name,
-            email: refToSave,
+            email: emailToSave,
             referenceNumber: refToSave,
             refNum: refToSave,
             category: editingPassport.category,
