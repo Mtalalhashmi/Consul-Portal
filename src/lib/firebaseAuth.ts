@@ -53,18 +53,18 @@ try {
 
 export { auth, db };
 
-// Validate Connection to Firestore on startup
-async function testConnection() {
-  if (!db) return;
+// Optional Connection check function (not called on module boot to prevent 10s timeout warnings)
+export async function testConnection() {
+  if (!db) return false;
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
+    const docRef = doc(db, 'test', 'connection');
+    await getDocFromServer(docRef);
+    return true;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('the client is offline')) {
-      console.error("Please check your Firebase configuration.");
-    }
+    console.warn("[Firebase] Offline mode active.");
+    return false;
   }
 }
-testConnection();
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const currentUser = auth?.currentUser;
@@ -84,19 +84,23 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.error('Firestore Error: ', JSON.stringify(errInfo));
-  throw new Error(JSON.stringify(errInfo));
+  console.warn('Firestore Note: ', JSON.stringify(errInfo));
+  return errInfo;
 }
 
 // Initialize Analytics safely
 export let analytics: any = null;
-if (app) {
+if (app && typeof window !== "undefined") {
   isSupported().then((supported) => {
     if (supported) {
-      analytics = getAnalytics(app);
+      try {
+        analytics = getAnalytics(app);
+      } catch (e) {
+        // Silently ignore analytics fetch errors in sandboxed iframes
+      }
     }
-  }).catch((err) => {
-    console.warn("Firebase Analytics is not supported in this environment:", err);
+  }).catch(() => {
+    // Silently ignore analytics fail
   });
 }
 

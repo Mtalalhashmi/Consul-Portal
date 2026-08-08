@@ -46,6 +46,16 @@ export function removeLocalStorage(key: string): void {
 // --- FIREBASE FIRESTORE SYNC FUNCTIONS ---
 
 /**
+ * Timeout helper to avoid blocking on slow or failing network requests to Firestore.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number = 3000): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Firestore timeout")), ms))
+  ]);
+}
+
+/**
  * Save a document locally in localStorage and sync it to Firebase Firestore.
  */
 export async function syncDocToFirestore(collectionName: string, docId: string, data: any): Promise<boolean> {
@@ -57,33 +67,33 @@ export async function syncDocToFirestore(collectionName: string, docId: string, 
   if (db) {
     try {
       const docRef = doc(db, collectionName, sanitizedId);
-      await setDoc(docRef, {
+      await withTimeout(setDoc(docRef, {
         ...data,
         updatedAt: new Date().toISOString()
-      }, { merge: true });
+      }, { merge: true }), 3000);
       console.log(`[DataStore] Synced doc to Firestore: ${collectionName}/${sanitizedId}`);
       return true;
     } catch (err) {
-      console.warn(`[DataStore] Firestore write failed for ${collectionName}/${sanitizedId} (saved locally):`, err);
+      console.warn(`[DataStore] Firestore write skipped/failed for ${collectionName}/${sanitizedId} (saved locally):`, err);
     }
   }
   return false;
 }
 
 /**
- * Fetch all documents from a Firestore collection.
+ * Fetch all documents from a Firestore collection with timeout.
  */
 export async function fetchDocsFromFirestore(collectionName: string): Promise<any[]> {
   if (!db) return [];
   try {
-    const querySnapshot = await getDocs(collection(db, collectionName));
+    const querySnapshot = await withTimeout(getDocs(collection(db, collectionName)), 3000);
     const docs: any[] = [];
     querySnapshot.forEach((docSnap) => {
       docs.push({ id: docSnap.id, ...docSnap.data() });
     });
     return docs;
   } catch (err) {
-    console.warn(`[DataStore] Failed to fetch docs from Firestore ${collectionName}:`, err);
+    console.warn(`[DataStore] Failed/timed out fetching docs from Firestore ${collectionName}:`, err);
     return [];
   }
 }
@@ -95,11 +105,11 @@ export async function deleteDocFromFirestore(collectionName: string, docId: stri
   if (!db || !docId) return false;
   const sanitizedId = String(docId).replace(/\//g, "_");
   try {
-    await deleteDoc(doc(db, collectionName, sanitizedId));
+    await withTimeout(deleteDoc(doc(db, collectionName, sanitizedId)), 3000);
     console.log(`[DataStore] Deleted doc from Firestore: ${collectionName}/${sanitizedId}`);
     return true;
   } catch (err) {
-    console.warn(`[DataStore] Failed to delete doc from Firestore ${collectionName}/${sanitizedId}:`, err);
+    console.warn(`[DataStore] Failed/timed out deleting doc from Firestore ${collectionName}/${sanitizedId}:`, err);
     return false;
   }
 }
