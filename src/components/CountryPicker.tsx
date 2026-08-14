@@ -315,20 +315,6 @@ export default function CountryPicker({
             </span>
           </div>
         </div>
-
-        {/* Theme Toggler */}
-        <button
-          type="button"
-          onClick={() => setIsDark(!isDark)}
-          className={`p-2 rounded-xl transition duration-200 cursor-pointer ${
-            isDark 
-              ? "bg-slate-800 hover:bg-slate-700 text-amber-400" 
-              : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-          }`}
-          title={isDark ? "Switch to WhatsApp Light Theme" : "Switch to Sleek Dark Theme"}
-        >
-          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
       </div>
 
       {/* STICKY SEARCH CONTAINER */}

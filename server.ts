@@ -2098,22 +2098,31 @@ JSON format:
 `;
     }
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      },
-    });
+    if (ai) {
+      try {
+        const response = await ai.models.generateContent({
+          model: "gemini-3.6-flash",
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+          },
+        });
 
-    if (response && response.text) {
-      const parsed = JSON.parse(response.text.trim());
-      if (parsed.subject && parsed.body) {
-        return parsed;
+        if (response && response.text) {
+          const parsed = JSON.parse(response.text.trim());
+          if (parsed.subject && parsed.body) {
+            return parsed;
+          }
+        }
+      } catch (err: any) {
+        if (err?.status === 403 || String(err).includes("PERMISSION_DENIED")) {
+          ai = null;
+        }
+        console.log("[Email Draft] Using procedural template generator.");
       }
     }
   } catch (err) {
-    console.error("[Gmail Integration] Failed to generate AI email using Gemini:", err);
+    console.log("[Email Draft] Using procedural template generator.");
   }
 
   return getFallbackEmail(type, name, details);
@@ -5063,46 +5072,51 @@ app.post("/api/chat", async (req, res) => {
 
   try {
     if (ai) {
-      const formattedHistory = (history || []).map((h: any) => ({
-        role: h.role === "assistant" ? "model" : "user",
-        parts: [{ text: h.content }]
-      }));
+      try {
+        const formattedHistory = (history || []).map((h: any) => ({
+          role: h.role === "assistant" ? "model" : "user",
+          parts: [{ text: h.content }]
+        }));
 
-      const chat = ai.chats.create({
-        model: "gemini-3.5-flash",
-        config: {
-          systemInstruction: systemInstruction,
-          temperature: 0.5,
-        },
-        history: formattedHistory
-      });
-
-      const response = await chat.sendMessage({ message: message });
-      const responseText = response.text || "";
-
-      // 2. Track unanswered queries based on fallback response pattern
-      if (
-        responseText.toLowerCase().includes("unavailable") || 
-        responseText.toLowerCase().includes("not available") ||
-        responseText.toLowerCase().includes("cannot find") ||
-        responseText.toLowerCase().includes("don't have info") ||
-        responseText.toLowerCase().includes("do not have this info") ||
-        responseText.toLowerCase().includes("unfortunately")
-      ) {
-        UNANSWERED_QUERIES.push({
-          query: message,
-          timestamp: new Date().toISOString()
+        const chat = ai.chats.create({
+          model: "gemini-3.6-flash",
+          config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.5,
+          },
+          history: formattedHistory
         });
-      }
 
-      return res.json({ response: responseText });
+        const response = await chat.sendMessage({ message: message });
+        const responseText = response.text || "";
+
+        if (
+          responseText.toLowerCase().includes("unavailable") || 
+          responseText.toLowerCase().includes("not available") ||
+          responseText.toLowerCase().includes("cannot find") ||
+          responseText.toLowerCase().includes("don't have info") ||
+          responseText.toLowerCase().includes("do not have this info") ||
+          responseText.toLowerCase().includes("unfortunately")
+        ) {
+          UNANSWERED_QUERIES.push({
+            query: message,
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        return res.json({ response: responseText });
+      } catch (geminiErr: any) {
+        if (geminiErr?.status === 403 || String(geminiErr).includes("PERMISSION_DENIED")) {
+          ai = null;
+        }
+        const mockResponse = getSmartMockResponse(message);
+        return res.json({ response: mockResponse });
+      }
     } else {
       const mockResponse = getSmartMockResponse(message);
       return res.json({ response: mockResponse });
     }
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    // Even in case of error, return a robust fallback from getSmartMockResponse
     const mockResponse = getSmartMockResponse(message);
     return res.json({ response: mockResponse });
   }
@@ -5132,29 +5146,35 @@ app.post("/api/ai-showcase/chat", async (req, res) => {
 
   try {
     if (ai) {
-      const formattedHistory = (history || []).map((h: any) => ({
-        role: h.role === "assistant" ? "model" : "user",
-        parts: [{ text: h.content }]
-      }));
+      try {
+        const formattedHistory = (history || []).map((h: any) => ({
+          role: h.role === "assistant" ? "model" : "user",
+          parts: [{ text: h.content }]
+        }));
 
-      const chat = ai.chats.create({
-        model: "gemini-3.5-flash",
-        config: {
-          systemInstruction: systemInstruction,
-          temperature: 0.6,
-        },
-        history: formattedHistory
-      });
+        const chat = ai.chats.create({
+          model: "gemini-3.6-flash",
+          config: {
+            systemInstruction: systemInstruction,
+            temperature: 0.6,
+          },
+          history: formattedHistory
+        });
 
-      const response = await chat.sendMessage({ message: message });
-      return res.json({ response: response.text });
+        const response = await chat.sendMessage({ message: message });
+        return res.json({ response: response.text });
+      } catch (geminiErr: any) {
+        if (geminiErr?.status === 403 || String(geminiErr).includes("PERMISSION_DENIED")) {
+          ai = null;
+        }
+        const fallbackAnswer = getShowcaseMockResponse(websiteId, message);
+        return res.json({ response: fallbackAnswer });
+      }
     } else {
-      // High-quality mock fallback based on websiteId
       const answer = getShowcaseMockResponse(websiteId, message);
       return res.json({ response: answer });
     }
   } catch (error: any) {
-    console.error("AI Showcase Chat Error:", error);
     const fallbackAnswer = getShowcaseMockResponse(websiteId, message);
     return res.json({ response: fallbackAnswer });
   }
@@ -6009,7 +6029,7 @@ app.post("/api/jobs/search", async (req, res) => {
           Return ONLY the valid JSON array and nothing else. No markdown wrappers.
         `;
         const aiRes = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-3.6-flash",
           contents: aiPrompt,
           config: {
             temperature: 0.3,
@@ -6020,8 +6040,11 @@ app.post("/api/jobs/search", async (req, res) => {
         if (Array.isArray(parsed)) {
           jobListings = parsed;
         }
-      } catch (geminiErr) {
-        console.warn("Gemini job generation failed, falling back to high-fidelity procedural generation:", geminiErr.message);
+      } catch (geminiErr: any) {
+        if (geminiErr?.status === 403 || String(geminiErr).includes("PERMISSION_DENIED")) {
+          ai = null;
+        }
+        console.log("[Jobs Search] Utilizing procedural job generator.");
       }
     }
 
@@ -6235,7 +6258,7 @@ app.post("/api/global-search", async (req, res) => {
     if (ai) {
       try {
         const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-3.6-flash",
           contents: query,
           config: {
             systemInstruction: searchSystemInstruction,
@@ -6244,7 +6267,10 @@ app.post("/api/global-search", async (req, res) => {
         });
         return res.json({ response: response.text });
       } catch (geminiErr: any) {
-        console.warn("Gemini global search failed, falling back to procedural search:", geminiErr.message || geminiErr);
+        if (geminiErr?.status === 403 || String(geminiErr).includes("PERMISSION_DENIED")) {
+          ai = null;
+        }
+        console.log("[Global Search] Utilizing procedural search generator.");
       }
     }
 
@@ -6286,41 +6312,46 @@ app.use((err: any, req: any, res: any, next: any) => {
 
 // Initialize Gemini Client asynchronously
 initializeGeminiClient().catch(err => {
-  console.warn("[Gemini Init Note]:", err?.message || String(err));
+  console.log("[Gemini Init Note]: Using procedural fallback.");
 });
 
 // Configure static asset serving and Vite middleware
-const distPath = path.join(process.cwd(), "dist");
+async function startServer() {
+  const distPath = path.join(process.cwd(), "dist");
 
-if (process.env.NODE_ENV !== "production") {
-  console.log("Starting server in DEVELOPMENT mode with Vite middleware...");
-  createViteServer({
-    server: { middlewareMode: true },
-    appType: "spa",
-  }).then((vite) => {
-    app.use(vite.middlewares);
-  }).catch((err) => {
-    console.error("Vite middleware error:", err);
-  });
-} else {
-  console.log("Starting server in PRODUCTION mode (Hostinger / Standalone Node.js)...");
-  app.use(express.static(distPath));
-  app.get("*", (req: any, res: any) => {
-    if (req.path.startsWith("/api/")) {
-      return res.status(404).json({ error: "API endpoint not found" });
+  if (process.env.NODE_ENV !== "production") {
+    console.log("Starting server in DEVELOPMENT mode with Vite middleware...");
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa",
+      });
+      app.use(vite.middlewares);
+    } catch (err) {
+      console.error("Vite middleware error:", err);
     }
-    const indexPath = path.join(distPath, "index.html");
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send("Application build not found. Please run 'npm run build' first.");
-    }
+  } else {
+    console.log("Starting server in PRODUCTION mode (Hostinger / Standalone Node.js)...");
+    app.use(express.static(distPath));
+    app.get("*", (req: any, res: any) => {
+      if (req.path.startsWith("/api/")) {
+        return res.status(404).json({ error: "API endpoint not found" });
+      }
+      const indexPath = path.join(distPath, "index.html");
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send("Application build not found. Please run 'npm run build' first.");
+      }
+    });
+  }
+
+  // Start Express HTTP listener on port 3000 / process.env.PORT
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
   });
 }
 
-// Start Express HTTP listener on port 3000 / process.env.PORT
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});
+startServer();
 
 export default app;

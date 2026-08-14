@@ -1071,12 +1071,12 @@ export default function FlightBookingDesk() {
                       <div className="text-right shrink-0">
                         {promoApplied ? (
                           <div className="space-y-0.5">
-                            <p className="text-[10px] text-slate-500 line-through">PKR {offer.pricePKR.toLocaleString()}</p>
-                            <p className="text-sm font-black text-amber-400">PKR {discountedPrice.toLocaleString()}</p>
+                            <p className="text-[10px] text-slate-500 line-through">PKR {(offer?.pricePKR || 0).toLocaleString()}</p>
+                            <p className="text-sm font-black text-amber-400">PKR {(discountedPrice || 0).toLocaleString()}</p>
                             <span className="inline-block bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] px-1 rounded font-bold">15% Discount</span>
                           </div>
                         ) : (
-                          <p className="text-sm font-black text-rose-300">PKR {offer.pricePKR.toLocaleString()}</p>
+                          <p className="text-sm font-black text-rose-300">PKR {(offer?.pricePKR || 0).toLocaleString()}</p>
                         )}
                         <p className="text-[9px] text-slate-500 font-mono mt-0.5">Estimated All-Inclusive</p>
                       </div>
@@ -1102,7 +1102,7 @@ export default function FlightBookingDesk() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">Total Price:</span>
               <span className="text-sm font-black text-amber-400">
-                PKR {Math.round(selectedOffer.pricePKR * promoDiscount).toLocaleString()}
+                PKR {Math.round((selectedOffer?.pricePKR || 0) * (promoDiscount || 1)).toLocaleString()}
               </span>
             </div>
           </div>
@@ -1283,7 +1283,7 @@ export default function FlightBookingDesk() {
                 <div className="bg-slate-950 p-4 border-t border-slate-800/80 flex items-center justify-between">
                   <div>
                     <p className="text-[8px] text-slate-500 uppercase">Verifiable Voucher Price</p>
-                    <p className="text-xs font-black text-amber-400">PKR {Math.round(selectedOffer.pricePKR * promoDiscount).toLocaleString()}</p>
+                    <p className="text-xs font-black text-amber-400">PKR {Math.round((selectedOffer?.pricePKR || 0) * (promoDiscount || 1)).toLocaleString()}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-[8px] text-emerald-400 font-bold uppercase tracking-widest">• GDS REGISTERED</p>

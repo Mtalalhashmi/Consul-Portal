@@ -623,6 +623,96 @@ export const VACANCIES: Vacancy[] = [
     flag: "🇧🇭",
     spots: 15,
     imageUrl: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?auto=format&fit=crop&q=80&w=600"
+  },
+  {
+    id: "v-ca-01",
+    title: "Senior Cloud & DevOps Engineer",
+    company: "Maple Cloud Solutions Inc.",
+    country: "Canada",
+    region: "Europe",
+    salary: "CAD $6,800 / Month",
+    requirements: [
+      "BS/MS Computer Science (WES evaluated)",
+      "Hands-on experience with AWS/GCP, Docker, Kubernetes, and Terraform",
+      "IELTS General CLB 7+ with strong English communication"
+    ],
+    description: "Architect multi-cloud infrastructures, automate CI/CD release pipelines, and lead tech initiatives in Toronto & Waterloo tech hubs. Full LMIA work permit with fast-track Canadian PR eligibility.",
+    category: "IT & Software",
+    flag: "🇨🇦",
+    spots: 8,
+    imageUrl: "https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&q=80&w=600"
+  },
+  {
+    id: "v-ca-02",
+    title: "Commercial Construction & Heavy Machinery Lead",
+    company: "Pacific Rim Builders Ltd.",
+    country: "Canada",
+    region: "Europe",
+    salary: "CAD $5,400 / Month",
+    requirements: [
+      "Diploma / Degree in Civil Engineering or Red Seal Trade",
+      "3+ years experience in heavy industrial construction projects",
+      "Valid international driving permit and clean safety record"
+    ],
+    description: "Supervise commercial building operations, manage concrete framework teams, and coordinate site safety compliance in Vancouver & Calgary. LMIA approved sponsorship.",
+    category: "Construction",
+    flag: "🇨🇦",
+    spots: 14,
+    imageUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&q=80&w=600"
+  },
+  {
+    id: "v-ca-03",
+    title: "Registered Care Specialist & Healthcare Assistant",
+    company: "CareFirst Canada Health Network",
+    country: "Canada",
+    region: "Europe",
+    salary: "CAD $4,500 / Month",
+    requirements: [
+      "Nursing diploma or Bachelor degree in Healthcare/Caregiving",
+      "Valid professional council registration",
+      "IELTS General CLB 5+ (Language booster support provided)"
+    ],
+    description: "Deliver professional geriatric and acute healthcare support in accredited Canadian hospitals and assisted-living centers. Direct provincial permanent residency pathway.",
+    category: "Healthcare",
+    flag: "🇨🇦",
+    spots: 12,
+    imageUrl: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80&w=600"
+  },
+  {
+    id: "v-ca-04",
+    title: "Cross-Border Logistics Fleet Operations Manager",
+    company: "Trans-Canada Freight Systems",
+    country: "Canada",
+    region: "Europe",
+    salary: "CAD $4,900 / Month",
+    requirements: [
+      "Bachelor's degree or Supply Chain Management Diploma",
+      "2+ years experience in freight dispatching, RFID tracking, and ERP",
+      "Conversational English / Basic French is a plus"
+    ],
+    description: "Coordinate inter-provincial supply lines, manage fleet dispatch schedules, and oversee automated warehousing centers in Montreal & Toronto.",
+    category: "Logistics",
+    flag: "🇨🇦",
+    spots: 10,
+    imageUrl: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=600"
+  },
+  {
+    id: "v-au-01",
+    title: "Senior Electrical & Renewable Grid Engineer",
+    company: "SunState Power Alliance Australia",
+    country: "Australia",
+    region: "Europe",
+    salary: "AUD $7,200 / Month",
+    requirements: [
+      "B.Sc Electrical Engineering (Engineers Australia assessed)",
+      "Solar grid or high-voltage transmission substation experience",
+      "PTE Academic 65+ or IELTS 6.5+"
+    ],
+    description: "Design and commission large-scale solar farm grid integrations across Queensland and New South Wales. Subclass 482 TSS sponsorship with fast-track PR transition.",
+    category: "Engineering",
+    flag: "🇦🇺",
+    spots: 6,
+    imageUrl: "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=600"
   }
 ];
 
@@ -715,6 +805,206 @@ export const REVIEWS: Review[] = [
     date: "1 week ago",
     comment: "Unbelievable service! I was hesitant at first, but when I verified my passport file on the portal, all my concerns vanished. The AI and counselor team helped me get an appointment for Italy's medical care sector. Truly professional.",
     avatar: womanOrangeBgImg
+  },
+  {
+    id: "r-06",
+    name: "Tanvir Rahman",
+    location: "Dhaka, Bangladesh",
+    countryGranted: "Germany (Schengen)",
+    stars: 5,
+    date: "2 days ago",
+    comment: "Applied for Senior Systems Engineer in Frankfurt directly from Dhaka. ConsulPortal verified my degree attestation and handled the Schengen visa file seamlessly. Passport stamped in 45 days!",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-07",
+    name: "Tariq Mehmood",
+    location: "Lahore, Pakistan",
+    countryGranted: "Saudi Arabia (NEOM)",
+    stars: 5,
+    date: "3 days ago",
+    comment: "Selected for NEOM Infrastructure Project in Saudi Arabia. Live tracking of MOFA status gave me 100% confidence. Flight booked and now working comfortably in Riyadh with great accommodation.",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-08",
+    name: "Priya Sharma",
+    location: "New Delhi, India",
+    countryGranted: "Italy (Schengen)",
+    stars: 5,
+    date: "5 days ago",
+    comment: "Applied for Nursing Specialist role in Rome. The consular escrow system ensured my visa processing fees were completely secure until embassy approval. Excellent experience from India!",
+    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-09",
+    name: "Anowar Hossain",
+    location: "Chittagong, Bangladesh",
+    countryGranted: "Qatar (Doha)",
+    stars: 5,
+    date: "6 days ago",
+    comment: "As an HVAC Technician from Chittagong, getting a legitimate Qatar work visa used to be stressful. ConsulPortal made every step transparent from GAMCA medical checkup to ticket dispatch.",
+    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-10",
+    name: "Rajesh Kumar",
+    location: "Mumbai, India",
+    countryGranted: "United Arab Emirates",
+    stars: 5,
+    date: "1 week ago",
+    comment: "Software Developer visa in Dubai processed in record time. The AI match evaluator matched my profile directly to top UAE employers without middleman commissions.",
+    avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-11",
+    name: "Fatima Noor",
+    location: "Islamabad, Pakistan",
+    countryGranted: "Poland (Schengen)",
+    stars: 5,
+    date: "1 week ago",
+    comment: "Secured Office Administrator role in Warsaw, Poland. Being a female applicant, safety and authentic documentation were crucial. ConsulPortal guided me at every step with complete transparency.",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-12",
+    name: "Mohammed Hasan",
+    location: "Sylhet, Bangladesh",
+    countryGranted: "Kuwait (City)",
+    stars: 5,
+    date: "2 weeks ago",
+    comment: "Heavy Equipment Operator visa for Kuwait City. Verified my passport tracking daily on ConsulPortal. Honest, genuine recruitment service for Bangladeshi candidates.",
+    avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-13",
+    name: "Amitav Ganguly",
+    location: "Kolkata, India",
+    countryGranted: "France (Schengen)",
+    stars: 5,
+    date: "2 weeks ago",
+    comment: "Civil Engineer candidate for Paris Metro expansion project. The embassy submission guidance and official document translation support were top-tier. Highly recommended!",
+    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-14",
+    name: "Bilal Ahmed",
+    location: "Karachi, Pakistan",
+    countryGranted: "Oman (Muscat)",
+    stars: 5,
+    date: "2 weeks ago",
+    comment: "Logistics Manager in Muscat, Oman. The WhatsApp support and real-time updates were outstanding. Completed my biometric appointment without any hassle.",
+    avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-15",
+    name: "Rahul Nair",
+    location: "Kochi, Kerala, India",
+    countryGranted: "Saudi Arabia (Jeddah)",
+    stars: 5,
+    date: "3 weeks ago",
+    comment: "Electrical Supervisor job in Jeddah. Escrow payment protection gave me complete peace of mind. Arrived safely in KSA with my official work permit and iqama pre-clearance.",
+    avatar: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-16",
+    name: "Shamima Akter",
+    location: "Dhaka, Bangladesh",
+    countryGranted: "Italy (Milan)",
+    stars: 5,
+    date: "3 weeks ago",
+    comment: "Textile & Garment Design Specialist position in Milan, Italy. The entire visa appointment, document translation, and embassy filing process was smooth and stress-free.",
+    avatar: "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-17",
+    name: "Usman Ghani",
+    location: "Peshawar, Pakistan",
+    countryGranted: "Germany (Munich)",
+    stars: 5,
+    date: "3 weeks ago",
+    comment: "Solar Energy Installer in Munich. ConsulPortal helped me track my file from initial submission to final embassy stamping. Exceptional team and guidance!",
+    avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-18",
+    name: "Suresh Patel",
+    location: "Ahmedabad, India",
+    countryGranted: "Romania (Schengen)",
+    stars: 5,
+    date: "1 month ago",
+    comment: "Automobile Technician position in Bucharest, Romania. The team handled my work permit application with total precision and no hidden agency fees.",
+    avatar: "https://images.unsplash.com/photo-1528892952291-009c663ce843?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-19",
+    name: "Jahangir Alam",
+    location: "Narayanganj, Bangladesh",
+    countryGranted: "United Arab Emirates",
+    stars: 5,
+    date: "1 month ago",
+    comment: "Dubai Logistics & Warehouse Supervisor vacancy. ConsulPortal is 100% genuine. Checked my passport live status daily until flight ticket dispatch.",
+    avatar: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-20",
+    name: "Ayesha Khan",
+    location: "Rawalpindi, Pakistan",
+    countryGranted: "Spain (Schengen)",
+    stars: 5,
+    date: "1 month ago",
+    comment: "Agricultural Specialist in Valencia, Spain. The guidance on document translation, apostille attestation, and embassy interview prep was clear and professional.",
+    avatar: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-21",
+    name: "Vikram Singh",
+    location: "Chandigarh, India",
+    countryGranted: "Poland (Poznań)",
+    stars: 5,
+    date: "1 month ago",
+    comment: "Forklift Driver in Poznań, Poland. Honest guidance, no hidden costs, and total clarity on official consular fees throughout the process.",
+    avatar: "https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-22",
+    name: "Mahfuzur Rahman",
+    location: "Comilla, Bangladesh",
+    countryGranted: "Qatar (Doha)",
+    stars: 5,
+    date: "1 month ago",
+    comment: "Doha Expressway Construction Supervisor. The portal provided step-by-step live updates for my Qatar MOFA clearance and GAMCA medical test.",
+    avatar: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-23",
+    name: "Hamza Ali",
+    location: "Faisalabad, Pakistan",
+    countryGranted: "Czech Republic",
+    stars: 5,
+    date: "1 month ago",
+    comment: "CNC Machinist in Prague. Tracked my visa file status online every day. Arrived in Czech Republic with full employer-sponsored perks!",
+    avatar: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-24",
+    name: "Sunil Varma",
+    location: "Hyderabad, India",
+    countryGranted: "Netherlands (Amsterdam)",
+    stars: 5,
+    date: "1 month ago",
+    comment: "Full Stack Engineer in Amsterdam. From technical interview to Schengen EU Blue Card approval, ConsulPortal handled everything seamlessly.",
+    avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300"
+  },
+  {
+    id: "r-25",
+    name: "Nusrat Jahan",
+    location: "Rajshahi, Bangladesh",
+    countryGranted: "Saudi Arabia (Dammam)",
+    stars: 5,
+    date: "1 month ago",
+    comment: "Clinical Laboratory Technician in Dammam. Highly reliable portal for female healthcare professionals seeking verified Gulf contracts with official licensing.",
+    avatar: "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=300"
   }
 ];
 
@@ -772,6 +1062,24 @@ export const CITY_CARDS: CountryCityCard[] = [
     animatedIcon: "🗼",
     jobsCount: 18,
     imageUrl: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=400"
+  },
+  {
+    city: "Doha",
+    country: "Qatar",
+    flag: "🇶🇦",
+    bgGradient: "from-amber-950/70 via-red-950/50 to-slate-950",
+    animatedIcon: "✈️",
+    jobsCount: 65,
+    imageUrl: "https://images.unsplash.com/photo-1578895210405-907db48a7111?auto=format&fit=crop&q=80&w=400"
+  },
+  {
+    city: "Muscat",
+    country: "Oman",
+    flag: "🇴🇲",
+    bgGradient: "from-emerald-950/70 via-teal-950/50 to-slate-950",
+    animatedIcon: "🕌",
+    jobsCount: 32,
+    imageUrl: "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&q=80&w=400"
   }
 ];
 
@@ -809,3 +1117,159 @@ export const PAKISTANI_PAYMENT_METHODS = [
     color: "bg-slate-900/50 border-teal-500/50 text-teal-300"
   }
 ];
+
+export const TOUR_PACKAGES: Array<{
+  id: string;
+  title: string;
+  country: string;
+  flag: string;
+  duration: string;
+  days: number;
+  nights: number;
+  pricePKR: number;
+  originalPricePKR?: number;
+  rating: number;
+  reviewsCount: number;
+  imageUrl: string;
+  category: "Family" | "Honeymoon" | "Adventure" | "Group" | "Luxury";
+  description: string;
+  includes: string[];
+}> = [
+  {
+    id: "tp-01",
+    title: "Amazing Turkey",
+    country: "Turkey",
+    flag: "🇹🇷",
+    duration: "7 Days / 6 Nights",
+    days: 7,
+    nights: 6,
+    pricePKR: 85000,
+    originalPricePKR: 95000,
+    rating: 4.8,
+    reviewsCount: 120,
+    imageUrl: "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&q=80&w=600",
+    category: "Family",
+    description: "Explore Istanbul, Bosphorus Cruise, Cappadocia Hot Air Balloons and historic Pamukkale thermal pools with full visa guidance.",
+    includes: ["Return Flights Placeholder", "4-Star Hotel Stay", "Daily Breakfast", "Airport Transfers", "E-Visa Assistance"]
+  },
+  {
+    id: "tp-02",
+    title: "Dubai Shopping Festival",
+    country: "United Arab Emirates",
+    flag: "🇦🇪",
+    duration: "5 Days / 4 Nights",
+    days: 5,
+    nights: 4,
+    pricePKR: 75000,
+    originalPricePKR: 85000,
+    rating: 4.6,
+    reviewsCount: 98,
+    imageUrl: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&q=80&w=600",
+    category: "Luxury",
+    description: "Experience luxury shopping, Desert Safari with BBQ dinner, Burj Khalifa top deck views, and Dubai Marina yacht cruise.",
+    includes: ["30-Day Express Visa", "4-Star Hotel in Deira/Downtown", "Desert Safari Tour", "Dhow Cruise Dinner"]
+  },
+  {
+    id: "tp-03",
+    title: "Switzerland Delight",
+    country: "Switzerland",
+    flag: "🇨🇭",
+    duration: "6 Days / 5 Nights",
+    days: 6,
+    nights: 5,
+    pricePKR: 180000,
+    originalPricePKR: 200000,
+    rating: 4.9,
+    reviewsCount: 76,
+    imageUrl: "https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&q=80&w=600",
+    category: "Honeymoon",
+    description: "Alpine wonders of Zurich, Lucerne, Interlaken, and Mount Titlis snow activities with Schengen visa dossier preparation.",
+    includes: ["Schengen Visa Appointment", "Swiss Travel Rail Pass", "Alpine Resort Hotel", "Mountain Cable Car"]
+  },
+  {
+    id: "tp-04",
+    title: "Malaysia Highlights",
+    country: "Malaysia",
+    flag: "🇲🇾",
+    duration: "5 Days / 4 Nights",
+    days: 5,
+    nights: 4,
+    pricePKR: 65000,
+    originalPricePKR: 72000,
+    rating: 4.7,
+    reviewsCount: 64,
+    imageUrl: "https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&q=80&w=600",
+    category: "Group",
+    description: "Discover Kuala Lumpur Petronas Twin Towers, Genting Highlands cable car ride, Batu Caves, and Sunway Lagoon theme park.",
+    includes: ["E-Visa Sticker Approval", "City Center Hotel", "Genting Cable Car Ticket", "Bilingual Tour Guide"]
+  },
+  {
+    id: "tp-05",
+    title: "Europe Explorer",
+    country: "Germany",
+    flag: "🇩🇪",
+    duration: "10 Days / 9 Nights",
+    days: 10,
+    nights: 9,
+    pricePKR: 250000,
+    originalPricePKR: 280000,
+    rating: 4.9,
+    reviewsCount: 88,
+    imageUrl: "https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&q=80&w=600",
+    category: "Adventure",
+    description: "Multi-country European voyage covering Germany, Netherlands, France, and Belgium with Schengen visa guarantee.",
+    includes: ["Multi-Entry Schengen Visa", "Intercity Luxury Coach", "4-Star City Hotels", "Guided Museum Tickets"]
+  },
+  {
+    id: "tp-06",
+    title: "Thailand Getaway",
+    country: "Thailand",
+    flag: "🇹🇭",
+    duration: "6 Days / 5 Nights",
+    days: 6,
+    nights: 5,
+    pricePKR: 60000,
+    originalPricePKR: 68000,
+    rating: 4.6,
+    reviewsCount: 35,
+    imageUrl: "https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?auto=format&fit=crop&q=80&w=600",
+    category: "Family",
+    description: "Bangkok city temples, Coral Island speed boat tour in Pattaya, floating markets, and tropical beach resorts.",
+    includes: ["Thailand Visa On Arrival Support", "Pattaya Beach Resort", "Coral Island Tour", "Daily Breakfast"]
+  },
+  {
+    id: "tp-07",
+    title: "Saudi Arabia Umrah & Ziyarat",
+    country: "Saudi Arabia",
+    flag: "🇸🇦",
+    duration: "8 Days / 7 Nights",
+    days: 8,
+    nights: 7,
+    pricePKR: 110000,
+    originalPricePKR: 125000,
+    rating: 4.9,
+    reviewsCount: 150,
+    imageUrl: "https://images.unsplash.com/photo-1591604466107-ec97de577aff?auto=format&fit=crop&q=80&w=600",
+    category: "Family",
+    description: "Blessed spiritual journey to Makkah Al-Mukarramah and Madinah Al-Munawwarah with 5-star hotel near Haram.",
+    includes: ["Umrah Visa Approval", "Hotel 200m from Haram", "VIP Ziyarat Transport", "Biometric Nusuk Assistance"]
+  },
+  {
+    id: "tp-08",
+    title: "United Kingdom Heritage",
+    country: "United Kingdom",
+    flag: "🇬🇧",
+    duration: "8 Days / 7 Nights",
+    days: 8,
+    nights: 7,
+    pricePKR: 195000,
+    originalPricePKR: 215000,
+    rating: 4.8,
+    reviewsCount: 42,
+    imageUrl: "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&q=80&w=600",
+    category: "Luxury",
+    description: "Explore London Big Ben, Buckingham Palace, Oxford University, and Scottish Highlands with UK Standard Visitor Visa.",
+    includes: ["UK Visitor Visa Dossier", "Central London Hotel", "Hop-On Sightseeing Bus", "Thames River Cruise"]
+  }
+];
+

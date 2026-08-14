@@ -36,6 +36,69 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getJobImageByTitle } from "../utils/jobImages";
+import { RAW_COUNTRIES } from "../utils/countriesData";
+import { searchStructuredJobs, getAllJobs, getJobsByCountry, ISO_MAP, StructuredJob } from "../utils/jobDatabase";
+import { CountryConsularHub } from "./CountryConsularHub";
+
+function convertStructuredToCard(sj: StructuredJob): JobCardDetail {
+  return {
+    id: sj.id,
+    title: sj.jobTitle,
+    companyName: sj.companyName || `${sj.country} Alliance Operations Ltd`,
+    companyLogo: sj.jobTitle.charAt(0),
+    jobImage: getJobImageByTitle(sj.jobTitle) || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600",
+    country: sj.country,
+    countryFlag: sj.flag,
+    city: sj.city,
+    salary: sj.salaryString,
+    numericSalary: sj.salary.min,
+    currency: sj.salary.currency,
+    overtimePay: "Paid at 1.5x standard hourly rate",
+    accommodation: "Provided (Free fully furnished company housing)",
+    foodAllowance: "Included (3 meals/day or subsidized food stipend)",
+    transportation: "Provided (Free company shuttle transit)",
+    medicalInsurance: "Provided (Premium coverage - full medical & dental)",
+    contractDuration: "2 Years (Renewable)",
+    workingHours: sj.dutyHours || "8 Hours / Day (40-48 hrs/wk)",
+    weeklyOff: sj.country.toLowerCase().includes("saudi") || sj.country.toLowerCase().includes("qatar") || sj.country.toLowerCase().includes("emirates") ? "Friday" : "Saturday & Sunday",
+    visaSponsorship: "Yes",
+    airTicketIncluded: "Yes",
+    experienceRequired: sj.experience,
+    educationRequired: "High School / Diploma or Bachelor's",
+    ageRequirement: "20 - 48 Years",
+    gender: "Any",
+    vacancies: sj.vacancies || 12,
+    jobCategory: sj.category,
+    industry: sj.category,
+    postedDate: sj.postedDate,
+    applicationDeadline: sj.applicationDeadline,
+    isVerifiedEmployer: true,
+    hiringNow: true,
+    urgentHiring: sj.id.charCodeAt(sj.id.length - 1) % 2 === 0,
+    featured: sj.id.charCodeAt(sj.id.length - 1) % 3 === 0,
+    description: `${sj.description}\n\nConsular Verification: Approved employment quota with guaranteed visa sponsorship, regulated minimum wage, and welfare protections in ${sj.country}.`,
+    responsibilities: [
+      `Perform daily operational assignments according to ${sj.companyName} standards.`,
+      `Maintain strict compliance with local occupational health, safety (HSE), and quality protocols in ${sj.city}, ${sj.country}.`,
+      `Collaborate effectively with multinational crew leads and project supervisors.`
+    ],
+    requirements: [
+      `Prior background, trade certification, or aptitude in ${sj.category}.`,
+      `Valid national passport with at least 1 year validity.`,
+      `Medical fitness certificate and clean background clearance.`
+    ]
+  };
+}
+
+function getComprehensiveJobsList(countryFilter: string): JobCardDetail[] {
+  let structured: StructuredJob[] = [];
+  if (countryFilter && countryFilter !== "All") {
+    structured = getJobsByCountry(countryFilter);
+  } else {
+    structured = getAllJobs().slice(0, 300);
+  }
+  return structured.map(convertStructuredToCard);
+}
 
 // Types for the job cards
 interface JobCardDetail {
@@ -641,26 +704,28 @@ export default function GlobalJobDirectory({
                 ]
               };
             });
+            const baseJobs = getComprehensiveJobsList(selectedCountry);
+            const mergedList = [...enrichedList, ...baseJobs];
             // Guarantee deduplication by job title - only 1 job per title name listed
             const seenTitles = new Set<string>();
-            const uniqueJobs = enrichedList.filter((j: any) => {
-              const norm = (j.title || "").trim().toLowerCase();
+            const uniqueJobs = mergedList.filter((j: any) => {
+              const norm = `${(j.title || "").trim().toLowerCase()}_${(j.country || "").trim().toLowerCase()}`;
               if (seenTitles.has(norm)) return false;
               seenTitles.add(norm);
               return true;
             });
             setJobs(uniqueJobs);
           } else {
-            // Fallback to static if empty response
-            setJobs(ENRICHED_STATIC_PRESEEDED_JOBS);
+            // Fallback to comprehensive structured jobs for country
+            setJobs(getComprehensiveJobsList(selectedCountry));
           }
         } else {
-          throw new Error("Server API returned status " + response.status);
+          setJobs(getComprehensiveJobsList(selectedCountry));
         }
       } catch (err: any) {
-        console.warn("Live API job fetch had standard credentials lock, falling back smoothly to procedural client storage:", err.message);
-        // Fallback smoothly to static local database
-        setJobs(ENRICHED_STATIC_PRESEEDED_JOBS);
+        console.warn("Live API job fetch had standard credentials lock, falling back smoothly to procedural client storage:", err?.message);
+        // Fallback smoothly to comprehensive structured jobs for country
+        setJobs(getComprehensiveJobsList(selectedCountry));
       } finally {
         setIsLoading(false);
       }
@@ -792,6 +857,56 @@ export default function GlobalJobDirectory({
     };
   }, [filteredJobs]);
 
+  // Featured Country Chips for the AI Search Header
+  const displayedCountryChips = useMemo(() => {
+    const popularNames = [
+      "Tunisia",
+      "United Arab Emirates",
+      "United Kingdom",
+      "United States",
+      "Saudi Arabia",
+      "Oman",
+      "Qatar",
+      "Kuwait",
+      "Bahrain",
+      "Germany",
+      "Poland",
+      "Italy",
+      "Spain",
+      "Romania",
+      "Malaysia",
+      "Canada",
+      "Australia"
+    ];
+
+    if (!searchQuery) {
+      return RAW_COUNTRIES.filter(c => popularNames.includes(c.name));
+    }
+
+    return RAW_COUNTRIES.filter(c =>
+      c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.capital.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 16);
+  }, [searchQuery]);
+
+  // Resolve active country for consular dossier
+  const activeDossierCountry = useMemo(() => {
+    if (selectedCountry && selectedCountry !== "All") {
+      return selectedCountry;
+    }
+    if (searchQuery) {
+      const q = searchQuery.trim().toLowerCase();
+      const matched = RAW_COUNTRIES.find(c => 
+        c.name.toLowerCase() === q || 
+        c.name.toLowerCase().includes(q) ||
+        c.capital.toLowerCase() === q ||
+        (ISO_MAP[c.name] && ISO_MAP[c.name].toLowerCase() === q)
+      );
+      if (matched) return matched.name;
+    }
+    return null;
+  }, [selectedCountry, searchQuery]);
+
   // Apply Form Submission Handler
   const handleApplyFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -905,7 +1020,7 @@ export default function GlobalJobDirectory({
   return (
     <div className={`p-1.5 sm:p-2 rounded-3xl transition-colors duration-500 ${isDarkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-800"}`}>
       
-      {/* Dynamic Sub-tab Selector with Theme glass switch */}
+      {/* Dynamic Sub-tab Selector */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800/40 pb-5 mb-8">
         <div className="flex items-center gap-1.5 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80 w-full sm:w-auto overflow-x-auto">
           <button
@@ -930,27 +1045,6 @@ export default function GlobalJobDirectory({
             <span>Govt Legal Portals</span>
           </button>
         </div>
-
-        {/* Brand Theme Switcher */}
-        <button
-          onClick={() => {
-            setIsDarkMode(!isDarkMode);
-            showToast(isDarkMode ? "☀️ Switched to Light Glass theme!" : "🌙 Switched to Dark Midnight theme!");
-          }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border transition-all cursor-pointer text-xs font-mono font-bold ${isDarkMode ? "bg-slate-900 border-slate-800 text-slate-300 hover:text-white" : "bg-white border-slate-200 text-slate-700 shadow-sm hover:bg-slate-100"}`}
-        >
-          {isDarkMode ? (
-            <>
-              <Sun className="w-4 h-4 text-amber-500" />
-              <span>Light Glass Theme</span>
-            </>
-          ) : (
-            <>
-              <Moon className="w-4 h-4 text-indigo-500" />
-              <span>Dark Midnight Theme</span>
-            </>
-          )}
-        </button>
       </div>
 
       {/* TOAST SYSTEM */}
@@ -972,6 +1066,104 @@ export default function GlobalJobDirectory({
       {activeTab === "board" && (
         <div className="space-y-8">
           
+          {/* AI COUNTRY & JOB EXPLORER HERO SEARCH BANNER */}
+          <div className="bg-[#080808] border border-[#D4AF37]/35 rounded-3xl p-6 sm:p-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)] text-center relative overflow-hidden">
+            {/* Ambient background gold glow */}
+            <div className="absolute top-0 right-1/2 translate-x-1/2 w-96 h-96 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none -z-0" />
+
+            <div className="relative z-10 max-w-3xl mx-auto space-y-4">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#111111] border border-[#D4AF37]/40 text-[#F5D76E] text-xs font-mono font-semibold shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <Globe2 className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>AI COUNTRY EXPLORER</span>
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl sm:text-4xl font-serif font-black text-white tracking-tight uppercase">
+                EXPLORE YOUR <span className="bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] bg-clip-text text-transparent">DESTINATION</span>
+              </h2>
+
+              {/* Subtitle */}
+              <p className="text-xs sm:text-sm text-[#A7A7A7] max-w-xl mx-auto leading-relaxed">
+                Instant immigration advisories, verified job listings, currency rates, and embassy guidelines for 200+ countries.
+              </p>
+
+              {/* Sleek Search Bar */}
+              <div className="relative max-w-xl mx-auto pt-2">
+                <Search className="w-4 h-4 text-[#D4AF37] absolute left-4 top-[calc(50%+4px)] -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search jobs, titles or 200+ countries (e.g. Uni, Germany, Dubai)..."
+                  className="w-full pl-11 pr-10 py-3 rounded-xl bg-[#111111] border border-[#D4AF37]/40 text-xs sm:text-sm text-white placeholder-[#A7A7A7] focus:outline-none focus:border-[#F5D76E] shadow-[0_0_20px_rgba(212,175,55,0.15)] font-mono transition"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3.5 top-[calc(50%+4px)] -translate-y-1/2 text-slate-400 hover:text-white p-1 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Filter Chips With Flag & Country Name */}
+              <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pt-3 pb-1 scrollbar-none px-1">
+                <button
+                  onClick={() => setSelectedCountry("All")}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition cursor-pointer shrink-0 ${
+                    selectedCountry === "All"
+                      ? "bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-[#050505] font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]"
+                      : "bg-[#111111] text-[#A7A7A7] hover:text-white border border-[#D4AF37]/20 hover:border-[#D4AF37]/60"
+                  }`}
+                >
+                  <span>🌍</span>
+                  <span>All Countries</span>
+                </button>
+
+                {displayedCountryChips.map((c) => {
+                  const isSelected = selectedCountry.toLowerCase() === c.name.toLowerCase();
+                  return (
+                    <button
+                      key={c.name}
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedCountry("All");
+                        } else {
+                          setSelectedCountry(c.name);
+                        }
+                      }}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 whitespace-nowrap transition cursor-pointer shrink-0 ${
+                        isSelected
+                          ? "bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-[#050505] font-bold shadow-[0_0_15px_rgba(212,175,55,0.4)]"
+                          : "bg-[#111111] text-[#A7A7A7] hover:text-white border border-[#D4AF37]/20 hover:border-[#D4AF37]/60"
+                      }`}
+                    >
+                      <span className="text-base">{c.flag}</span>
+                      <span>{c.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* DYNAMIC HIGH-FIDELITY CONSULAR DOSSIER & INTELLIGENCE HUB */}
+          {activeDossierCountry && (
+            <CountryConsularHub
+              countryName={activeDossierCountry}
+              onApplyForCountry={(cName) => {
+                setSelectedCountry(cName);
+                showToast(`Viewing verified ${cName} vacancies`);
+              }}
+              onSelectCategory={(cat) => {
+                setSelectedCategory(cat);
+                showToast(`Filtered by ${cat} in ${activeDossierCountry}`);
+              }}
+            />
+          )}
+
           {/* STATISTICS AT THE TOP */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
             <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${isDarkMode ? "bg-slate-900/40 border-slate-850" : "bg-white border-slate-200 shadow-sm"}`}>
@@ -1042,21 +1234,17 @@ export default function GlobalJobDirectory({
 
                 {/* Country Dropdown */}
                 <div className="space-y-1">
-                  <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Country</label>
+                  <label className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">Country ({RAW_COUNTRIES.length} Countries)</label>
                   <div className="relative">
                     <select
                       value={selectedCountry}
                       onChange={(e) => setSelectedCountry(e.target.value)}
                       className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none appearance-none cursor-pointer pr-8 ${isDarkMode ? "bg-slate-950 border-slate-800 text-slate-200 focus:border-amber-500/50" : "bg-slate-50 border-slate-200 text-slate-800 focus:border-amber-500"}`}
                     >
-                      <option value="All">🌍 All Countries</option>
-                      <option value="Saudi Arabia">🇸🇦 Saudi Arabia</option>
-                      <option value="Germany">🇩🇪 Germany</option>
-                      <option value="United Kingdom">🇬🇧 United Kingdom</option>
-                      <option value="Poland">🇵🇱 Poland</option>
-                      <option value="United Arab Emirates">🇦🇪 United Arab Emirates</option>
-                      <option value="Qatar">🇶🇦 Qatar</option>
-                      <option value="Italy">🇮🇹 Italy</option>
+                      <option value="All">🌍 All Countries ({RAW_COUNTRIES.length})</option>
+                      {RAW_COUNTRIES.map(c => (
+                        <option key={c.name} value={c.name}>{c.flag} {c.name}</option>
+                      ))}
                     </select>
                     <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-3.5 pointer-events-none" />
                   </div>
@@ -1108,12 +1296,18 @@ export default function GlobalJobDirectory({
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className={`w-full text-xs px-3.5 py-2.5 rounded-xl border outline-none appearance-none cursor-pointer pr-8 ${isDarkMode ? "bg-slate-950 border-slate-800 text-slate-200 focus:border-amber-500/50" : "bg-slate-50 border-slate-200 text-slate-800 focus:border-amber-500"}`}
                     >
-                      <option value="All">All Categories</option>
-                      <option value="Engineering & IT">Engineering & IT</option>
-                      <option value="Technical & Trades">Technical & Trades</option>
-                      <option value="Logistics & Labor">Logistics & Labor</option>
-                      <option value="Professional & Healthcare">Professional & Healthcare</option>
-                      <option value="Service & Hospitality">Service & Hospitality</option>
+                      <option value="All">All Categories (11 Sectors)</option>
+                      <option value="Driving & Delivery">🚚 Driving & Delivery</option>
+                      <option value="Hospitality">🏨 Hospitality</option>
+                      <option value="Cleaning">🧹 Cleaning</option>
+                      <option value="Warehouse & Logistics">📦 Warehouse & Logistics</option>
+                      <option value="Construction">🏗️ Construction</option>
+                      <option value="Manufacturing">🏭 Factory & Manufacturing</option>
+                      <option value="Agriculture">🌾 Agriculture</option>
+                      <option value="Security">🛡️ Security</option>
+                      <option value="Care & Support">🤝 Care & Support</option>
+                      <option value="Retail">🛒 Retail</option>
+                      <option value="Other Labour">🔧 Other Labour Jobs</option>
                     </select>
                     <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 top-3.5 pointer-events-none" />
                   </div>
@@ -1395,7 +1589,7 @@ export default function GlobalJobDirectory({
                           setSelectedJobDetails(job);
                           setApplySuccess(false);
                         }}
-                        className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl flex items-center justify-center gap-2 p-3 text-xs font-bold tracking-wider cursor-pointer transition-all shadow-md uppercase"
+                        className="w-full bg-amber-500 hover:bg-amber-600 effect-shimmer-button text-slate-950 rounded-xl flex items-center justify-center gap-2 p-3 text-xs font-bold tracking-wider cursor-pointer transition-all shadow-md uppercase"
                       >
                         <span>View Details & Apply</span>
                         <ArrowRight className="w-4 h-4" />
@@ -1941,7 +2135,7 @@ export default function GlobalJobDirectory({
                         <button
                           type="submit"
                           disabled={isSubmittingApply}
-                          className="w-full bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg mt-2"
+                          className="w-full bg-emerald-500 hover:bg-emerald-600 effect-shimmer-button text-slate-950 font-bold py-2.5 px-4 rounded-xl text-xs uppercase tracking-wider transition disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-lg mt-2"
                         >
                           {isSubmittingApply ? (
                             <>

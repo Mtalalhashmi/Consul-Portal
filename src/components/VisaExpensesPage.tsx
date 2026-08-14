@@ -242,12 +242,12 @@ export const VisaExpensesPage: React.FC<VisaExpensesPageProps> = ({
   const totalCalculatedPkr = baseStep1 + baseStep2 + baseStep3 + gamcaCost + fastTrackCost + flightReservationCost + dependentCost;
 
   const formatCurrency = (amountPkr: number) => {
-    const rate = exchangeRates[currency];
-    const val = amountPkr * rate;
+    const rate = exchangeRates[currency] || 1;
+    const val = (amountPkr || 0) * rate;
     if (currency === "PKR") {
-      return `PKR ${Math.round(val).toLocaleString()}`;
+      return `PKR ${Math.round(val || 0).toLocaleString()}`;
     } else {
-      return `${currencySymbols[currency]}${val.toFixed(2)}`;
+      return `${currencySymbols[currency] || "$"}${val.toFixed(2)}`;
     }
   };
 
@@ -430,7 +430,7 @@ export const VisaExpensesPage: React.FC<VisaExpensesPageProps> = ({
                     <ul className="text-xs space-y-1.5 text-slate-300">
                       <li className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" /> MOFA & HEC Attestation</span>
-                        <span className="font-mono text-slate-200">~PKR {selectedCountry.attestationPkr.toLocaleString()}</span>
+                        <span className="font-mono text-slate-200">~PKR {(selectedCountry?.attestationPkr ?? 0).toLocaleString()}</span>
                       </li>
                       <li className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" /> Candidate Bio & Portal Registration</span>
@@ -502,7 +502,7 @@ export const VisaExpensesPage: React.FC<VisaExpensesPageProps> = ({
                       </li>
                       <li className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" /> VFS / Embassy Slot Allocation</span>
-                        <span className="font-mono text-slate-200">~PKR {selectedCountry.vfsFeePkr.toLocaleString()}</span>
+                        <span className="font-mono text-slate-200">~PKR {(selectedCountry?.vfsFeePkr ?? 0).toLocaleString()}</span>
                       </li>
                       <li className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-400 shrink-0" /> Official Quota Verification</span>
@@ -570,7 +570,7 @@ export const VisaExpensesPage: React.FC<VisaExpensesPageProps> = ({
                       </li>
                       <li className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Protector Stamp (OEC)</span>
-                        <span className="font-mono text-slate-200">~PKR {selectedCountry.protectorFeePkr.toLocaleString()}</span>
+                        <span className="font-mono text-slate-200">~PKR {(selectedCountry?.protectorFeePkr ?? 0).toLocaleString()}</span>
                       </li>
                       <li className="flex items-center justify-between">
                         <span className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Final Flight & Escrow Clearance</span>
@@ -1050,13 +1050,13 @@ export const VisaExpensesPage: React.FC<VisaExpensesPageProps> = ({
                         </span>
                       </td>
                       <td className="py-3.5 px-3 text-slate-300">€{c.embassyFeeEur}</td>
-                      <td className="py-3.5 px-3 text-slate-300">PKR {c.vfsFeePkr.toLocaleString()}</td>
-                      <td className="py-3.5 px-3 text-slate-300">PKR {c.attestationPkr.toLocaleString()}</td>
-                      <td className="py-3.5 px-3 text-amber-300 font-bold">PKR {c.step1Pkr.toLocaleString()}</td>
-                      <td className="py-3.5 px-3 text-blue-300 font-bold">PKR {c.step2Pkr.toLocaleString()}</td>
-                      <td className="py-3.5 px-3 text-emerald-300 font-bold">PKR {c.step3Pkr.toLocaleString()}</td>
+                      <td className="py-3.5 px-3 text-slate-300">PKR {(c.vfsFeePkr ?? 0).toLocaleString()}</td>
+                      <td className="py-3.5 px-3 text-slate-300">PKR {(c.attestationPkr ?? 0).toLocaleString()}</td>
+                      <td className="py-3.5 px-3 text-amber-300 font-bold">PKR {(c.step1Pkr ?? 0).toLocaleString()}</td>
+                      <td className="py-3.5 px-3 text-blue-300 font-bold">PKR {(c.step2Pkr ?? 0).toLocaleString()}</td>
+                      <td className="py-3.5 px-3 text-emerald-300 font-bold">PKR {(c.step3Pkr ?? 0).toLocaleString()}</td>
                       <td className="py-3.5 px-4 text-right font-bold text-amber-400 text-sm">
-                        PKR {(c.step1Pkr + c.step2Pkr + c.step3Pkr).toLocaleString()}
+                        PKR {((c.step1Pkr || 0) + (c.step2Pkr || 0) + (c.step3Pkr || 0)).toLocaleString()}
                       </td>
                     </tr>
                   ))}

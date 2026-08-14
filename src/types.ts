@@ -134,3 +134,30 @@ export interface SportInfo {
   featuredAthletes: { name: string; sport: string; achievements: string }[];
 }
 
+export interface TourPackage {
+  id: string;
+  title: string;
+  country: string;
+  flag: string;
+  duration: string;
+  days: number;
+  nights: number;
+  pricePKR: number;
+  originalPricePKR?: number;
+  rating: number;
+  reviewsCount: number;
+  imageUrl: string;
+  category: "Family" | "Honeymoon" | "Adventure" | "Group" | "Luxury";
+  description: string;
+  includes: string[];
+}
+
+export interface ContactMessage {
+  name: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+}
+
+

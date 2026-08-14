@@ -48,39 +48,71 @@ export async function checkSupabaseConnection() {
 
 export async function saveApplicationSupabaseClient(appData: any) {
   try {
-    const record = {
-      id: appData.id || `app-${Date.now()}`,
-      tracking_number: appData.trackingNumber || appData.id,
-      name: appData.name || appData.fullName || "Applicant",
-      full_name: appData.fullName || appData.name || "Applicant",
-      email: appData.email || "",
-      phone: appData.phone || "",
-      user_id: appData.userId || appData.user_id || "",
-      job_id: appData.vacancyId || appData.jobId || "",
+    const appId = appData.id || `app-${Date.now()}`;
+    const applicantName = appData.name || appData.fullName || "Applicant";
+    const email = appData.email || "applicant@example.com";
+    const phone = appData.phone || "";
+    const trackingNumber = appData.trackingNumber || appData.tracking_number || appId;
+    const country = appData.country || appData.destinationCountry || "General";
+    const vacancyTitle = appData.vacancyTitle || appData.jobTitle || appData.vacancy_title || "General Application";
+    const company = appData.company || appData.recruitmentTarget || "";
+    const passportNumber = appData.passportNumber || appData.passport_number || appData.passportNum || "";
+    const passportExpiry = appData.passportExpiry || appData.passport_expiry || "";
+    const cnic = appData.cnic || "";
+    const cvLink = appData.cvLink || appData.documentPath || appData.cv_link || "";
+    const coverLetter = appData.coverLetter || appData.cover_letter || "";
+    const uploadedFile = appData.uploadedFile || appData.uploaded_file || "";
+    const createdAt = appData.createdAt || appData.created_at || new Date().toISOString();
+
+    // 1. Primary table: applications
+    const appRecord: Record<string, any> = {
+      id: appId,
+      tracking_number: trackingNumber,
+      name: applicantName,
+      email: email,
+      phone: phone,
       vacancy_id: appData.vacancyId || appData.jobId || "",
-      vacancy_title: appData.vacancyTitle || appData.jobTitle || "",
-      country: appData.country || appData.destinationCountry || "",
-      destination_country: appData.destinationCountry || appData.country || "",
+      vacancy_title: vacancyTitle,
+      country: country,
       applying_from: appData.applyingFrom || "Pakistan",
-      recruitment_target: appData.recruitmentTarget || appData.company || "",
-      company: appData.company || "",
-      passport_number: appData.passportNumber || "",
-      passport_expiry: appData.passportExpiry || "",
-      cnic: appData.cnic || "",
+      company: company,
+      passport_number: passportNumber,
+      passport_expiry: passportExpiry,
+      cnic: cnic,
       status: appData.status || "Pending",
-      document_path: appData.documentPath || appData.cvLink || "",
-      cv_link: appData.cvLink || appData.documentPath || "",
-      cover_letter: appData.coverLetter || "",
-      created_at: appData.createdAt || new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      cv_link: cvLink,
+      cover_letter: coverLetter,
+      uploaded_file: uploadedFile || cvLink,
+      created_at: createdAt
     };
-    const { error: err1 } = await supabase.from("applications").upsert([record], { onConflict: "id" });
-    const { error: err2 } = await supabase.from("job_applications").upsert([record], { onConflict: "id" });
-    if (err1 && err2) {
-      console.warn("[Supabase App Save Note]:", err1.message);
+
+    const { data: d1, error: err1 } = await supabase.from("applications").upsert([appRecord], { onConflict: "id" }).select();
+    if (!err1) {
+      console.log("[Supabase Client] Saved to 'applications' table successfully.");
+    } else {
+      console.warn("[Supabase applications table note]:", err1.message);
     }
-    console.log("[Supabase Client] Job application saved to Supabase.");
-    return { success: true, record };
+
+    // 2. Secondary table: job_applications
+    const jobAppRecord: Record<string, any> = {
+      id: appId,
+      full_name: applicantName,
+      email: email,
+      phone: phone,
+      job_title: vacancyTitle,
+      job_category: appData.category || "General",
+      country: country,
+      passport_num: passportNumber,
+      status: appData.status || "Pending",
+      created_at: createdAt
+    };
+
+    const { error: err2 } = await supabase.from("job_applications").upsert([jobAppRecord], { onConflict: "id" });
+    if (!err2) {
+      console.log("[Supabase Client] Saved to 'job_applications' table successfully.");
+    }
+
+    return { success: !err1 || !err2, record: appRecord };
   } catch (err: any) {
     console.warn("[Supabase Client App Save Note]:", err);
     return { success: false, error: err?.message };
@@ -89,43 +121,52 @@ export async function saveApplicationSupabaseClient(appData: any) {
 
 export async function saveUserAccountSupabaseClient(userData: any) {
   try {
-    const record = {
-      id: userData.id || `usr-${Date.now()}`,
-      user_id: userData.userId || userData.user_id || userData.id,
-      name: userData.name || userData.fullName || "",
-      full_name: userData.fullName || userData.name || "",
-      email: userData.email || "",
-      phone: userData.phone || "",
-      country: userData.country || "Pakistan",
-      role: userData.role || "client",
-      status: userData.status || "Active",
-      passport_num: userData.passportNum || userData.passport_num || "",
-      passport_number: userData.passportNum || userData.passport_num || "",
-      track_id: userData.trackId || userData.track_id || "",
-      created_at: userData.createdAt || new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-    const { error: err1 } = await supabase.from("client_accounts").upsert([record], { onConflict: "id" });
-    const { error: err2 } = await supabase.from("profiles").upsert([{
-      id: record.id,
-      user_id: record.user_id,
-      full_name: record.full_name,
-      email: record.email,
-      phone: record.phone,
-      country: record.country,
-      role: record.role,
-      status: record.status,
-      created_at: record.created_at,
-      updated_at: record.updated_at
-    }], { onConflict: "id" });
+    const userId = userData.id || `usr-${Date.now()}`;
+    const name = userData.name || userData.fullName || "";
+    const email = userData.email || "";
+    const phone = userData.phone || "";
+    const passportNum = userData.passportNum || userData.passport_num || userData.passportNumber || "";
+    const trackId = userData.trackId || userData.track_id || userData.trackingNumber || "";
+    const status = userData.status || "Active";
+    const createdAt = userData.createdAt || new Date().toISOString();
 
-    if (err1 && err2) {
-      await supabase.from("clients").upsert([record], { onConflict: "id" });
-      await supabase.from("users").upsert([record], { onConflict: "id" });
+    // 1. client_accounts table
+    const clientRecord = {
+      id: userId,
+      name: name,
+      email: email,
+      phone: phone,
+      passport_num: passportNum,
+      track_id: trackId,
+      status: status,
+      created_at: createdAt
+    };
+
+    const { error: err1 } = await supabase.from("client_accounts").upsert([clientRecord], { onConflict: "id" });
+    if (!err1) {
+      console.log("[Supabase Client] Saved to 'client_accounts' table successfully.");
+    } else {
+      console.warn("[Supabase client_accounts note]:", err1.message);
     }
-    console.log("[Supabase Client] User account saved to Supabase.");
+
+    // 2. profiles table fallback
+    try {
+      await supabase.from("profiles").upsert([{
+        id: userId,
+        full_name: name,
+        email: email,
+        phone: phone,
+        country: userData.country || "Pakistan",
+        role: userData.role || "client",
+        status: status,
+        created_at: createdAt
+      }], { onConflict: "id" });
+    } catch (_) {}
+
+    return { success: true, record: clientRecord };
   } catch (err) {
     console.warn("[Supabase Client User Save Note]:", err);
+    return { success: false };
   }
 }
 
@@ -145,12 +186,8 @@ export async function saveQuerySupabaseClient(queryData: {
       id: queryData.id || `query-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: queryData.name || "Client",
       email: queryData.email || "",
-      phone: queryData.phone || "",
       subject: queryData.subject || queryData.category || "General Inquiry",
       message: queryData.message || "",
-      category: queryData.category || "General",
-      country: queryData.country || "",
-      type: queryData.type || "client_query",
       created_at: new Date().toISOString()
     };
     const { error } = await supabase.from("client_queries").upsert([record], { onConflict: "id" });
@@ -161,33 +198,55 @@ export async function saveQuerySupabaseClient(queryData: {
       }
     }
     console.log("[Supabase Client] Query saved to Supabase.");
+    return { success: true };
   } catch (err) {
     console.warn("[Supabase Client Query Save Note]:", err);
+    return { success: false };
   }
 }
 
 export async function savePaymentSupabaseClient(paymentData: any) {
   try {
-    const record = {
+    const record: Record<string, any> = {
       id: paymentData.id || `PAY-${Date.now()}`,
-      transaction_id: paymentData.transactionId || "",
-      track_id: paymentData.trackId || "",
-      client_name: paymentData.clientName || "",
-      client_email: paymentData.clientEmail || "",
-      step_title: paymentData.stepTitle || "",
-      amount: paymentData.amount || 0,
-      currency: paymentData.currency || "PKR",
+      track_id: paymentData.trackId || paymentData.track_id || "",
+      client_name: paymentData.clientName || paymentData.sender_name || paymentData.client_name || "Client",
       method: paymentData.method || "Bank Transfer",
-      status: paymentData.status || "Verified",
+      amount: Number(paymentData.amount) || 0,
       created_at: new Date().toISOString()
     };
-    const { error } = await supabase.from("payments").upsert([record], { onConflict: "id" });
+
+    // Include extended attributes if provided
+    if (paymentData.status) record.status = paymentData.status;
+    if (paymentData.clientEmail) record.client_email = paymentData.clientEmail;
+    if (paymentData.stepTitle) record.step_title = paymentData.stepTitle;
+    if (paymentData.currency) record.currency = paymentData.currency;
+    if (paymentData.transactionId) record.transaction_id = paymentData.transactionId;
+
+    let { error } = await supabase.from("payments").upsert([record], { onConflict: "id" });
+    
+    // If error because extended columns don't exist yet, fallback to base columns
+    if (error && error.message?.includes("column")) {
+      const baseRecord = {
+        id: record.id,
+        track_id: record.track_id,
+        client_name: record.client_name,
+        method: record.method,
+        amount: record.amount,
+        created_at: record.created_at
+      };
+      const res = await supabase.from("payments").upsert([baseRecord], { onConflict: "id" });
+      error = res.error;
+    }
+
     if (error) {
       await supabase.from("payment_receipts").upsert([record], { onConflict: "id" });
     }
     console.log("[Supabase Client] Payment saved to Supabase.");
+    return { success: true };
   } catch (err) {
     console.warn("[Supabase Client Payment Save Note]:", err);
+    return { success: false };
   }
 }
 

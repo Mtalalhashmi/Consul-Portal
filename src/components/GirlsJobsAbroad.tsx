@@ -951,51 +951,51 @@ export default function GirlsJobsAbroad() {
 
   return (
     <div className="space-y-12">
-      {/* HEADER CARD / HERO HERO BANNER */}
-      <div className="relative overflow-hidden rounded-3xl border border-amber-500/15 bg-slate-900/40 p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-2xl">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl -z-10" />
-        <div className="absolute bottom-0 left-12 w-60 h-60 bg-rose-500/5 rounded-full blur-2xl -z-10" />
+      {/* HEADER CARD / HERO HERO BANNER WITH CONSULAR GOLD THEME */}
+      <div className="relative overflow-hidden rounded-3xl border border-[#D4AF37]/35 bg-[#080808] p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-[0_20px_50px_rgba(0,0,0,0.9)]">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-12 w-60 h-60 bg-[#D4AF37]/5 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="space-y-4 max-w-2xl text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-[10px] uppercase font-bold tracking-wider">
-            <Heart className="w-3.5 h-3.5 fill-amber-400/20 animate-pulse" />
+        <div className="space-y-4 max-w-2xl text-center md:text-left relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#F5D76E] font-mono text-[10px] uppercase font-bold tracking-wider shadow-md">
+            <Heart className="w-3.5 h-3.5 fill-[#D4AF37]/20 text-[#D4AF37] animate-pulse" />
             Official Overseas Women's Board
           </div>
-          <h1 className="text-3xl sm:text-4xl font-display font-extrabold text-white leading-tight">
+          <h1 className="text-3xl sm:text-4xl font-serif font-black text-white leading-tight">
             Girls Jobs Abroad <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-rose-300 via-amber-200 to-amber-300 bg-clip-text text-transparent">
-              Verified Placements & Secure Careers
+            <span className="bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] bg-clip-text text-transparent">
+              Verified Placements &amp; Secure Careers
             </span>
           </h1>
           <p className="text-slate-300 text-sm leading-relaxed">
-            Verified Jobs • Legal Work Visas • Gulf & Europe Opportunities for Women. We partner exclusively with official, licensed recruitment agencies and direct overseas employers to curate 100% legal, safe, and family-approved placements.
+            Verified Jobs • Legal Work Visas • Gulf &amp; Europe Opportunities for Women. We partner exclusively with official, licensed recruitment agencies and direct overseas employers to curate 100% legal, safe, and family-approved placements.
           </p>
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1 text-xs">
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
               Direct Corporate Sponsors
             </span>
             <span className="text-slate-600">•</span>
-            <span className="flex items-center gap-1.5 text-slate-400">
-              <CheckCircle2 className="w-4 h-4 text-amber-500" />
+            <span className="flex items-center gap-1.5 text-slate-300">
+              <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
               Secure Staff Compounds
             </span>
           </div>
         </div>
 
         {/* Action / Quick Info Stats Badge */}
-        <div className="bg-slate-950/80 p-5 sm:p-6 rounded-2xl border border-slate-800/80 space-y-3 shrink-0 w-full md:w-auto text-center md:text-left min-w-[240px]">
-          <span className="text-[10px] font-mono text-amber-400 uppercase tracking-widest font-extrabold block">Live Directory State</span>
+        <div className="bg-[#0B0B0B] p-5 sm:p-6 rounded-2xl border border-[#D4AF37]/35 space-y-3 shrink-0 w-full md:w-auto text-center md:text-left min-w-[240px] shadow-xl relative z-10">
+          <span className="text-[10px] font-mono text-[#F5D76E] uppercase tracking-widest font-extrabold block">Live Directory State</span>
           <div className="flex items-baseline justify-center md:justify-start gap-2">
             <span className="text-3xl font-mono font-bold text-white tracking-tight">
               {String(FEMALE_VACANCIES.length).padStart(2, "0")}
             </span>
-            <span className="text-xs text-slate-500 font-mono uppercase">Verified Intake Blocks</span>
+            <span className="text-xs text-slate-400 font-mono uppercase">Verified Intake Blocks</span>
           </div>
           <p className="text-[10.5px] text-slate-400 leading-normal max-w-[200px] mx-auto md:mx-0">
             Intended for medical, teaching, hospitality, customer support and verified packaging/skilled labor.
           </p>
-          <div className="h-px bg-slate-900 w-full" />
+          <div className="h-px bg-[#D4AF37]/20 w-full" />
           <div className="flex items-center justify-center md:justify-start gap-1.5 text-[10px] font-mono text-emerald-400 uppercase font-extrabold">
             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
             Daily Verified Feed Active
@@ -1005,23 +1005,23 @@ export default function GirlsJobsAbroad() {
 
       {/* SEARCH AND FILTERS */}
       <div className="space-y-4">
-        <div className="bg-slate-900/60 p-4 sm:p-5 rounded-2xl border border-slate-800/80 flex flex-col lg:flex-row gap-4 items-center justify-between">
+        <div className="bg-[#080808] p-4 sm:p-5 rounded-2xl border border-[#D4AF37]/30 flex flex-col lg:flex-row gap-4 items-center justify-between shadow-lg">
           <div className="relative w-full lg:max-w-xs xl:max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-500" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-[#D4AF37]" />
             <input
               type="text"
               placeholder="Search by title, country, city, education..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 text-slate-300 text-xs pl-10 pr-4 py-2.5 rounded-xl focus:border-amber-500/40 outline-none transition"
+              className="w-full bg-[#111111] border border-[#D4AF37]/30 text-white text-xs pl-10 pr-4 py-2.5 rounded-xl focus:border-[#D4AF37] outline-none transition placeholder-slate-500 font-mono"
             />
           </div>
 
           <div className="flex flex-wrap gap-4 w-full lg:w-auto justify-start lg:justify-end items-center">
             {/* Region Filter */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full sm:w-auto">
-              <span className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">Region:</span>
-              <div className="flex items-center gap-0.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+              <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">Region:</span>
+              <div className="flex items-center gap-0.5 bg-[#050505] p-1 rounded-xl border border-[#D4AF37]/25">
                 {(["All", "Gulf", "Schengen", "Europe"] as const).map((region) => (
                   <button
                     key={region}
@@ -1030,9 +1030,9 @@ export default function GirlsJobsAbroad() {
                       setSelectedRegion(region);
                       setSelectedCountryFilter("All");
                     }}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition cursor-pointer ${
                       selectedRegion === region
-                        ? "bg-amber-500/10 text-amber-300 border border-amber-500/20"
+                        ? "bg-[#D4AF37] text-[#050505] shadow-md"
                         : "text-slate-400 hover:text-slate-200"
                     }`}
                   >
@@ -1300,7 +1300,7 @@ export default function GirlsJobsAbroad() {
                     setSubmitSuccess(false);
                     setSubmitError("");
                   }}
-                  className="w-full sm:w-auto bg-gradient-to-r from-rose-500/90 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-slate-950 font-extrabold text-xs uppercase px-5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/5 cursor-pointer"
+                  className="w-full sm:w-auto bg-gradient-to-r from-rose-500/90 to-amber-500 hover:from-rose-600 hover:to-amber-600 effect-shimmer-button text-slate-950 font-extrabold text-xs uppercase px-5 py-2.5 rounded-xl transition shadow-lg shadow-amber-500/5 cursor-pointer"
                 >
                   Apply & Initiate Screening
                 </button>
@@ -1366,7 +1366,7 @@ export default function GirlsJobsAbroad() {
                           setSubmitSuccess(false);
                           setSubmitError("");
                         }}
-                        className="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 text-slate-950 font-black text-xs uppercase py-3 rounded-xl transition shadow-lg shadow-amber-500/10 cursor-pointer"
+                        className="w-full bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 effect-shimmer-button text-slate-950 font-black text-xs uppercase py-3 rounded-xl transition shadow-lg shadow-amber-500/10 cursor-pointer"
                       >
                         Submit General {selectedCountryFilter} Candidacy
                       </button>
@@ -1690,7 +1690,7 @@ export default function GirlsJobsAbroad() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-2/3 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 disabled:from-slate-800 disabled:to-slate-900 text-slate-950 font-extrabold text-xs uppercase py-3 rounded-xl transition shadow-lg shadow-amber-500/15 flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-2/3 bg-gradient-to-r from-rose-500 to-amber-500 hover:from-rose-600 hover:to-amber-600 effect-shimmer-button disabled:from-slate-800 disabled:to-slate-900 text-slate-950 font-extrabold text-xs uppercase py-3 rounded-xl transition shadow-lg shadow-amber-500/15 flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     {isSubmitting ? "Routing Dossier..." : "Submit Screening Form"}
                   </button>

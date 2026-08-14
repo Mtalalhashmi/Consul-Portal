@@ -339,6 +339,44 @@ export const COUNTRY_GUIDES: Record<string, CountryGuideData> = {
     ],
     popularJobs: ["AC Plant Technicians", "Security Supervisors", "Retail Sales Leads", "Quantity Surveyors"],
     description: "Bahrain's LMRA visa process is exceptionally fast and secure, representing a popular option for global skilled workers looking for immediate, hassle-free Gulf placement."
+  },
+  "Canada": {
+    name: "Canada",
+    flag: "🇨🇦",
+    region: "Europe",
+    visaType: "LMIA Work Permit / Express Entry / PNP Stream",
+    processingTime: "60 - 90 Days",
+    educationReq: "WES Evaluated Bachelor's / High School / Red Seal Trades",
+    languageReq: "IELTS General (CLB 5 to 7+) or TEF French",
+    salaryRange: "CAD $3,800 - $7,500 / Month",
+    costOfLiving: "Moderate-High (CAD $1,200 - $1,900 / Month)",
+    benefits: [
+      "Direct pathway to Canadian Permanent Residence (PR) & Citizenship",
+      "Free public healthcare coverage (Medicare) & free children schooling",
+      "Spousal Open Work Permit allowing spouse to work anywhere in Canada",
+      "High minimum wage rates & protected federal labor standards"
+    ],
+    popularJobs: ["Cloud & DevOps Engineers", "Industrial Mechanics", "Construction Leads", "Registered Nurses & Caregivers", "Heavy Transport Drivers"],
+    description: "Canada's high-wage economy and progressive immigration policies make it one of the world's most sought-after relocation destinations, offering straightforward paths to Permanent Residency with full family sponsorship and social safety."
+  },
+  "Australia": {
+    name: "Australia",
+    flag: "🇦🇺",
+    region: "Europe",
+    visaType: "Subclass 482 TSS / Subclass 189 & 190 PR Streams",
+    processingTime: "45 - 90 Days",
+    educationReq: "Skills Assessment (VETASSESS/Engineers Australia) + Degree",
+    languageReq: "PTE Academic (65+) or IELTS (6.5+)",
+    salaryRange: "AUD $4,500 - $8,500 / Month",
+    costOfLiving: "High (AUD $1,400 - $2,200 / Month)",
+    benefits: [
+      "World's highest national minimum wages and superannuation pensions",
+      "Direct permanent residency pathways under state nomination lists",
+      "World-class Medicare healthcare system and pristine coastal living",
+      "Sponsorship for partners and children with full study & work rights"
+    ],
+    popularJobs: ["Mining & Civil Engineers", "Healthcare Nurses", "Software Developers", "Automotive Technicians"],
+    description: "Australia offers transparent, points-tested General Skilled Migration pathways and employer sponsorship visas for qualified international talent across Sydney, Melbourne, Brisbane, and regional hubs."
   }
 };
 
@@ -364,152 +402,172 @@ export default function CountryGuideSection({
   return (
     <section 
       id="country-guide-section" 
-      className="bg-slate-900/40 border border-slate-800/80 rounded-3xl p-6 sm:p-8 space-y-8 scroll-mt-24"
+      className="bg-[#080808] border border-[#D4AF37]/30 shadow-[0_20px_50px_rgba(0,0,0,0.9)] rounded-3xl p-6 sm:p-8 space-y-8 scroll-mt-24"
     >
-      {/* Header and Horizontal Flag Slider */}
-      <div className="space-y-4">
+      {/* Header and Horizontal Flag Marquee Slider */}
+      <div className="space-y-5">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <span className="text-xs font-mono text-amber-500 uppercase tracking-widest flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-              Consular Information Desk
-            </span>
-            <h3 className="text-xl sm:text-2xl font-display font-extrabold text-white mt-1">
-              Interactive Country Guide & Visa Information Center
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#F5D76E] text-xs font-mono mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" />
+              <span>CONSULAR INFORMATION DESK</span>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight mt-1">
+              Interactive Country Guide &amp; Visa Information Center
             </h3>
-            <p className="text-slate-400 text-xs mt-1">
+            <p className="text-[#A7A7A7] text-xs sm:text-sm mt-1.5 max-w-2xl leading-relaxed">
               Swipe or click any flag below to instantly display legal visa channels, salary charts, and employee protection rights.
             </p>
           </div>
         </div>
 
-        {/* Custom Interactive Flag Slider Selector inside the section */}
-        <div className="bg-slate-950/80 p-3 sm:p-4.5 rounded-2xl border border-slate-850/80 space-y-4">
-          {/* Gulf Flags Row */}
+        {/* Custom Interactive Flag Slider Selector with Dual Infinite Marquees */}
+        <div className="bg-[#050505] p-3.5 sm:p-5 rounded-2xl border border-[#D4AF37]/25 space-y-5 shadow-inner overflow-hidden">
+          
+          {/* Gulf Flags Row (Upper line - Slides Right to Left) */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono text-amber-400 uppercase tracking-wider block">Gulf Region (Tax-Free Salaries)</span>
-              <span className="text-[9px] font-mono text-slate-500 sm:hidden">Swipe Left-Right ↔</span>
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-mono text-[#F5D76E] uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#D4AF37] animate-ping" />
+                GULF REGION (TAX-FREE SALARIES)
+              </span>
+              <span className="text-[10px] font-mono text-[#A7A7A7] bg-[#111111] px-2.5 py-0.5 rounded-full border border-[#D4AF37]/20">
+                Swipe Left-Right ↔
+              </span>
             </div>
-            <div className="flex flex-nowrap sm:flex-wrap overflow-x-auto gap-2 pb-2 sm:pb-0 scroll-smooth snap-x scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-              {gulfCountries.map((c) => {
-                const isSelected = activeCountryKey === c.name;
-                return (
-                  <button
-                    key={c.name}
-                    onClick={() => onSelectCountry(c.name)}
-                    className={`text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-2 font-bold border cursor-pointer shrink-0 snap-center ${
-                      isSelected 
-                        ? "bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-md shadow-amber-500/5" 
-                        : "bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800/80"
-                    }`}
-                  >
-                    <span className="text-base">{c.flag}</span>
-                    <span className="text-[11px] sm:text-xs">{c.name}</span>
-                  </button>
-                );
-              })}
+            
+            {/* Smooth Marquee Container Right to Left */}
+            <div className="overflow-hidden w-full relative py-1 rounded-xl bg-[#0b0b0b] border border-[#D4AF37]/15">
+              <div className="animate-marquee-left flex items-center gap-3 py-1 px-2 hover:[animation-play-state:paused]">
+                {[...gulfCountries, ...gulfCountries].map((c, index) => {
+                  const isSelected = activeCountryKey === c.name;
+                  return (
+                    <button
+                      key={`${c.name}-${index}`}
+                      onClick={() => onSelectCountry(c.name)}
+                      className={`text-xs px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 font-bold border cursor-pointer shrink-0 ${
+                        isSelected 
+                          ? "bg-[#D4AF37] text-slate-950 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.4)] scale-105" 
+                          : "bg-[#111111] hover:bg-[#1a170e] text-[#F5D76E] border-[#D4AF37]/25 hover:border-[#D4AF37]"
+                      }`}
+                    >
+                      <span className="text-lg">{c.flag}</span>
+                      <span className="text-xs font-semibold whitespace-nowrap">{c.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* Schengen Flags Row */}
+          {/* Schengen Flags Row (Lower line - Slides Left to Right) */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono text-teal-400 uppercase tracking-wider block">Schengen Europe (PR & Healthcare Pathways)</span>
-              <span className="text-[9px] font-mono text-slate-500 sm:hidden">Swipe Left-Right ↔</span>
+            <div className="flex items-center justify-between px-1">
+              <span className="text-[11px] font-mono text-teal-400 uppercase tracking-wider font-bold flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-teal-400 animate-ping" />
+                SCHENGEN EUROPE (PR &amp; HEALTHCARE PATHWAYS)
+              </span>
+              <span className="text-[10px] font-mono text-[#A7A7A7] bg-[#111111] px-2.5 py-0.5 rounded-full border border-[#D4AF37]/20">
+                Swipe Left-Right ↔
+              </span>
             </div>
-            <div className="flex flex-nowrap sm:flex-wrap overflow-x-auto gap-2 pb-2 sm:pb-0 scroll-smooth snap-x scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-              {schengenCountries.map((c) => {
-                const isSelected = activeCountryKey === c.name;
-                return (
-                  <button
-                    key={c.name}
-                    onClick={() => onSelectCountry(c.name)}
-                    className={`text-xs px-3.5 py-2 rounded-xl transition flex items-center gap-2 font-bold border cursor-pointer shrink-0 snap-center ${
-                      isSelected 
-                        ? "bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-md shadow-amber-500/5" 
-                        : "bg-slate-900 hover:bg-slate-800 text-slate-300 border-slate-800/80"
-                    }`}
-                  >
-                    <span className="text-base">{c.flag}</span>
-                    <span className="text-[11px] sm:text-xs">{c.name}</span>
-                  </button>
-                );
-              })}
+
+            {/* Smooth Marquee Container Left to Right */}
+            <div className="overflow-hidden w-full relative py-1 rounded-xl bg-[#0b0b0b] border border-[#D4AF37]/15">
+              <div className="animate-marquee-right flex items-center gap-3 py-1 px-2 hover:[animation-play-state:paused]">
+                {[...schengenCountries, ...schengenCountries].map((c, index) => {
+                  const isSelected = activeCountryKey === c.name;
+                  return (
+                    <button
+                      key={`${c.name}-${index}`}
+                      onClick={() => onSelectCountry(c.name)}
+                      className={`text-xs px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5 font-bold border cursor-pointer shrink-0 ${
+                        isSelected 
+                          ? "bg-[#D4AF37] text-slate-950 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.4)] scale-105" 
+                          : "bg-[#111111] hover:bg-[#1a170e] text-[#F5D76E] border-[#D4AF37]/25 hover:border-[#D4AF37]"
+                      }`}
+                    >
+                      <span className="text-lg">{c.flag}</span>
+                      <span className="text-xs font-semibold whitespace-nowrap">{c.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
+
         </div>
       </div>
 
       {/* Main Flag Information Panel */}
       {guide && (
-        <div className="grid lg:grid-cols-12 gap-6 sm:gap-8 bg-slate-950/50 p-4 sm:p-6 lg:p-8 rounded-2xl border border-slate-800/80 items-stretch animate-fade-in">
+        <div className="grid lg:grid-cols-12 gap-6 sm:gap-8 bg-[#050505] p-4 sm:p-6 lg:p-8 rounded-2xl border border-[#D4AF37]/30 items-stretch shadow-2xl animate-fade-in">
           {/* Left Column: Big Flag Badge and Quick Facts */}
           <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               {/* Flag Badge Card */}
-              <div className="bg-slate-900/80 border border-slate-800 p-4 sm:p-6 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-xl">
+              <div className="bg-[#0b0b0b] border border-[#D4AF37]/30 p-4 sm:p-6 rounded-2xl flex items-center gap-3 sm:gap-4 shadow-xl">
                 <span className="text-4xl sm:text-5xl drop-shadow-md select-none">{guide.flag}</span>
                 <div>
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-[9px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full font-bold ${
+                    <span className={`text-[9px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full font-bold ${
                       guide.region === "Gulf" 
-                        ? "bg-amber-500/15 text-amber-400 border border-amber-500/20" 
-                        : "bg-teal-500/15 text-teal-400 border border-teal-500/20"
+                        ? "bg-[#D4AF37]/15 text-[#F5D76E] border border-[#D4AF37]/30" 
+                        : "bg-teal-500/15 text-teal-300 border border-teal-500/30"
                     }`}>
                       {guide.region} Region
                     </span>
                   </div>
-                  <h4 className="text-xl sm:text-2xl font-display font-extrabold text-white mt-1">
+                  <h4 className="text-xl sm:text-2xl font-serif font-bold text-white mt-1.5">
                     {guide.name}
                   </h4>
                 </div>
               </div>
 
               {/* Facts Dashboard */}
-              <div className="bg-slate-900/30 rounded-2xl border border-slate-850 p-3.5 sm:p-4 space-y-3 sm:space-y-3.5 text-[11px] sm:text-xs">
+              <div className="bg-[#0b0b0b] rounded-2xl border border-[#D4AF37]/20 p-3.5 sm:p-4 space-y-3 sm:space-y-3.5 text-[11px] sm:text-xs">
                 {/* Visa Type */}
                 <div className="flex items-start gap-2.5">
-                  <Landmark className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <Landmark className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase block font-mono">Official Visa Type</span>
-                    <span className="text-slate-200 font-semibold">{guide.visaType}</span>
+                    <span className="text-[10px] text-[#A7A7A7] uppercase block font-mono">Official Visa Type</span>
+                    <span className="text-white font-semibold">{guide.visaType}</span>
                   </div>
                 </div>
 
                 {/* Processing Time */}
                 <div className="flex items-start gap-2.5">
-                  <Calendar className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <Calendar className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase block font-mono">Turnaround Time</span>
-                    <span className="text-slate-200 font-semibold">{guide.processingTime}</span>
+                    <span className="text-[10px] text-[#A7A7A7] uppercase block font-mono">Turnaround Time</span>
+                    <span className="text-white font-semibold">{guide.processingTime}</span>
                   </div>
                 </div>
 
                 {/* Avg Salary */}
                 <div className="flex items-start gap-2.5">
-                  <DollarSign className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <DollarSign className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase block font-mono">Average Monthly Package</span>
-                    <span className="text-amber-400 font-extrabold">{guide.salaryRange}</span>
+                    <span className="text-[10px] text-[#A7A7A7] uppercase block font-mono">Average Monthly Package</span>
+                    <span className="text-[#F5D76E] font-extrabold">{guide.salaryRange}</span>
                   </div>
                 </div>
 
                 {/* Education Requirements */}
                 <div className="flex items-start gap-2.5">
-                  <GraduationCap className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <GraduationCap className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase block font-mono">Education Requirement</span>
-                    <span className="text-slate-200 font-medium">{guide.educationReq}</span>
+                    <span className="text-[10px] text-[#A7A7A7] uppercase block font-mono">Education Requirement</span>
+                    <span className="text-white font-medium">{guide.educationReq}</span>
                   </div>
                 </div>
 
                 {/* Language Requirements */}
                 <div className="flex items-start gap-2.5">
-                  <Languages className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                  <Languages className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
                   <div>
-                    <span className="text-[10px] text-slate-400 uppercase block font-mono">Language Competency</span>
-                    <span className="text-slate-200 font-medium">{guide.languageReq}</span>
+                    <span className="text-[10px] text-[#A7A7A7] uppercase block font-mono">Language Competency</span>
+                    <span className="text-white font-medium">{guide.languageReq}</span>
                   </div>
                 </div>
               </div>
@@ -518,9 +576,9 @@ export default function CountryGuideSection({
             {/* Direct Action Button */}
             <button
               onClick={() => onViewVacancies(guide.name)}
-              className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-3.5 px-6 rounded-xl text-xs transition uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-amber-500/10 cursor-pointer"
+              className="w-full bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] hover:brightness-110 text-[#050505] font-extrabold py-3.5 px-6 rounded-xl text-xs transition uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(212,175,55,0.3)] cursor-pointer"
             >
-              <Briefcase className="w-4 h-4 text-slate-950" />
+              <Briefcase className="w-4 h-4 text-[#050505]" />
               <span>View {guide.name} Vacancies</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
@@ -530,20 +588,20 @@ export default function CountryGuideSection({
           <div className="lg:col-span-7 flex flex-col justify-between space-y-6">
             <div className="space-y-5">
               <div>
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block mb-1">Consular Briefing</span>
-                <p className="text-slate-300 text-sm leading-relaxed">
+                <span className="text-[10px] font-mono text-[#D4AF37] uppercase tracking-widest block mb-1 font-bold">Consular Briefing</span>
+                <p className="text-white/90 text-sm leading-relaxed">
                   {guide.description}
                 </p>
               </div>
 
               {/* Verified Key Benefits */}
               <div className="space-y-3">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Stipulated Welfare & Benefits</span>
+                <span className="text-[10px] font-mono text-[#D4AF37] uppercase tracking-widest block font-bold">Stipulated Welfare & Benefits</span>
                 <div className="grid sm:grid-cols-2 gap-2.5">
                   {guide.benefits.map((benefit, bIdx) => (
-                    <div key={bIdx} className="flex items-start gap-2 bg-slate-900/50 p-3 rounded-xl border border-slate-850">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                      <span className="text-slate-300 text-[11px] sm:text-xs leading-normal font-medium">{benefit}</span>
+                    <div key={bIdx} className="flex items-start gap-2 bg-[#0b0b0b] p-3 rounded-xl border border-[#D4AF37]/20">
+                      <CheckCircle2 className="w-4 h-4 text-[#D4AF37] shrink-0 mt-0.5" />
+                      <span className="text-[#F5D76E] text-[11px] sm:text-xs leading-normal font-medium">{benefit}</span>
                     </div>
                   ))}
                 </div>
@@ -551,14 +609,14 @@ export default function CountryGuideSection({
 
               {/* Popular Job Occupations */}
               <div className="space-y-3">
-                <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block">Highest In-Demand Occupations</span>
+                <span className="text-[10px] font-mono text-[#D4AF37] uppercase tracking-widest block font-bold">Highest In-Demand Occupations</span>
                 <div className="flex flex-wrap gap-2">
                   {guide.popularJobs.map((job, jIdx) => (
                     <span 
                       key={jIdx} 
-                      className="bg-slate-900 text-slate-300 border border-slate-800/80 px-2.5 py-1.5 rounded-xl text-[10px] font-mono flex items-center gap-1.5 font-semibold"
+                      className="bg-[#111111] text-[#F5D76E] border border-[#D4AF37]/30 px-3 py-1.5 rounded-xl text-[10px] font-mono flex items-center gap-1.5 font-semibold"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37]"></span>
                       {job}
                     </span>
                   ))}
@@ -567,117 +625,117 @@ export default function CountryGuideSection({
             </div>
 
             {/* Subtext warning */}
-            <div className="bg-slate-900/40 p-3 rounded-xl border border-slate-850 text-[10px] text-slate-400">
-              ⚠️ <strong>Notice to Applicants:</strong> All salaries listed are based on active employment agreements negotiated by our placement desks. Relocation support is legally managed through verified employers on the ConsulPortal registry.
+            <div className="bg-[#0b0b0b] p-3.5 rounded-xl border border-[#D4AF37]/30 text-[10px] text-[#A7A7A7] leading-relaxed">
+              ⚠️ <strong className="text-white">Notice to Applicants:</strong> All salaries listed are based on active employment agreements negotiated by our placement desks. Relocation support is legally managed through verified employers on the ConsulPortal registry.
             </div>
           </div>
 
           {guide.name === "United Kingdom" && (
-            <div className="lg:col-span-12 border-t border-slate-800/80 pt-6 mt-6 space-y-4">
+            <div className="lg:col-span-12 border-t border-[#D4AF37]/30 pt-6 mt-6 space-y-4">
               <div className="flex items-center gap-2">
                 <span className="text-xl">📊</span>
                 <div>
-                  <h4 className="text-base font-display font-extrabold text-white">
+                  <h4 className="text-base font-serif font-bold text-white">
                     United Kingdom (UK) Work Visa Cost Distribution
                   </h4>
-                  <p className="text-slate-400 text-xs">
-                    Official UKVI & recruitment service fees. Displaying <strong className="text-amber-400">maximum certified fees only</strong>.
+                  <p className="text-[#A7A7A7] text-xs">
+                    Official UKVI &amp; recruitment service fees. Displaying <strong className="text-[#F5D76E]">maximum certified fees only</strong>.
                   </p>
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Employer-Paid Fees */}
-                <div className="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-2 text-amber-400 pb-2 border-b border-slate-800/60">
-                    <Building className="w-4 h-4 text-amber-500" />
+                <div className="bg-[#0b0b0b] border border-[#D4AF37]/30 p-5 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-2 text-[#F5D76E] pb-2 border-b border-[#D4AF37]/20">
+                    <Building className="w-4 h-4 text-[#D4AF37]" />
                     <span className="text-xs font-mono font-bold uppercase tracking-wider">🏢 Employer-Paid Fees (Paid by Company)</span>
                   </div>
                   <div className="space-y-3.5 text-xs text-slate-300">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-semibold text-slate-200">Certificate of Sponsorship (CoS) Fee</p>
-                        <p className="text-[10px] text-slate-500">Required for official sponsorship reference issuance.</p>
+                        <p className="font-semibold text-white">Certificate of Sponsorship (CoS) Fee</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Required for official sponsorship reference issuance.</p>
                       </div>
-                      <span className="font-mono text-amber-400 font-bold text-right">£239 (~PKR 85,000)</span>
+                      <span className="font-mono text-[#F5D76E] font-bold text-right">£239 (~PKR 85,000)</span>
                     </div>
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-semibold text-slate-200">Immigration Skills Charge</p>
-                        <p className="text-[10px] text-slate-500">Per worker per year (maximum fee rate).</p>
+                        <p className="font-semibold text-white">Immigration Skills Charge</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Per worker per year (maximum fee rate).</p>
                       </div>
-                      <span className="font-mono text-amber-400 font-bold text-right">£1,000 (~PKR 355,000)</span>
+                      <span className="font-mono text-[#F5D76E] font-bold text-right">£1,000 (~PKR 355,000)</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Applicant-Paid Fees */}
-                <div className="bg-slate-900/40 border border-slate-800 p-5 rounded-2xl space-y-3">
-                  <div className="flex items-center gap-2 text-teal-400 pb-2 border-b border-slate-800/60">
-                    <User className="w-4 h-4 text-teal-500" />
+                <div className="bg-[#0b0b0b] border border-[#D4AF37]/30 p-5 rounded-2xl space-y-3">
+                  <div className="flex items-center gap-2 text-teal-300 pb-2 border-b border-[#D4AF37]/20">
+                    <User className="w-4 h-4 text-teal-400" />
                     <span className="text-xs font-mono font-bold uppercase tracking-wider">👤 Applicant-Paid Fees (Out-of-Pocket Cost)</span>
                   </div>
                   <div className="space-y-3 text-xs text-slate-300">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-semibold text-slate-200">Official UKVI Visa Fee</p>
-                        <p className="text-[10px] text-slate-500">More than 3 years visa duration rate (maximum).</p>
+                        <p className="font-semibold text-white">Official UKVI Visa Fee</p>
+                        <p className="text-[10px] text-[#A7A7A7]">More than 3 years visa duration rate (maximum).</p>
                       </div>
-                      <span className="font-mono text-teal-400 font-bold text-right">PKR 504,000 (~£1,420)</span>
+                      <span className="font-mono text-teal-300 font-bold text-right">PKR 504,000 (~£1,420)</span>
                     </div>
-                    <div className="flex justify-between items-start border-t border-slate-900 pt-2">
+                    <div className="flex justify-between items-start border-t border-[#111111] pt-2">
                       <div>
-                        <p className="font-semibold text-slate-200">Immigration Health Surcharge (IHS)</p>
-                        <p className="text-[10px] text-slate-500">Access to NHS hospital care (per year rate).</p>
+                        <p className="font-semibold text-white">Immigration Health Surcharge (IHS)</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Access to NHS hospital care (per year rate).</p>
                       </div>
-                      <span className="font-mono text-teal-400 font-bold text-right">PKR 365,000</span>
+                      <span className="font-mono text-teal-300 font-bold text-right">PKR 365,000</span>
                     </div>
-                    <div className="flex justify-between items-start border-t border-slate-900 pt-2">
+                    <div className="flex justify-between items-start border-t border-[#111111] pt-2">
                       <div>
-                        <p className="font-semibold text-slate-200">Tuberculosis (TB) Medical Test</p>
-                        <p className="text-[10px] text-slate-500">Conducted at approved UKVI clinics in PK.</p>
+                        <p className="font-semibold text-white">Tuberculosis (TB) Medical Test</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Conducted at approved UKVI clinics in PK.</p>
                       </div>
-                      <span className="font-mono text-teal-400 font-bold text-right">PKR 16,500</span>
+                      <span className="font-mono text-teal-300 font-bold text-right">PKR 16,500</span>
                     </div>
-                    <div className="flex justify-between items-start border-t border-slate-900 pt-2">
+                    <div className="flex justify-between items-start border-t border-[#111111] pt-2">
                       <div>
-                        <p className="font-semibold text-slate-200">VFS Global Biometric Center Service Fee</p>
-                        <p className="text-[10px] text-slate-500">Appointment scheduling and document scanning.</p>
+                        <p className="font-semibold text-white">VFS Global Biometric Center Service Fee</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Appointment scheduling and document scanning.</p>
                       </div>
-                      <span className="font-mono text-teal-400 font-bold text-right">PKR 7,500</span>
+                      <span className="font-mono text-teal-300 font-bold text-right">PKR 7,500</span>
                     </div>
-                    <div className="flex justify-between items-start border-t border-slate-900 pt-2">
+                    <div className="flex justify-between items-start border-t border-[#111111] pt-2">
                       <div>
-                        <p className="font-semibold text-slate-200">Travel Agency File Prep & Handling</p>
-                        <p className="text-[10px] text-slate-500">Full dossier preparation & appeal guarantee (maximum).</p>
+                        <p className="font-semibold text-white">Travel Agency File Prep &amp; Handling</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Full dossier preparation &amp; appeal guarantee (maximum).</p>
                       </div>
-                      <span className="font-mono text-teal-400 font-bold text-right">PKR 350,000</span>
+                      <span className="font-mono text-teal-300 font-bold text-right">PKR 350,000</span>
                     </div>
-                    <div className="flex justify-between items-start border-t border-slate-900 pt-2">
+                    <div className="flex justify-between items-start border-t border-[#111111] pt-2">
                       <div>
-                        <p className="font-semibold text-slate-200">Real Flight Ticket Expense</p>
-                        <p className="text-[10px] text-slate-500">Actual direct departure ticket (Islamabad/Lahore to London).</p>
+                        <p className="font-semibold text-white">Real Flight Ticket Expense</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Actual direct departure ticket (Islamabad/Lahore to London).</p>
                       </div>
                       <span className="font-mono text-emerald-400 font-bold text-right">PKR 220,000</span>
                     </div>
-                    <div className="flex justify-between items-start border-t border-slate-900 pt-2">
+                    <div className="flex justify-between items-start border-t border-[#111111] pt-2">
                       <div>
-                        <p className="font-semibold text-slate-200">Verifiable Flight Hold Reservation</p>
-                        <p className="text-[10px] text-slate-500">Dummy flight ticket placeholder for visa application.</p>
+                        <p className="font-semibold text-white">Verifiable Flight Hold Reservation</p>
+                        <p className="text-[10px] text-[#A7A7A7]">Dummy flight ticket placeholder for visa application.</p>
                       </div>
-                      <span className="font-mono text-teal-400 font-bold text-right">PKR 4,000</span>
+                      <span className="font-mono text-teal-300 font-bold text-right">PKR 4,000</span>
                     </div>
                   </div>
 
                   {/* Combined total out of pocket card */}
-                  <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                  <div className="bg-[#050505] p-4 rounded-xl border border-[#D4AF37]/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
                     <div>
-                      <p className="text-slate-400 font-semibold uppercase tracking-wider text-[10px]">Estimated Applicant-Paid Total</p>
-                      <p className="text-[10px] text-slate-500 leading-normal">Includes Visa, IHS, Medicals, Handling, and Real Flight Ticket.</p>
+                      <p className="text-[#F5D76E] font-semibold uppercase tracking-wider text-[10px]">Estimated Applicant-Paid Total</p>
+                      <p className="text-[10px] text-[#A7A7A7] leading-normal">Includes Visa, IHS, Medicals, Handling, and Real Flight Ticket.</p>
                     </div>
                     <div className="text-right">
-                      <span className="font-mono text-emerald-400 font-extrabold text-sm sm:text-base">PKR 1,462,500</span>
-                      <p className="text-[9px] text-slate-500">Max rates inclusive of flight ticket</p>
+                      <span className="font-mono text-[#F5D76E] font-extrabold text-sm sm:text-base">PKR 1,462,500</span>
+                      <p className="text-[9px] text-[#A7A7A7]">Max rates inclusive of flight ticket</p>
                     </div>
                   </div>
                 </div>

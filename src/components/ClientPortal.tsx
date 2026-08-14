@@ -1379,6 +1379,32 @@ export default function ClientPortal({ whatsAppNum, paymentMethods }: ClientPort
               ) : (
                 <div className="bg-slate-950 p-6 sm:p-8 rounded-3xl border border-slate-850 space-y-6">
                   
+                  {/* 📡 Live Consular Record Status Banner with Radar Ping Animation Overlay */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1527] via-[#0b101d] to-[#070b14] border border-[#D4AF37]/50 p-4 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 radar-ping-overlay">
+                    <div className="flex items-center gap-3.5 relative z-10">
+                      <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/60 shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                        <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping absolute" />
+                        <span className="w-3 h-3 rounded-full bg-emerald-400 relative z-10" />
+                        <div className="absolute inset-0 rounded-full border border-emerald-400/80 radar-ping-ring" />
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-mono font-black text-[#F5D76E] tracking-wider uppercase">CONSULAR RECORD STATUS</span>
+                          <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>LIVE ACTIVE</span>
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 font-sans mt-0.5 leading-snug">
+                          Authentic Embassy Dossier Registry &amp; Milestones Stream
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative z-10 text-right shrink-0 font-mono text-[10px] text-amber-300 bg-[#050505]/90 px-3 py-1.5 rounded-xl border border-[#D4AF37]/40">
+                      <span>FILE CODE: <strong className="text-white font-bold">{user.trackId}</strong></span>
+                    </div>
+                  </div>
+
                   {/* Ledger header */}
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-900 pb-4">
                     <div className="space-y-1">

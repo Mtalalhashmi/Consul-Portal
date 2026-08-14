@@ -212,8 +212,12 @@ export default function OfficialVerificationDesk() {
           </p>
         </div>
         
-        <div className="bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-2 rounded-2xl flex items-center gap-2 shrink-0">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div className="bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-2 rounded-2xl flex items-center gap-2.5 shrink-0 relative overflow-hidden shadow-sm">
+          <div className="relative flex items-center justify-center w-3 h-3 shrink-0">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping absolute" />
+            <span className="w-2 h-2 rounded-full bg-emerald-400 relative z-10" />
+            <div className="absolute -inset-1 rounded-full border border-emerald-400/60 radar-ping-ring" />
+          </div>
           <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider">100% Audited Links</span>
         </div>
       </div>

@@ -79,9 +79,9 @@ export default function CountryPickerPlayground() {
             Engineered using high-speed static arrays and React memoization to prevent rendering lag.
           </p>
           <div className="h-px bg-slate-900 w-full" />
-          <div className="flex items-center justify-center md:justify-start gap-1.5 text-[10px] font-mono text-amber-400 uppercase font-extrabold">
-            <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-            Double-Theme Enabled
+          <div className="flex items-center justify-center md:justify-start gap-1.5 text-[10px] font-mono text-emerald-400 uppercase font-extrabold">
+            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+            Instant Live Search
           </div>
         </div>
       </div>

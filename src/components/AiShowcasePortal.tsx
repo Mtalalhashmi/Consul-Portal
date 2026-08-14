@@ -923,3 +923,5 @@ export function AiShowcasePortal() {
     </div>
   );
 }
+
+export default AiShowcasePortal;

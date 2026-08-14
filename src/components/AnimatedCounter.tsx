@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 
 interface AnimatedCounterProps {
-  target: number;
+  target?: number;
+  end?: number;
   duration?: number;
   prefix?: string;
   suffix?: string;
@@ -11,12 +12,14 @@ interface AnimatedCounterProps {
 
 export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   target,
+  end,
   duration = 1500,
   prefix = "",
   suffix = "",
   className = "",
   threshold = 0.5,
 }) => {
+  const finalTarget = target ?? end ?? 0;
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLSpanElement | null>(null);
 
@@ -37,14 +40,14 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
 
             // Smooth ease-out cubic
             const eased = 1 - Math.pow(1 - progress, 3);
-            const currentVal = Math.floor(target * eased);
+            const currentVal = Math.floor(finalTarget * eased);
 
-            setCount(currentVal);
+            setCount(isNaN(currentVal) ? 0 : currentVal);
 
             if (progress < 1) {
               requestAnimationFrame(update);
             } else {
-              setCount(target);
+              setCount(finalTarget);
             }
           }
 
@@ -60,12 +63,12 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
     return () => {
       observer.disconnect();
     };
-  }, [target, duration, threshold]);
+  }, [finalTarget, duration, threshold]);
 
   return (
-    <span ref={ref} className={`counter ${className}`} data-target={target}>
+    <span ref={ref} className={`counter ${className}`} data-target={finalTarget}>
       {prefix}
-      {count.toLocaleString()}
+      {(count ?? 0).toLocaleString()}
       {suffix}
     </span>
   );

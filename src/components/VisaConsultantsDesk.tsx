@@ -1358,7 +1358,7 @@ export default function VisaConsultantsDesk({
                   handleBookConsultant(consultantsList[0]);
                 }
               }}
-              className="w-full bg-slate-950 hover:bg-slate-900 text-amber-400 hover:text-amber-300 py-3 px-4 rounded-xl text-xs font-bold border border-slate-800 transition flex items-center justify-center gap-2 cursor-pointer mt-4"
+              className="w-full bg-slate-950 hover:bg-slate-900 text-amber-400 hover:text-amber-300 effect-shimmer-button py-3 px-4 rounded-xl text-xs font-bold border border-slate-800 transition flex items-center justify-center gap-2 cursor-pointer mt-4"
             >
               <Calendar className="w-4 h-4 text-amber-500" />
               <span>Book Priority Package Consultation</span>
@@ -1484,7 +1484,7 @@ export default function VisaConsultantsDesk({
                   <div className="pt-2">
                     <button 
                       onClick={() => handleBookConsultant(advisor)}
-                      className="w-full bg-slate-900 hover:bg-amber-500 text-slate-300 hover:text-slate-950 font-bold py-2 px-4 rounded-xl text-xs transition border border-slate-800 hover:border-amber-400 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+                      className="w-full bg-slate-900 hover:bg-amber-500 text-slate-300 hover:text-slate-950 effect-shimmer-button font-bold py-2 px-4 rounded-xl text-xs transition border border-slate-800 hover:border-amber-400 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
                     >
                       <Calendar className="w-3.5 h-3.5 shrink-0" />
                       <span>{isUnlockedFlow ? "Request Free Stamping Review" : "Book Expert Session"}</span>
@@ -1864,7 +1864,7 @@ export default function VisaConsultantsDesk({
                   <button 
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 disabled:opacity-50 text-slate-950 font-extrabold py-3 px-6 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 effect-shimmer-button disabled:opacity-50 text-slate-950 font-extrabold py-3 px-6 rounded-xl text-xs sm:text-sm uppercase tracking-wider transition flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? "Syncing Calendar Slot..." : `🔐 Confirm & Lock virtual desk session`}
                   </button>

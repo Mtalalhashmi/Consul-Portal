@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { RAW_COUNTRIES } from "../utils/countriesData";
 import { getJobImageByTitle } from "../utils/jobImages";
+import { getJobsByCountry, getJobCountForCountry } from "../utils/jobDatabase";
 import { motion, AnimatePresence } from "motion/react";
 
 interface CountryStats {
@@ -232,6 +233,8 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
       countryCode: "+1"
     };
 
+    const jobCount = getJobCountForCountry(raw.name);
+
     return {
       country: raw.name,
       currencyCode: raw.currencyCode || "USD",
@@ -242,7 +245,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
       languages: raw.languages,
       countryCode: raw.countryCode,
       stats: {
-        totalJobs: 1850,
+        totalJobs: jobCount,
         avgSalary: 4200,
         minSalary: 2100,
         maxSalary: 8800,
@@ -264,150 +267,39 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
 
   // Fallback jobs generator if API call fails or yields empty
   const getFallbackJobs = (countryName: string): JobVacancy[] => {
-    const raw = RAW_COUNTRIES.find(c => c.name.toLowerCase() === countryName.toLowerCase());
-    const symbol = (raw?.currencySymbol && raw.currencySymbol !== "؋" && raw.currencySymbol !== ".د.ب" && raw.currencySymbol !== "د.ج") 
-      ? raw.currencySymbol 
-      : (raw?.currencyCode || "$");
-    const capital = raw?.capital || "Central District";
-
-    return [
-      {
-        id: `fallback-job-1-${countryName}`,
-        title: "Senior Full-Stack Software Engineer",
-        companyName: "Global Tech Solutions",
-        companyLogo: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80",
-        salary: `${symbol} 5,500 / Month`,
-        numericSalary: 5500,
-        city: capital,
-        country: countryName,
-        experienceRequired: "3-5 Years",
-        educationRequired: "Bachelor's Degree in Computer Science",
-        employmentType: "Full-Time",
-        remoteStatus: "Hybrid",
-        shiftTiming: "Day Shift",
-        benefits: ["Relocation Package", "Full Health Cover", "Paid Flight Tickets"],
-        visaVerification: "Yes, fully sponsored by employer",
-        accommodation: "Provided (Free housing for 3 months)",
-        transportation: "Provided (Company shuttle)",
-        medicalInsurance: "Provided (Premium coverage)",
-        overtime: "Paid overtime at 1.5x",
-        paidLeave: "30 days annual paid leave",
-        postedDate: "2026-07-20",
-        description: `High-growth technology firm in ${capital}, ${countryName} is looking for a skilled Software Engineer. Employer provides complete visa sponsorship and relocation support.`,
-        responsibilities: [
-          "Develop scalable web applications and cloud backend infrastructure",
-          "Collaborate with international teams across product design and deployment",
-          "Ensure high code quality, security standards, and system performance"
-        ],
-        requirements: [
-          "Bachelor's Degree in CS or Software Engineering",
-          "3+ years experience with React, Node.js, and Cloud services",
-          "Fluency in English or local working language"
-        ]
-      },
-      {
-        id: `fallback-job-2-${countryName}`,
-        title: "Registered ICU Clinical Nurse Specialist",
-        companyName: "Metropolitan General Hospital",
-        companyLogo: "https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=120&q=80",
-        salary: `${symbol} 4,200 / Month`,
-        numericSalary: 4200,
-        city: capital,
-        country: countryName,
-        experienceRequired: "2-4 Years",
-        educationRequired: "Bachelor of Science in Nursing (BSN)",
-        employmentType: "Full-Time",
-        remoteStatus: "On-Site",
-        shiftTiming: "Flexible Shifts",
-        benefits: ["Fast-Track Work Visa", "Free Accommodation", "Medical Cover"],
-        visaVerification: "Yes, embassy verified",
-        accommodation: "Provided (Single officer apartment)",
-        transportation: "Provided (Transit pass allowance)",
-        medicalInsurance: "Provided (Full hospital coverage)",
-        overtime: "Paid overtime at 1.5x",
-        paidLeave: "28 days annual paid leave",
-        postedDate: "2026-07-22",
-        description: `Urgent recruitment for qualified ICU Registered Nurses at state-of-the-art medical centers in ${countryName}. Guaranteed sponsorship permit and fast-track processing.`,
-        responsibilities: [
-          "Provide acute care monitoring for critical ICU patients",
-          "Administer specialized treatments and coordinate physician protocols",
-          "Maintain rigorous patient charts and sanitary safety standards"
-        ],
-        requirements: [
-          "Licensed Registered Nurse with BSN credential",
-          "Minimum 2 years ICU/Emergency clinical experience",
-          "Valid passport and attested educational certificates"
-        ]
-      },
-      {
-        id: `fallback-job-3-${countryName}`,
-        title: "Civil & Structural Site Engineer",
-        companyName: "Apex Infrastructure Group",
-        companyLogo: "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=120&q=80",
-        salary: `${symbol} 4,800 / Month`,
-        numericSalary: 4800,
-        city: capital,
-        country: countryName,
-        experienceRequired: "3+ Years",
-        educationRequired: "B.Sc Civil Engineering",
-        employmentType: "Full-Time",
-        remoteStatus: "On-Site",
-        shiftTiming: "Day Shift",
-        benefits: ["Overtime Pay", "Housing Stipend", "Return Flight"],
-        visaVerification: "Yes, fully sponsored by employer",
-        accommodation: "Housing stipend included",
-        transportation: "Provided (Site vehicle)",
-        medicalInsurance: "Provided (Comprehensive)",
-        overtime: "Paid overtime at 1.5x",
-        paidLeave: "30 days annual paid leave",
-        postedDate: "2026-07-21",
-        description: `Lead major commercial & industrial infrastructure projects in ${countryName}. Employer offers immediate work visa issuance and site housing allowances.`,
-        responsibilities: [
-          "Supervise daily site construction activities and safety compliance",
-          "Review structural blueprints, AutoCAD schematics, and materials quality",
-          "Manage subcontractor schedules and client status reports"
-        ],
-        requirements: [
-          "Degree in Civil or Structural Engineering",
-          "3+ years experience on high-rise or highway civil projects",
-          "Proficiency in AutoCAD, Primavera, or Revit"
-        ]
-      },
-      {
-        id: `fallback-job-4-${countryName}`,
-        title: "Logistics & Fleet Operations Manager",
-        companyName: "TransGlobe Freight Systems",
-        companyLogo: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=120&q=80",
-        salary: `${symbol} 3,900 / Month`,
-        numericSalary: 3900,
-        city: capital,
-        country: countryName,
-        experienceRequired: "2-5 Years",
-        educationRequired: "Degree in Supply Chain or Business",
-        employmentType: "Full-Time",
-        remoteStatus: "Hybrid",
-        shiftTiming: "Day Shift",
-        benefits: ["Annual Bonus", "Medical Insurance", "Sponsorship Permit"],
-        visaVerification: "Yes, embassy verified",
-        accommodation: "Housing stipend included",
-        transportation: "Provided (Company car allowance)",
-        medicalInsurance: "Provided (Standard coverage)",
-        overtime: "No",
-        paidLeave: "25 days annual paid leave",
-        postedDate: "2026-07-23",
-        description: `Direct supply chain operations, fleet dispatching, and customs clearance logistics for international trade routes across ${countryName}.`,
-        responsibilities: [
-          "Manage fleet routes, warehouse inventory, and carrier schedules",
-          "Ensure customs documentation and cross-border regulatory compliance",
-          "Optimize fuel efficiency, freight budgets, and dispatch timelines"
-        ],
-        requirements: [
-          "Degree or diploma in Logistics / Supply Chain",
-          "Proven track record in freight management or fleet dispatch",
-          "Strong communication and organizational skills"
-        ]
-      }
-    ];
+    const structured = getJobsByCountry(countryName);
+    return structured.map(s => ({
+      id: s.id,
+      title: s.jobTitle,
+      companyName: s.companyName || `${s.country} Recruitment Agency`,
+      companyLogo: "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=120&q=80",
+      salary: s.salaryString,
+      numericSalary: s.salary.min,
+      city: s.city,
+      country: s.country,
+      experienceRequired: s.experience,
+      educationRequired: "High School / Diploma",
+      employmentType: "Full-Time",
+      remoteStatus: "On-Site",
+      shiftTiming: s.dutyHours,
+      benefits: s.benefits,
+      visaVerification: s.verifiedVacancy ? "Yes, verified vacancy" : "Yes, employer sponsored",
+      accommodation: "Provided (Free housing)",
+      transportation: "Provided (Shuttle transit)",
+      medicalInsurance: "Provided (Full coverage)",
+      overtime: "Paid overtime where applicable",
+      paidLeave: "Annual leave according to contract",
+      postedDate: s.postedDate,
+      description: `${s.description}\n\nDisclaimer: ${s.disclaimer}`,
+      responsibilities: [
+        `Perform standard ${s.jobTitle.toLowerCase()} duties according to employer guidelines.`,
+        `Maintain safety standards in ${s.city}, ${s.country}.`
+      ],
+      requirements: [
+        `Relevant experience as ${s.jobTitle}.`,
+        `Valid passport with at least 6 months validity.`
+      ]
+    }));
   };
 
   // Fetch Country Details (Stats + Rest Countries + Currency setup)
@@ -939,7 +831,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                     <div>
                       <span className="text-[9px] text-slate-500 block uppercase font-mono">ACTIVE CAPACITY</span>
                       <h4 className="text-2xl font-black text-white mt-1">
-                        {countryDetails.stats.totalJobs.toLocaleString()}+ Jobs
+                        {(countryDetails.stats?.totalJobs ?? 0).toLocaleString()}+ Jobs
                       </h4>
                       <p className="text-[11px] text-slate-400 mt-1">Live active visas currently listed in portal.</p>
                     </div>
@@ -964,19 +856,19 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                       <div className="bg-slate-950/40 p-2.5 rounded-xl border border-slate-900/50">
                         <span className="text-[9px] text-slate-500 block uppercase font-mono">Minimum</span>
                         <span className="text-xs font-mono font-black text-slate-200">
-                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.minSalary.toLocaleString()}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{(countryDetails.stats?.minSalary ?? 0).toLocaleString()}
                         </span>
                       </div>
                       <div className="bg-rose-500/5 p-2.5 rounded-xl border border-rose-500/10">
                         <span className="text-[9px] text-rose-400 block uppercase font-mono font-bold">Average</span>
                         <span className="text-sm font-mono font-black text-rose-300">
-                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.avgSalary.toLocaleString()}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{(countryDetails.stats?.avgSalary ?? 0).toLocaleString()}
                         </span>
                       </div>
                       <div className="bg-slate-950/40 p-2.5 rounded-xl border border-slate-900/50">
                         <span className="text-[9px] text-slate-500 block uppercase font-mono">Maximum</span>
                         <span className="text-xs font-mono font-black text-slate-200">
-                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.maxSalary.toLocaleString()}
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{(countryDetails.stats?.maxSalary ?? 0).toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -995,7 +887,7 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] font-mono text-rose-400 font-bold block">
-                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{countryDetails.stats.avgLivingCost.toLocaleString()} / mo
+                          {getDisplayCurrencyPrefix(countryDetails.currencySymbol, countryDetails.currencyCode)}{(countryDetails.stats?.avgLivingCost ?? 0).toLocaleString()} / mo
                         </span>
                         <span className="text-[8px] text-slate-500 font-mono">Total Estimated</span>
                       </div>
@@ -1397,14 +1289,14 @@ export default function CountryExplorer({ onApplyJob }: { onApplyJob?: (job: any
                     <div className="p-3 bg-slate-950 rounded-xl border border-slate-900 flex items-center justify-between">
                       <span className="text-slate-500 text-[10px] uppercase">USD EQUIVALENT</span>
                       <strong className="text-slate-200 font-bold">
-                        ${usdEquivalent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        ${(usdEquivalent || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </strong>
                     </div>
 
                     <div className="p-3 bg-slate-950 rounded-xl border border-slate-900 flex items-center justify-between">
                       <span className="text-slate-500 text-[10px] uppercase">PKR EQUIVALENT</span>
                       <strong className="text-amber-400 font-bold">
-                        PKR {pkrEquivalent.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        PKR {(pkrEquivalent || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </strong>
                     </div>
                   </div>

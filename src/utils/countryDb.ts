@@ -93,6 +93,24 @@ const CUSTOM_COUNTRY_DETAILS: Record<string, Partial<Country>> = {
     attractions: ["Tower of London", "Stonehenge", "British Museum", "Edinburgh Castle", "The Roman Baths"],
     weatherOverview: "Maritime climate characterized by cool summers, mild winters, and frequent cloud cover and rain throughout the year.",
     emergencyNumbers: { police: "999", ambulance: "999", fire: "999" }
+  },
+  "Canada": {
+    description: "Canada is a vast, technologically advanced North American federation renowned for exceptional quality of life, multicultural society, universal healthcare, and progressive economic immigration pathways including Express Entry, LMIA work permits, and Provincial Nominee Programs (PNP).",
+    visaInfo: "LMIA Work Permit, Express Entry (Federal Skilled Worker), Provincial Nominee Program (PNP), Intra-Company Transfer. High demand in IT & Software, Engineering, Healthcare (Nursing/Caregiving), Construction Trades, and Fleet Logistics. Direct pathway to Canadian PR.",
+    majorAirports: ["Toronto Pearson International (YYZ)", "Vancouver International (YVR)", "Montréal-Trudeau (YUL)", "Calgary International (YYC)", "Ottawa Macdonald-Cartier (YOW)"],
+    majorCities: ["Toronto", "Vancouver", "Montreal", "Calgary", "Ottawa", "Edmonton"],
+    attractions: ["Niagara Falls", "Banff National Park & Lake Louise", "CN Tower Toronto", "Old Quebec", "Whistler Blackcomb"],
+    weatherOverview: "Varied continental climate with warm summers (20-30°C) and crisp, snowy winters. Coastal British Columbia offers mild temperatures year-round.",
+    emergencyNumbers: { police: "911", ambulance: "911", fire: "911" }
+  },
+  "Australia": {
+    description: "Australia is a sovereign country comprising the mainland of the Australian continent, celebrated for its robust economy, high minimum wages, sunny climate, and transparent points-tested General Skilled Migration (GSM) streams.",
+    visaInfo: "Subclass 482 (TSS Work Visa), Subclass 189/190 (Skilled Independent PR), Subclass 491 (Regional Skilled). High demand in Mining, Engineering, IT, Healthcare, and Construction.",
+    majorAirports: ["Sydney Kingsford Smith (SYD)", "Melbourne Airport (MEL)", "Brisbane Airport (BNE)", "Perth Airport (PER)"],
+    majorCities: ["Sydney", "Melbourne", "Brisbane", "Perth", "Adelaide", "Canberra"],
+    attractions: ["Sydney Opera House", "Great Barrier Reef", "Uluru", "Bondi Beach", "Melbourne Great Ocean Road"],
+    weatherOverview: "Temperate southern climate with tropical northern regions. Summers are warm and sunny (25-35°C); winters are pleasant (12-18°C).",
+    emergencyNumbers: { police: "000", ambulance: "000", fire: "000" }
   }
 };
 

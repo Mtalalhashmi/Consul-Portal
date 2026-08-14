@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { saveApplicationSupabaseClient, saveQuerySupabaseClient, savePaymentSupabaseClient, uploadFileSupabaseClient } from "./lib/supabase";
 import { 
@@ -45,24 +45,49 @@ import { VACANCIES, PARTNERS, REVIEWS, CITY_CARDS, PAKISTANI_PAYMENT_METHODS } f
 import { getJobImageByTitle } from "./utils/jobImages";
 import { Vacancy, PassportTrack, FlightOffer, FlightSearch } from "./types";
 import { AnimatedCounter } from "./components/AnimatedCounter";
-import AdminPortal from "./components/AdminPortal";
 import { BrandLogoDispatcher } from "./components/BrandLogos";
-import GlobalJobDirectory from "./components/GlobalJobDirectory";
+import { LuxuryHero } from "./components/LuxuryHero";
+import { SmartJobRecommendations } from "./components/SmartJobRecommendations";
+import { LuxuryCountryExplorer } from "./components/LuxuryCountryExplorer";
+import { LuxuryFooter } from "./components/LuxuryFooter";
+import { LuxuryLoadingOverlay } from "./components/LuxuryLoadingOverlay";
 import OfficialVerificationDesk from "./components/OfficialVerificationDesk";
-import ClientPortal from "./components/ClientPortal";
 import CountryGuideSection from "./components/CountryGuideSection";
 import WorkforceSectors from "./components/WorkforceSectors";
-import { AiShowcasePortal } from "./components/AiShowcasePortal";
-import GirlsJobsAbroad from "./components/GirlsJobsAbroad";
-import CountryPickerPlayground from "./components/CountryPickerPlayground";
-import CountryExplorer from "./components/CountryExplorer";
-import CurrencyConverter from "./components/CurrencyConverter";
-import FlightBookingDesk from "./components/FlightBookingDesk";
-import VisaConsultantsDesk from "./components/VisaConsultantsDesk";
-import AiEmployeesHub from "./components/AiEmployeesHub";
-import VisaExpensesPage from "./components/VisaExpensesPage";
-import AiMatchEvaluator from "./components/AiMatchEvaluator";
-import AgencyB2BPortal from "./components/AgencyB2BPortal";
+import { UniversalTopSearch } from "./components/UniversalTopSearch";
+import { FloatingWhatsAppButtons } from "./components/FloatingWhatsAppButtons";
+
+// Lazy-loaded heavy page/tab modules for ultra-fast initial page load
+const AdminPortal = lazy(() => import("./components/AdminPortal"));
+const ClientPortal = lazy(() => import("./components/ClientPortal"));
+const GlobalJobDirectory = lazy(() => import("./components/GlobalJobDirectory"));
+const StackedReviewsSection = lazy(() => import("./components/StackedReviewsSection"));
+const AiShowcasePortal = lazy(() => import("./components/AiShowcasePortal"));
+const GirlsJobsAbroad = lazy(() => import("./components/GirlsJobsAbroad"));
+const CountryPickerPlayground = lazy(() => import("./components/CountryPickerPlayground"));
+const CountryExplorer = lazy(() => import("./components/CountryExplorer"));
+const CurrencyConverter = lazy(() => import("./components/CurrencyConverter"));
+const FlightBookingDesk = lazy(() => import("./components/FlightBookingDesk"));
+const VisaConsultantsDesk = lazy(() => import("./components/VisaConsultantsDesk"));
+const AiEmployeesHub = lazy(() => import("./components/AiEmployeesHub"));
+const VisaExpensesPage = lazy(() => import("./components/VisaExpensesPage"));
+const AiMatchEvaluator = lazy(() => import("./components/AiMatchEvaluator"));
+const AgencyB2BPortal = lazy(() => import("./components/AgencyB2BPortal"));
+const PartnersSection = lazy(() => import("./components/PartnersSection"));
+
+// Elegant skeleton loader fallback for lazy modules
+function ModuleSkeleton() {
+  return (
+    <div className="w-full py-16 px-4 flex flex-col items-center justify-center space-y-4 animate-pulse">
+      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+        <Loader2 className="w-6 h-6 animate-spin" />
+      </div>
+      <div className="h-4 w-48 bg-slate-800/80 rounded-full"></div>
+      <div className="h-3 w-32 bg-slate-800/50 rounded-full"></div>
+    </div>
+  );
+}
+
 // @ts-ignore
 import qatarPlaneImg from "./assets/images/qatar_airways_plane_1783877120077.jpg";
 // @ts-ignore
@@ -98,11 +123,25 @@ const getVacancyTags = (vacancyId: string): string[] => {
 
 export default function App() {
   // Navigation / Tabs State
-  const [activeTab, setActiveTab] = useState<"home" | "vacancies" | "tracker" | "flights" | "portal" | "admin" | "ai-showcase" | "girls-jobs" | "country-picker" | "currency" | "consultants" | "ai-employees" | "visa-expenses" | "ai-evaluator" | "agency-b2b">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "vacancies" | "tracker" | "flights" | "portal" | "admin" | "ai-showcase" | "girls-jobs" | "country-picker" | "currency" | "consultants" | "ai-employees" | "visa-expenses" | "ai-evaluator" | "agency-b2b" | "visa-services" | "contact" | "payment" | "partners">("home");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<string>("PKR");
+  const [paymentItem, setPaymentItem] = useState<{
+    title: string;
+    amountPKR: number;
+    image?: string;
+    details?: string;
+  }>({
+    title: "Schengen Visa & Flight Booking Fee",
+    amountPKR: 170000,
+    image: "https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?auto=format&fit=crop&q=80&w=600",
+    details: "Candidate Passport Processing & Verified Seat Reservation"
+  });
+
 
   // Country Guide State
   const [selectedCountryGuide, setSelectedCountryGuide] = useState<string>("Saudi Arabia");
+  const [hubRegionFilter, setHubRegionFilter] = useState<"All" | "GCC" | "Schengen">("All");
 
   // Dynamic Settings States
   const [whatsAppNum, setWhatsAppNum] = useState("12513734858");
@@ -145,7 +184,11 @@ export default function App() {
   // Search and Filter States for Vacancies
   const [selectedRegion, setSelectedRegion] = useState<"All" | "Gulf" | "Schengen" | "Europe">("All");
   const [selectedCountry, setSelectedCountry] = useState<string>("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const availableCountries = Array.from(new Set(VACANCIES.map(v => v.country)));
+  const availableCategories = Array.from(new Set(VACANCIES.map(v => v.category)));
   const [isFlagDropdownOpen, setIsFlagDropdownOpen] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [aiSearchResponse, setAiSearchResponse] = useState<string | null>(null);
@@ -844,1028 +887,517 @@ export default function App() {
   });
 
   return (
-    <div id="root-portal" className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950 overflow-x-hidden">
+    <div id="root-portal" className="min-h-screen bg-[#050505] text-slate-100 font-sans selection:bg-[#D4AF37] selection:text-[#050505] overflow-x-hidden">
       
-      {/* 2445 Successful Reviews Ribbon (Top Header Announcement) */}
-      <div id="top-announcement" className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 text-slate-950 text-sm font-semibold py-2 px-4 shadow-md flex items-center justify-between z-50 relative">
-        <div className="max-w-7xl mx-auto w-full flex flex-wrap justify-between items-center gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center bg-slate-950 text-amber-400 p-1 rounded-full text-xs font-bold px-2.5">★ MILESTONE</span>
-            <span>Proudly Completed <strong className="font-extrabold underline">2,445+ Successful Visa & Passport Issues</strong> for Global Candidates!</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:inline bg-slate-950/20 text-slate-900 text-xs px-2 py-0.5 rounded">99.8% Success Rate</span>
-            <button 
-              onClick={() => { setActiveTab("tracker"); }} 
-              className="bg-slate-950 text-white hover:bg-slate-900 transition text-xs font-bold py-1 px-3 rounded-full"
-            >
-              Track Active File Now →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Navigation Header */}
-      <header id="main-header" className="sticky top-0 bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 z-40 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          
+      {/* Main Header Bar */}
+      <header className="sticky top-0 z-50 bg-[#050505]/95 backdrop-blur-md border-b border-[#D4AF37]/30 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           {/* Logo Brand */}
-          <div 
-            id="brand-logo" 
-            className="flex items-center gap-3 cursor-pointer group"
-            onClick={() => setActiveTab("home")}
-          >
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-500/10 group-hover:scale-105 transition-transform">
-              <Plane className="w-5 h-5 text-slate-950 -rotate-45 group-hover:rotate-0 transition-transform" />
+          <div onClick={() => setActiveTab("home")} className="flex items-center gap-3 cursor-pointer">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] p-0.5 shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+              <div className="w-full h-full bg-[#050505] rounded-[10px] flex items-center justify-center">
+                <Plane className="w-5 h-5 text-[#F5D76E]" />
+              </div>
             </div>
             <div>
-              <span className="font-display font-black text-xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-                ConsulPortal
+              <span className="font-serif font-extrabold text-xl sm:text-2xl tracking-tight text-white block leading-tight">
+                Consul<span className="gold-text-gradient">Portal</span>
               </span>
-              <p className="text-[10px] text-amber-500 font-mono tracking-widest uppercase">GULF & SCHENGEN SERVICES</p>
+              <p className="text-[10px] font-mono font-bold text-[#D4AF37] tracking-wider uppercase">
+                GULF &amp; SCHENGEN SERVICES
+              </p>
             </div>
           </div>
 
-          {/* Desktop Navigation Tabs */}
-          <nav id="nav-tabs" className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1.5 rounded-xl border border-slate-800">
-            <button 
-              id="tab-btn-home"
-              onClick={() => setActiveTab("home")} 
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === "home" ? "bg-slate-800 text-white shadow" : "text-slate-400 hover:text-white"}`}
-            >
-              Home Portal
-            </button>
-            <button 
-              id="tab-btn-vacancies"
-              onClick={() => setActiveTab("vacancies")} 
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === "vacancies" ? "bg-slate-800 text-white shadow" : "text-slate-400 hover:text-white"}`}
-            >
-              Overseas Vacancies
-            </button>
-            <button 
-              id="tab-btn-girls-jobs"
-              onClick={() => setActiveTab("girls-jobs")} 
-              className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${activeTab === "girls-jobs" ? "bg-amber-500/15 text-amber-400 border border-amber-500/25 shadow" : "text-slate-400 hover:text-white hover:bg-amber-500/5"}`}
-            >
-              <span>Girls Jobs 🌸</span>
-            </button>
-            <button 
-              id="tab-btn-country-picker"
-              onClick={() => setActiveTab("country-picker")} 
-              className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${activeTab === "country-picker" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 shadow" : "text-slate-400 hover:text-emerald-400"}`}
-            >
-              <span>Country Explorer 🌐</span>
-            </button>
-            <button 
-              id="tab-btn-currency"
-              onClick={() => setActiveTab("currency")} 
-              className={`px-4 py-2.5 rounded-lg text-sm font-semibold transition flex items-center gap-1.5 ${activeTab === "currency" ? "bg-amber-500/10 text-amber-400 border border-amber-500/25 shadow" : "text-slate-400 hover:text-amber-400"}`}
-            >
-              <span>Currency Desk 💱</span>
-            </button>
-            <button 
-              id="tab-btn-visa-expenses"
-              onClick={() => setActiveTab("visa-expenses")} 
-              className={`px-4 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5 ${activeTab === "visa-expenses" ? "bg-amber-500 text-slate-950 font-bold shadow-lg" : "bg-amber-500/10 text-amber-300 border border-amber-500/25 hover:bg-amber-500/20"}`}
-            >
-              <span>3-Step Fees & Expenses 💳</span>
-              <span className="text-[9px] bg-slate-950 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30 font-mono uppercase font-bold">Calculator</span>
-            </button>
-            <button 
-              id="tab-btn-ai-evaluator"
-              onClick={() => setActiveTab("ai-evaluator")} 
-              className={`px-4 py-2.5 rounded-lg text-sm font-extrabold transition flex items-center gap-1.5 ${activeTab === "ai-evaluator" ? "bg-amber-500 text-slate-950 font-bold shadow-lg" : "bg-amber-500/10 text-amber-400 border border-amber-500/25 hover:bg-amber-500/20"}`}
-            >
-              <span>AI Smart Evaluator 🤖</span>
-              <span className="text-[9px] bg-slate-950 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/30 font-mono uppercase font-bold">99.4% Sync</span>
-            </button>
-            <button 
-              id="tab-btn-agency-b2b"
-              onClick={() => setActiveTab("agency-b2b")} 
-              className={`px-4 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5 ${activeTab === "agency-b2b" ? "bg-blue-600 text-white shadow-lg" : "bg-blue-950/40 text-blue-300 border border-blue-500/30 hover:bg-blue-900/40"}`}
-            >
-              <span>Agency B2B Portal 🏢</span>
-              <span className="text-[9px] bg-slate-950 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 font-mono uppercase font-bold">Demand Letters</span>
-            </button>
-            <button 
-              id="tab-btn-tracker"
-              onClick={() => setActiveTab("tracker")} 
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === "tracker" ? "bg-slate-800 text-white shadow" : "text-slate-400 hover:text-white"}`}
-            >
-              Live Passport Tracking
-            </button>
-            <button 
-              id="tab-btn-consultants"
-              onClick={() => setActiveTab("consultants")} 
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === "consultants" ? "bg-slate-800 text-white shadow" : "text-slate-400 hover:text-white"}`}
-            >
-              Visa Consultants 👥
-            </button>
-            <button 
-              id="tab-btn-flights"
-              onClick={() => setActiveTab("flights")} 
-              className={`px-4 py-2.5 rounded-lg text-sm font-bold transition flex items-center gap-1.5 ${activeTab === "flights" ? "bg-rose-950 text-rose-300 border border-rose-500/30 shadow-lg" : "bg-rose-950/20 text-rose-400 border border-rose-950 hover:bg-rose-950/40 hover:text-rose-300"}`}
-            >
-              <span>Flight Booking ✈️</span>
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-              </span>
-            </button>
-            <button 
-              id="tab-btn-ai-employees"
-              onClick={() => setActiveTab("ai-employees")} 
-              className={`px-4 py-2 rounded-lg text-sm font-extrabold transition flex items-center gap-1.5 ${activeTab === "ai-employees" ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20" : "bg-slate-900 border border-amber-500/30 text-amber-300 hover:text-amber-200 hover:bg-slate-850"}`}
-            >
-              <span>AI Employees Hub 🤖</span>
-              <span className="text-[9px] bg-amber-950/80 text-amber-400 px-1.5 py-0.5 rounded border border-amber-500/30 font-mono uppercase">v2.0</span>
-            </button>
-            <button 
-              id="tab-btn-ai-showcase"
-              onClick={() => setActiveTab("ai-showcase")} 
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === "ai-showcase" ? "bg-amber-500 text-slate-950 font-bold shadow" : "text-slate-400 hover:text-amber-400"}`}
-            >
-              AI Integration Showcase ⚡
-            </button>
-            <button 
-              id="tab-btn-portal"
-              onClick={() => setActiveTab("portal")} 
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === "portal" ? "bg-amber-500 text-slate-950 font-bold shadow" : "text-slate-400 hover:text-white"}`}
-            >
-              Login / Sign In 👤
-            </button>
-            <button 
-              id="tab-btn-admin"
-              onClick={() => setActiveTab("admin")} 
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${activeTab === "admin" ? "bg-amber-500 text-slate-950 font-bold shadow" : "text-slate-400 hover:text-amber-400"}`}
-            >
-              Admin Portal 🔐
-            </button>
-          </nav>
+          {/* Top Universal AI Search Bar */}
+          <div className="flex-1 max-w-sm mx-3 hidden md:block">
+            <UniversalTopSearch
+              mode="header-inline"
+              onNavigateTab={(tab) => setActiveTab(tab)}
+              onSelectCountry={(c) => {
+                setSelectedCountry(c);
+                setSelectedCountryGuide(c);
+                setSelectedRegion("All");
+                setActiveTab("vacancies");
+              }}
+              onSelectVacancy={(v) => {
+                setApplyingVacancy(v);
+              }}
+              onOpenAiChatWithPrompt={(prompt) => {
+                setChatInput(prompt);
+                setIsChatOpen(true);
+              }}
+            />
+          </div>
 
-          {/* Call to Action Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right Actions */}
+          <div className="flex items-center gap-3">
             <button 
-              id="consult-ai-btn"
               onClick={() => setIsChatOpen(true)}
-              className="flex items-center gap-2 bg-slate-900 border border-slate-700 hover:border-amber-500/50 hover:bg-slate-800 text-slate-200 hover:text-white transition py-2 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-semibold"
+              className="border border-[#D4AF37]/40 bg-[#111111] hover:bg-[#1a170e] text-[#F5D76E] px-3.5 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
             >
-              <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
-              <span>Ask AI Consultant</span>
+              <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+              <span className="hidden sm:inline">Ask AI Consultant</span>
+              <span className="sm:hidden">AI</span>
             </button>
-            <a 
-              id="header-whatsapp-us-btn"
-              href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden lg:flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2 px-3 rounded-xl text-xs font-semibold border border-emerald-500/20 transition-all font-mono"
-              title="WhatsApp US Line"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-emerald-400 shrink-0">
-                <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-              </svg>
-              <span>{whatsAppDisplay}</span>
-            </a>
-            <a 
-              id="header-whatsapp-uk-btn"
-              href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden xl:flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 py-2 px-3 rounded-xl text-xs font-semibold border border-emerald-500/20 transition-all font-mono"
-              title="WhatsApp UK Line"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 text-emerald-400 shrink-0">
-                <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-              </svg>
-              <span>{whatsAppDisplay2}</span>
-            </a>
 
-            {/* Mobile Menu Toggle Button */}
             <button 
-              id="mobile-menu-toggle-btn"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="flex md:hidden p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400 hover:border-amber-500/30 transition-colors"
-              aria-label="Toggle Navigation Menu"
+              className="p-2.5 rounded-xl bg-[#111111] border border-[#D4AF37]/30 text-[#A7A7A7] hover:text-[#F5D76E] lg:hidden cursor-pointer"
             >
-              {isMobileMenuOpen ? (
-                <X className="w-5 h-5 text-amber-400" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
+              {isMobileMenuOpen ? <X className="w-5 h-5 text-[#F5D76E]" /> : <Menu className="w-5 h-5" />}
             </button>
-          </div>
 
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold flex-wrap">
+              <button onClick={() => setActiveTab("home")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "home" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Home
+              </button>
+              <button onClick={() => setActiveTab("vacancies")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "vacancies" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Overseas Vacancies
+              </button>
+              <button onClick={() => setActiveTab("girls-jobs")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "girls-jobs" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Girls Jobs
+              </button>
+              <button onClick={() => setActiveTab("tracker")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "tracker" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Passport Tracker 🛡️
+              </button>
+              <button onClick={() => setActiveTab("flights")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "flights" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Flights
+              </button>
+              <button onClick={() => setActiveTab("country-picker")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "country-picker" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                200 Countries
+              </button>
+              <button onClick={() => setActiveTab("currency")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "currency" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Currency Desk
+              </button>
+              <button onClick={() => setActiveTab("visa-expenses")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "visa-expenses" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Fee Calculator
+              </button>
+              <button onClick={() => setActiveTab("ai-evaluator")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "ai-evaluator" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                AI CV Match
+              </button>
+              <button onClick={() => setActiveTab("agency-b2b")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "agency-b2b" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+                Agency B2B
+              </button>
+              <button onClick={() => setActiveTab("portal")} className="ml-1 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] text-[#050505] text-xs font-black transition cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:brightness-110">
+                Portal Login
+              </button>
+            </nav>
+          </div>
         </div>
-
-        {/* Mobile Dropdown Menu Bar */}
-        {isMobileMenuOpen && (
-          <div 
-            id="mobile-menu-dropdown" 
-            className="md:hidden border-t border-slate-800/60 bg-slate-950/95 px-4 py-4 space-y-2 animate-fade-in shadow-2xl relative z-50"
-          >
-            <button 
-              id="mobile-tab-btn-home"
-              onClick={() => { setActiveTab("home"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition ${activeTab === "home" ? "bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" : "text-slate-400 hover:text-white bg-slate-900/30"}`}
-            >
-              Home Portal
-            </button>
-            <button 
-              id="mobile-tab-btn-vacancies"
-              onClick={() => { setActiveTab("vacancies"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition ${activeTab === "vacancies" ? "bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" : "text-slate-400 hover:text-white bg-slate-900/30"}`}
-            >
-              Overseas Vacancies
-            </button>
-            <button 
-              id="mobile-tab-btn-girls-jobs"
-              onClick={() => { setActiveTab("girls-jobs"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "girls-jobs" ? "bg-amber-500/10 text-amber-300 border border-amber-500/20" : "text-slate-400 hover:text-white bg-slate-900/30 border border-slate-800/50"}`}
-            >
-              <span>Girls Jobs Abroad 🌸</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-amber-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Women's Board</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-country-picker"
-              onClick={() => { setActiveTab("country-picker"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "country-picker" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "text-emerald-400 hover:text-emerald-300 bg-emerald-950/20 border border-emerald-900/30"}`}
-            >
-              <span>Country Explorer 🌐</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-emerald-950 text-emerald-400 py-0.5 px-2 rounded-full font-bold">200 Database</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-currency"
-              onClick={() => { setActiveTab("currency"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "currency" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" : "text-slate-400 hover:text-white bg-slate-900/30"}`}
-            >
-              <span>Currency Desk 💱</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-amber-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Live Rates</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-visa-expenses"
-              onClick={() => { setActiveTab("visa-expenses"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "visa-expenses" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-300 hover:text-amber-200 bg-amber-950/30 border border-amber-500/30"}`}
-            >
-              <span>3-Step Fees & Expenses 💳</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Calculator</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-ai-evaluator"
-              onClick={() => { setActiveTab("ai-evaluator"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-extrabold transition flex items-center justify-between ${activeTab === "ai-evaluator" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-300 hover:text-amber-200 bg-amber-950/30 border border-amber-500/30"}`}
-            >
-              <span>AI Smart Evaluator 🤖</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-emerald-400 py-0.5 px-2 rounded-full font-bold">99.4% Sync</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-agency-b2b"
-              onClick={() => { setActiveTab("agency-b2b"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "agency-b2b" ? "bg-blue-600 text-white font-bold" : "text-blue-300 hover:text-blue-200 bg-blue-950/30 border border-blue-500/30"}`}
-            >
-              <span>Agency B2B Portal 🏢</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-blue-400 py-0.5 px-2 rounded-full font-bold">Demand Letters</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-tracker"
-              onClick={() => { setActiveTab("tracker"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition ${activeTab === "tracker" ? "bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" : "text-slate-400 hover:text-white bg-slate-900/30"}`}
-            >
-              Live Passport Tracking
-            </button>
-            <button 
-              id="mobile-tab-btn-consultants"
-              onClick={() => { setActiveTab("consultants"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-semibold transition ${activeTab === "consultants" ? "bg-amber-500/10 text-amber-400 font-bold border border-amber-500/20" : "text-slate-400 hover:text-white bg-slate-900/30"}`}
-            >
-              Visa Consultants 👥
-            </button>
-            <button 
-              id="mobile-tab-btn-flights"
-              onClick={() => { setActiveTab("flights"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "flights" ? "bg-rose-950 text-rose-300 border border-rose-500/30" : "text-rose-400 bg-rose-950/20 hover:text-rose-300 border border-rose-950/40"}`}
-            >
-              <span>Flight Booking ✈️</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-rose-900 text-rose-300 py-0.5 px-2 rounded-full font-bold">5-Star Qatar</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-ai-employees"
-              onClick={() => { setActiveTab("ai-employees"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "ai-employees" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-300 hover:text-amber-200 bg-amber-950/30 border border-amber-500/30"}`}
-            >
-              <span>AI Employees Hub 🤖</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-amber-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">ConsulPortal v2.0</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-ai-showcase"
-              onClick={() => { setActiveTab("ai-showcase"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "ai-showcase" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-400 hover:text-amber-300 bg-amber-500/5 border border-amber-500/10"}`}
-            >
-              <span>AI Integration Showcase ⚡</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Simulator</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-portal"
-              onClick={() => { setActiveTab("portal"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "portal" ? "bg-amber-500 text-slate-950 font-bold" : "text-slate-400 hover:text-white bg-slate-900/30"}`}
-            >
-              <span>Login / Sign In 👤</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-amber-400 py-0.5 px-2 rounded-full font-bold">Secure Portal</span>
-            </button>
-            <button 
-              id="mobile-tab-btn-admin"
-              onClick={() => { setActiveTab("admin"); setIsMobileMenuOpen(false); }} 
-              className={`w-full text-left px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-between ${activeTab === "admin" ? "bg-amber-500 text-slate-950 font-bold" : "text-amber-400 hover:text-amber-300 bg-amber-500/5 border border-amber-500/10"}`}
-            >
-              <span>Admin Portal 🔐</span>
-              <span className="text-[9px] font-mono opacity-90 uppercase tracking-wider bg-slate-950 text-amber-400 py-0.5 px-2 rounded-full">Staff Gateway</span>
-            </button>
-            <div className="grid grid-cols-2 gap-2 pt-1">
-              <a 
-                id="mobile-whatsapp-us-btn"
-                href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-600 transition flex items-center justify-between shadow-lg font-mono"
-              >
-                <span className="truncate">{whatsAppDisplay}</span>
-                <span className="text-[8px] bg-slate-950 text-emerald-400 px-1.5 py-0.5 rounded font-bold">US</span>
-              </a>
-              <a 
-                id="mobile-whatsapp-uk-btn"
-                href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-600 transition flex items-center justify-between shadow-lg font-mono"
-              >
-                <span className="truncate">{whatsAppDisplay2}</span>
-                <span className="text-[8px] bg-slate-950 text-emerald-400 px-1.5 py-0.5 rounded font-bold">UK</span>
-              </a>
-            </div>
-          </div>
-        )}
       </header>
 
-      {/* FLYING PLANE AMBIENT ANIMATION (Automated Flying Plane Across Page) */}
-      <div id="ambient-flight-track" className="relative w-full h-10 overflow-hidden bg-slate-900/40 border-b border-slate-800 pointer-events-none">
-        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-dashed bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-        <div className="absolute top-1/2 -translate-y-1/2 animate-plane flex items-center gap-2 text-amber-400/80 text-xs font-mono whitespace-nowrap">
-          <Plane className="w-4 h-4 text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] rotate-45 animate-pulse" />
-          <span className="tracking-widest">FLIGHT CONSUL-2445 IS CURRENTLY FLYING TO SCHENGEN REGION...</span>
+      {/* Mobile Navigation Drawer */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden bg-[#050505] border-b border-[#D4AF37]/30 p-4 space-y-3 text-sm font-semibold animate-fade-in max-h-[85vh] overflow-y-auto shadow-2xl">
+          {/* Mobile Universal AI Search */}
+          <div className="pb-1">
+            <UniversalTopSearch
+              mode="header-inline"
+              onNavigateTab={(tab) => {
+                setActiveTab(tab);
+                setIsMobileMenuOpen(false);
+              }}
+              onSelectCountry={(c) => {
+                setSelectedCountry(c);
+                setSelectedCountryGuide(c);
+                setSelectedRegion("All");
+                setActiveTab("vacancies");
+                setIsMobileMenuOpen(false);
+              }}
+              onSelectVacancy={(v) => {
+                setApplyingVacancy(v);
+                setIsMobileMenuOpen(false);
+              }}
+              onOpenAiChatWithPrompt={(prompt) => {
+                setChatInput(prompt);
+                setIsChatOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
+            />
+          </div>
+
+          {/* Item 1: Home Portal */}
+          <button 
+            onClick={() => { setActiveTab("home"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'home' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
+          >
+            <span>Home Portal</span>
+          </button>
+
+          {/* Item 2: Overseas Vacancies */}
+          <button 
+            onClick={() => { setActiveTab("vacancies"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'vacancies' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
+          >
+            <span>Overseas Vacancies</span>
+          </button>
+
+          {/* Item 3: Girls Jobs Abroad */}
+          <button 
+            onClick={() => { setActiveTab("girls-jobs"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'girls-jobs' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
+          >
+            <span>Girls Jobs Abroad 🌸</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/40">WOMEN'S BOARD</span>
+          </button>
+
+          {/* Item 4: Country Explorer */}
+          <button 
+            onClick={() => { setActiveTab("country-picker"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'country-picker' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-emerald-400'}`}
+          >
+            <span className="text-emerald-400">Country Explorer 🌐</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-emerald-400 bg-emerald-500/10 border border-emerald-500/20">200 DATABASE</span>
+          </button>
+
+          {/* Item 5: Currency Desk */}
+          <button 
+            onClick={() => { setActiveTab("currency"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'currency' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
+          >
+            <span>Currency Desk 💱</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/30">LIVE RATES</span>
+          </button>
+
+          {/* Item 6: 3-Step Fees & Expenses */}
+          <button 
+            onClick={() => { setActiveTab("visa-expenses"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'visa-expenses' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
+          >
+            <span className="text-[#F5D76E]">3-Step Fees &amp; Expenses 💳</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/30">CALCULATOR</span>
+          </button>
+
+          {/* Item 7: AI Smart Evaluator */}
+          <button 
+            onClick={() => { setActiveTab("ai-evaluator"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'ai-evaluator' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
+          >
+            <span className="text-[#F5D76E]">AI Smart Evaluator 🤖</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-cyan-400 bg-cyan-500/10 border border-cyan-500/20">99.4% SYNC</span>
+          </button>
+
+          {/* Item 8: Agency B2B Portal */}
+          <button 
+            onClick={() => { setActiveTab("agency-b2b"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'agency-b2b' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-blue-300'}`}
+          >
+            <span className="text-blue-300">Agency B2B Portal 🏢</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-blue-400 bg-blue-500/10 border border-blue-500/20">DEMAND LETTERS</span>
+          </button>
+
+          {/* Item 9: Live Passport Tracking */}
+          <button 
+            onClick={() => { setActiveTab("tracker"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'tracker' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
+          >
+            <span>Live Passport Tracking</span>
+          </button>
+
+          {/* Item 10: Visa Consultants */}
+          <button 
+            onClick={() => { setActiveTab("consultants"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'consultants' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
+          >
+            <span className="flex items-center gap-2">Visa Consultants <span className="text-blue-400">👥</span></span>
+          </button>
+
+          {/* Item 11: Flight Booking */}
+          <button 
+            onClick={() => { setActiveTab("flights"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'flights' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
+          >
+            <span>Flight Booking ✈️</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-rose-400 bg-rose-500/10 border border-rose-500/20">5-STAR QATAR</span>
+          </button>
+
+          {/* Item 12: AI Employees Hub */}
+          <button 
+            onClick={() => { setActiveTab("ai-employees"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'ai-employees' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
+          >
+            <span className="text-[#F5D76E]">AI Employees Hub 🤖</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/30">CONSULPORTAL V2.0</span>
+          </button>
+
+          {/* Item 13: AI Integration Showcase */}
+          <button 
+            onClick={() => { setActiveTab("ai-showcase"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'ai-showcase' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
+          >
+            <span className="text-[#F5D76E]">AI Integration Showcase ⚡</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/30">SIMULATOR</span>
+          </button>
+
+          {/* Item 14: Login / Sign In */}
+          <button 
+            onClick={() => { setActiveTab("portal"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'portal' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
+          >
+            <span className="flex items-center gap-1.5">Login / Sign In <span className="text-blue-400">👤</span></span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/30">SECURE PORTAL</span>
+          </button>
+
+          {/* Item 15: Admin Portal */}
+          <button 
+            onClick={() => { setActiveTab("admin"); setIsMobileMenuOpen(false); }} 
+            className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'admin' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
+          >
+            <span className="text-[#F5D76E] flex items-center gap-1.5">Admin Portal 🔐</span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/30">STAFF GATEWAY</span>
+          </button>
+
+          {/* Bottom Call Buttons matching green style in screenshot */}
+          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <a 
+              href={`https://wa.me/${whatsAppNum}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black px-4 py-3 rounded-2xl text-xs flex items-center justify-between transition shadow-lg"
+            >
+              <span className="text-sm font-extrabold">+1 (251) 373-4858</span>
+              <span className="bg-slate-950 text-emerald-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">US</span>
+            </a>
+            <a 
+              href={`https://wa.me/${whatsAppNum2}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black px-4 py-3 rounded-2xl text-xs flex items-center justify-between transition shadow-lg"
+            >
+              <span className="text-sm font-extrabold">+44 7848 186539</span>
+              <span className="bg-slate-950 text-emerald-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">UK</span>
+            </a>
+          </div>
+        </div>
+      )}
+
+      {/* LUXURY HIGH-WEALTH CONSULAR TRANSIT MARQUEE (LEFT-TO-RIGHT) */}
+      <div id="ambient-flight-track" className="relative w-full py-2.5 sm:py-3 overflow-hidden bg-gradient-to-r from-[#070602] via-[#141005] to-[#070602] border-b border-[#D4AF37]/35 shadow-[0_4px_20px_rgba(0,0,0,0.6)] flex items-center">
+        {/* Left & Right Subtle Fade Masks */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-24 bg-gradient-to-r from-[#050505] to-transparent z-10" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-24 bg-gradient-to-l from-[#050505] to-transparent z-10" />
+
+        <div className="animate-marquee-right flex items-center gap-6 text-xs font-mono font-bold whitespace-nowrap">
+          {/* First sequence of high-wealth items */}
+          <div className="flex items-center gap-6 shrink-0">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <Plane className="w-3.5 h-3.5 text-[#D4AF37] rotate-45 shrink-0" />
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇸🇦 SAUDI ARABIA NEOM &amp; RIYADH:</span>
+              <span className="text-[11px] text-[#F5D76E]">480 Verified Work Visas Stamped &amp; En Route</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇩🇪 GERMANY &amp; SCHENGEN EU:</span>
+              <span className="text-[11px] text-[#F5D76E]">Opportunity Card &amp; Blue Card Direct Embassy Intakes Active</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <Plane className="w-3.5 h-3.5 text-[#D4AF37] rotate-45 shrink-0" />
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇦🇪 UAE &amp; 🇶🇦 QATAR:</span>
+              <span className="text-[11px] text-[#F5D76E]">320 Overseas Technical Delegates Approved • Flight Ready</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇨🇦 CANADA &amp; 🇬🇧 UK:</span>
+              <span className="text-[11px] text-[#F5D76E]">Express LMIA &amp; Tier-2 Work Authorizations Dispatched</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <Plane className="w-3.5 h-3.5 text-[#D4AF37] rotate-45 shrink-0" />
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇰🇼 KUWAIT &amp; 🇴🇲 OMAN:</span>
+              <span className="text-[11px] text-[#F5D76E]">Petroleum &amp; Heavy Industry Crews Deployed Under Escrow</span>
+            </div>
+          </div>
+
+          {/* Duplicated sequence for seamless infinite left-to-right looping */}
+          <div className="flex items-center gap-6 shrink-0" aria-hidden="true">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <Plane className="w-3.5 h-3.5 text-[#D4AF37] rotate-45 shrink-0" />
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇸🇦 SAUDI ARABIA NEOM &amp; RIYADH:</span>
+              <span className="text-[11px] text-[#F5D76E]">480 Verified Work Visas Stamped &amp; En Route</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇩🇪 GERMANY &amp; SCHENGEN EU:</span>
+              <span className="text-[11px] text-[#F5D76E]">Opportunity Card &amp; Blue Card Direct Embassy Intakes Active</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <Plane className="w-3.5 h-3.5 text-[#D4AF37] rotate-45 shrink-0" />
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇦🇪 UAE &amp; 🇶🇦 QATAR:</span>
+              <span className="text-[11px] text-[#F5D76E]">320 Overseas Technical Delegates Approved • Flight Ready</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇨🇦 CANADA &amp; 🇬🇧 UK:</span>
+              <span className="text-[11px] text-[#F5D76E]">Express LMIA &amp; Tier-2 Work Authorizations Dispatched</span>
+            </div>
+
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#110E04] border border-[#D4AF37]/40 text-[#F5D76E] shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <Plane className="w-3.5 h-3.5 text-[#D4AF37] rotate-45 shrink-0" />
+              <span className="text-[11px] uppercase tracking-wider font-extrabold text-white">🇰🇼 KUWAIT &amp; 🇴🇲 OMAN:</span>
+              <span className="text-[11px] text-[#F5D76E]">Petroleum &amp; Heavy Industry Crews Deployed Under Escrow</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Hero Banner Section */}
+      {/* Luxury Black & Gold Hero & Features (Test Theme #1) */}
       {activeTab === "home" && (
-        <section id="hero-section" className="relative py-16 lg:py-24 px-4 overflow-hidden bg-gradient-to-b from-slate-950 via-indigo-950/15 to-slate-950">
-          
-          {/* Subtle glow lights */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-amber-500/5 rounded-full blur-[120px] pointer-events-none"></div>
-          <div className="absolute top-10 right-10 w-80 h-80 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+        <>
+          <LuxuryHero
+            onSearchSubmit={(q, country, category) => {
+              if (q) setSearchQuery(q);
+              if (country !== "All") {
+                setSelectedCountry(country);
+                setSelectedCountryGuide(country);
+              }
+              if (category !== "All") setSelectedCategory(category);
+              setActiveTab("vacancies");
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+            onSelectCountry={(countryName) => {
+              setSelectedCountry(countryName);
+              setSelectedCountryGuide(countryName);
+              setSelectedRegion("All");
+              setActiveTab("vacancies");
+            }}
+            onSelectVacancy={(v) => {
+              setApplyingVacancy(v);
+            }}
+            onOpenAiChatWithPrompt={(prompt) => {
+              setChatInput(prompt);
+              setIsChatOpen(true);
+            }}
+            onExploreJobs={() => setActiveTab("vacancies")}
+            onVisaServices={() => setActiveTab("consultants")}
+            totalCountriesCount={158}
+            totalJobsCount={VACANCIES.length || 11450}
+            availableCountries={availableCountries}
+            availableCategories={availableCategories}
+          />
 
-          <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center relative z-10">
-            
-            {/* Left Content Column */}
-            <div className="lg:col-span-7 space-y-6">
-              
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-800 text-xs">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span className="text-slate-300 font-mono">Government Approved Agency Coordination</span>
-              </div>
+          {/* Interactive Country Guide & Visa Information Center */}
+          <div className="max-w-7xl mx-auto px-4 pt-2 pb-6">
+            <CountryGuideSection 
+              selectedCountry={selectedCountryGuide}
+              onSelectCountry={(countryName) => setSelectedCountryGuide(countryName)}
+              onViewVacancies={(countryName) => {
+                setSelectedCountry(countryName);
+                setSelectedRegion("All");
+                setActiveTab("vacancies");
+                setTimeout(() => {
+                  const el = document.getElementById("vacancies-section-top");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }, 100);
+              }}
+            />
+          </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold tracking-tight leading-tight">
-                <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-200 bg-clip-text text-transparent drop-shadow-sm">
-                  Premium Careers
-                </span>{" "}
-                <span className="text-slate-100">in the</span>{" "}
-                <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
-                  Gulf, Schengen &amp; Europe
-                </span>
-              </h1>
+          {/* AI Country Explorer */}
+          <LuxuryCountryExplorer
+            vacancies={VACANCIES}
+            selectedCountry={selectedCountryGuide}
+            onSelectCountry={(countryName) => setSelectedCountryGuide(countryName)}
+            onSelectCountryJobs={(cName) => {
+              setSelectedCountry(cName);
+            }}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+          />
 
-              <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl">
-                Securing verified work contracts, student permits, and certified sponsorships. Check current vacancies in <strong>Germany, Saudi Arabia, Dubai, Poland, and Italy</strong>. Issue your flight placeholders and track passport stamping live.
-              </p>
+          {/* 2-Line Automatic Sliding Flags Marquee Section (Gulf & Schengen Country Vacancies) */}
+          <section id="flags-marquee-section" className="py-8 bg-[#050505] border-y border-[#D4AF37]/20 overflow-hidden space-y-4 my-6">
+            <div className="max-w-7xl mx-auto px-4 text-center mb-4">
+              <span className="text-[11px] font-mono tracking-widest text-[#D4AF37] font-bold uppercase">Worldwide Placement Network</span>
+              <h2 className="text-xl sm:text-2xl font-display font-extrabold text-white mt-1">
+                Gulf &amp; Schengen Country Vacancies
+              </h2>
+            </div>
 
-              {/* Direct Search input with dynamic multi-section portal search dropdown */}
-              <div className="relative max-w-xl z-30">
-                <div className="p-2.5 rounded-2xl bg-slate-900/95 border border-slate-800 shadow-2xl flex flex-col sm:flex-row gap-2">
-                  <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-950/60 rounded-xl border border-slate-850">
-                    <Search className="w-5 h-5 text-amber-500 shrink-0" />
-                    <input 
-                      type="text" 
-                      placeholder="Search jobs, countries, girls section, flight booking..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onFocus={() => setIsSearchFocused(true)}
-                      onBlur={() => {
-                        // Small timeout to allow click handlers on dropdown list to trigger
-                        setTimeout(() => setIsSearchFocused(false), 200);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          setActiveTab("vacancies");
-                          setIsSearchFocused(false);
-                        }
-                      }}
-                      className="bg-transparent w-full focus:outline-none text-sm text-slate-100 placeholder-slate-500"
-                    />
-                    {searchQuery && (
-                      <button 
-                        type="button"
-                        onClick={() => setSearchQuery("")}
-                        className="text-slate-500 hover:text-white p-1 rounded-full cursor-pointer transition"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                  <button 
-                    type="button"
+            {/* Line 1 - Slides Left */}
+            <div className="relative flex overflow-x-hidden w-full bg-[#0B0B0B]/80 py-2.5 border-y border-[#D4AF37]/20">
+              <div className="animate-marquee-left flex gap-4">
+                {[...marqueeFlagsRow1, ...marqueeFlagsRow1, ...marqueeFlagsRow1].map((flag, idx) => (
+                  <div 
+                    key={`row1-${flag.code}-${idx}`} 
                     onClick={() => {
+                      setSelectedCountry(flag.name);
+                      setSelectedCountryGuide(flag.name);
+                      setSelectedRegion("All");
                       setActiveTab("vacancies");
-                      setIsSearchFocused(false);
+                      setTimeout(() => {
+                        const el = document.getElementById("vacancies-section-top");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 150);
                     }}
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-2.5 px-6 rounded-xl text-sm transition shadow-lg shadow-amber-500/10 flex items-center justify-center gap-1 cursor-pointer shrink-0"
+                    className="flex items-center gap-3 bg-[#111111] border border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-xl px-4 py-2 text-sm text-slate-200 cursor-pointer transition shrink-0 shadow-md"
                   >
-                    <span>Search</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-
-                {/* Dropdown Portal Overlay */}
-                {isSearchFocused && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-slate-950/95 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl overflow-hidden divide-y divide-slate-900/80 max-h-[440px] overflow-y-auto">
-                    
-                    {/* Scenario A: No Query yet -> Show quick desks / sections */}
-                    {!searchQuery ? (
-                      <div className="p-4 space-y-3.5 text-left">
-                        <span className="text-[10px] font-mono text-amber-500 uppercase font-extrabold tracking-wider block">⚡ Quick Website Desks</span>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("girls-jobs");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="bg-slate-900/40 hover:bg-rose-950/20 hover:border-rose-500/30 border border-slate-850 p-2 rounded-xl text-left transition flex items-center gap-2 group cursor-pointer"
-                          >
-                            <span className="text-xl">🌸</span>
-                            <div>
-                              <p className="text-xs font-bold text-white group-hover:text-rose-400">Girls Jobs Board</p>
-                              <p className="text-[9.5px] text-slate-400">Vetted safe placements</p>
-                            </div>
-                          </button>
-
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("flights");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="bg-slate-900/40 hover:bg-rose-950/20 hover:border-rose-500/30 border border-slate-850 p-2 rounded-xl text-left transition flex items-center gap-2 group cursor-pointer"
-                          >
-                            <span className="text-xl">✈️</span>
-                            <div>
-                              <p className="text-xs font-bold text-white group-hover:text-rose-400">Flight Booking Desk</p>
-                              <p className="text-[9.5px] text-slate-400">Qatar Airways 15% off</p>
-                            </div>
-                          </button>
-
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("tracker");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="bg-slate-900/40 hover:bg-amber-950/20 hover:border-amber-500/30 border border-slate-850 p-2 rounded-xl text-left transition flex items-center gap-2 group cursor-pointer"
-                          >
-                            <span className="text-xl">🛡️</span>
-                            <div>
-                              <p className="text-xs font-bold text-white group-hover:text-amber-400">Live Passport Tracker</p>
-                              <p className="text-[9.5px] text-slate-400">Stamping progress tracker</p>
-                            </div>
-                          </button>
-
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("ai-employees");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="bg-amber-950/20 hover:bg-amber-950/40 hover:border-amber-500/50 border border-amber-500/20 p-2 rounded-xl text-left transition flex items-center gap-2 group cursor-pointer"
-                          >
-                            <span className="text-xl">🤖</span>
-                            <div>
-                              <p className="text-xs font-bold text-amber-300 group-hover:text-amber-200">AI Employees Hub v2.0</p>
-                              <p className="text-[9.5px] text-slate-400">7 Specialized Agents</p>
-                            </div>
-                          </button>
-
-                          <button 
-                            type="button"
-                            onClick={() => {
-                              setActiveTab("country-picker");
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                            }}
-                            className="bg-slate-900/40 hover:bg-emerald-950/20 hover:border-emerald-500/30 border border-slate-850 p-2 rounded-xl text-left transition flex items-center gap-2 group cursor-pointer"
-                          >
-                            <span className="text-xl">🌐</span>
-                            <div>
-                              <p className="text-xs font-bold text-white group-hover:text-emerald-400">Country Picker</p>
-                              <p className="text-[9.5px] text-slate-400">WhatsApp hotline numbers</p>
-                            </div>
-                          </button>
-                        </div>
-
-                        <div className="pt-2 border-t border-slate-900">
-                          <span className="text-[10px] font-mono text-slate-500 uppercase tracking-widest block mb-1.5">Direct Country Guides & Visa info</span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {["Saudi Arabia", "Germany", "United Arab Emirates", "Italy", "Poland", "Qatar"].map((c) => (
-                              <button 
-                                key={c}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedCountryGuide(c);
-                                  const el = document.getElementById("country-guide-section");
-                                  if (el) el.scrollIntoView({ behavior: "smooth" });
-                                }}
-                                className="bg-slate-900/60 hover:bg-slate-800 border border-slate-850 text-xs text-slate-300 px-2 py-1 rounded-lg transition cursor-pointer"
-                              >
-                                {c === "Saudi Arabia" ? "🇸🇦 " : c === "Germany" ? "🇩🇪 " : c === "United Arab Emirates" ? "🇦🇪 " : c === "Italy" ? "🇮🇹 " : c === "Poland" ? "🇵🇱 " : "🇶🇦 "}
-                                {c}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      // Scenario B: Query typed in
-                      <div className="divide-y divide-slate-900/80 text-left">
-                        {/* 🌟 AI Smart Search Feature Upgrade */}
-                        <div className="p-4 bg-slate-950 border-b border-slate-900 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-mono text-amber-500 uppercase font-extrabold tracking-wider flex items-center gap-1.5">
-                              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-                              ConsulPortal AI Smart Search
-                            </span>
-                            <span className="text-[9px] font-mono text-slate-500 uppercase font-black">
-                              Connected via Gemini API
-                            </span>
-                          </div>
-
-                          {isAiSearching ? (
-                            <div className="py-4 flex flex-col items-center justify-center gap-2">
-                              <div className="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                              <span className="text-[10.5px] font-mono text-slate-400">Consulting AI Knowledge Base...</span>
-                            </div>
-                          ) : aiSearchResponse ? (
-                            <div className="bg-slate-900/50 border border-slate-850 p-3.5 rounded-xl space-y-2">
-                              {renderFormattedResponse(aiSearchResponse)}
-                              <div className="flex justify-end">
-                                <button
-                                  type="button"
-                                  onClick={() => handleGlobalAiSearch(searchQuery)}
-                                  className="text-[9px] font-mono text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 cursor-pointer"
-                                >
-                                  🔄 Refresh Answer
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-slate-900/30 border border-slate-900 p-3 rounded-xl">
-                              <div className="space-y-0.5">
-                                <p className="text-[11.5px] font-bold text-slate-200">Have a custom question about "{searchQuery}"?</p>
-                                <p className="text-[10px] text-slate-400">Our AI can instantly crawl country details, girls sections, flight bookings, and more.</p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleGlobalAiSearch(searchQuery)}
-                                className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs py-1.5 px-3 rounded-xl transition shadow-lg shadow-amber-500/10 flex items-center gap-1 shrink-0 cursor-pointer"
-                              >
-                                <span>Ask AI Agent</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Interactive Module Matches */}
-                        {(() => {
-                          const query = searchQuery.toLowerCase();
-                          const matchesGirlsJobs = query.includes("girl") || query.includes("women") || query.includes("female") || query.includes("welfare") || query.includes("safe") || query.includes("pink") || query.includes("hostel");
-                          const matchesFlights = query.includes("flight") || query.includes("ticket") || query.includes("qatar") || query.includes("airway") || query.includes("plane") || query.includes("pnr") || query.includes("pkr") || query.includes("booking") || query.includes("travel");
-                          const matchesTracker = query.includes("track") || query.includes("passport") || query.includes("status") || query.includes("live") || query.includes("verify") || query.includes("check") || query.includes("stamping");
-                          const matchesPortal = query.includes("portal") || query.includes("secure") || query.includes("client") || query.includes("login") || query.includes("dashboard") || query.includes("pay");
-                          const matchesCountryPicker = query.includes("picker") || query.includes("standards") || query.includes("whatsapp") || query.includes("choose") || query.includes("number");
-                          
-                          if (!matchesGirlsJobs && !matchesFlights && !matchesTracker && !matchesPortal && !matchesCountryPicker) return null;
-
-                          return (
-                            <div className="p-3 space-y-2">
-                              <span className="text-[10px] font-mono text-amber-500 uppercase font-extrabold tracking-wider block">📍 Matching Website Modules</span>
-                              <div className="space-y-1.5">
-                                {matchesGirlsJobs && (
-                                  <button 
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveTab("girls-jobs");
-                                      window.scrollTo({ top: 0, behavior: "smooth" });
-                                    }}
-                                    className="w-full text-left bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/15 p-2 rounded-xl transition flex items-center justify-between cursor-pointer"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">🌸</span>
-                                      <div>
-                                        <p className="text-xs font-bold text-rose-300">Girls Jobs Abroad Section</p>
-                                        <p className="text-[10.5px] text-slate-400">Vetted overseas vacancies, safe housing & welfare for female professionals</p>
-                                      </div>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-rose-400" />
-                                  </button>
-                                )}
-
-                                {matchesFlights && (
-                                  <button 
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveTab("flights");
-                                      window.scrollTo({ top: 0, behavior: "smooth" });
-                                    }}
-                                    className="w-full text-left bg-rose-950/20 border border-rose-500/20 hover:bg-rose-950/35 p-2 rounded-xl transition flex items-center justify-between cursor-pointer"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">✈️</span>
-                                      <div>
-                                        <p className="text-xs font-bold text-rose-200">Qatar Airways Booking Desk</p>
-                                        <p className="text-[10.5px] text-slate-400">15% discount applied. Live verifiable PNR reservations & Qsuite business info</p>
-                                      </div>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-rose-400" />
-                                  </button>
-                                )}
-
-                                {matchesTracker && (
-                                  <button 
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveTab("tracker");
-                                      window.scrollTo({ top: 0, behavior: "smooth" });
-                                    }}
-                                    className="w-full text-left bg-amber-500/5 border border-amber-500/20 hover:bg-amber-500/10 p-2 rounded-xl transition flex items-center justify-between cursor-pointer"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">🛡️</span>
-                                      <div>
-                                        <p className="text-xs font-bold text-amber-300">Live Passport Tracking Portal</p>
-                                        <p className="text-[10.5px] text-slate-400">Enter passport tracking ID or check current embassy submission statuses</p>
-                                      </div>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-amber-400" />
-                                  </button>
-                                )}
-
-                                {matchesPortal && (
-                                  <button 
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveTab("portal");
-                                      window.scrollTo({ top: 0, behavior: "smooth" });
-                                    }}
-                                    className="w-full text-left bg-blue-500/5 border border-blue-500/20 hover:bg-blue-500/10 p-2 rounded-xl transition flex items-center justify-between cursor-pointer"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">💼</span>
-                                      <div>
-                                        <p className="text-xs font-bold text-blue-300">Client Secure Portal</p>
-                                        <p className="text-[10.5px] text-slate-400">Access registered application portfolios, visa fee records, and documents</p>
-                                      </div>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-blue-400" />
-                                  </button>
-                                )}
-
-                                {matchesCountryPicker && (
-                                  <button 
-                                    type="button"
-                                    onClick={() => {
-                                      setActiveTab("country-picker");
-                                      window.scrollTo({ top: 0, behavior: "smooth" });
-                                    }}
-                                    className="w-full text-left bg-emerald-500/5 border border-emerald-500/20 hover:bg-emerald-500/10 p-2 rounded-xl transition flex items-center justify-between cursor-pointer"
-                                  >
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">🌐</span>
-                                      <div>
-                                        <p className="text-xs font-bold text-emerald-300">WhatsApp Country Standard Picker</p>
-                                        <p className="text-[10.5px] text-slate-400">Select country to dynamically adapt instant hotline support details</p>
-                                      </div>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-emerald-400" />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        {/* Country Guide Matches */}
-                        {(() => {
-                          const query = searchQuery.toLowerCase();
-                          const matches = CITY_CARDS.filter(c => 
-                            c.country.toLowerCase().includes(query) || 
-                            c.city.toLowerCase().includes(query)
-                          );
-
-                          if (matches.length === 0) return null;
-
-                          return (
-                            <div className="p-3 space-y-2">
-                              <span className="text-[10px] font-mono text-teal-400 uppercase font-extrabold tracking-wider block">🌍 Matching Visa Country Guides</span>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                {matches.map((c) => (
-                                  <button 
-                                    key={c.city}
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedCountryGuide(c.country);
-                                      const el = document.getElementById("country-guide-section");
-                                      if (el) el.scrollIntoView({ behavior: "smooth" });
-                                    }}
-                                    className="text-left bg-slate-900 hover:bg-slate-800 border border-slate-800/80 p-2 rounded-xl transition flex items-center gap-2 cursor-pointer"
-                                  >
-                                    <span className="text-xl">{c.flag}</span>
-                                    <div>
-                                      <p className="text-xs font-bold text-white">{c.country} ({c.city})</p>
-                                      <p className="text-[10px] text-slate-400">{c.jobsCount}+ active sponsored contracts</p>
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        {/* Vacancy Matches */}
-                        {(() => {
-                          const query = searchQuery.toLowerCase();
-                          const matches = VACANCIES.filter(v => 
-                            v.title.toLowerCase().includes(query) || 
-                            v.category.toLowerCase().includes(query) || 
-                            v.country.toLowerCase().includes(query) || 
-                            v.requirements.some(r => r.toLowerCase().includes(query))
-                          ).slice(0, 5);
-
-                          if (matches.length === 0) return null;
-
-                          return (
-                            <div className="p-3 space-y-2">
-                              <span className="text-[10px] font-mono text-amber-500 uppercase font-extrabold tracking-wider block">💼 Matching Overseas Vacancies ({matches.length})</span>
-                              <div className="space-y-1.5">
-                                {matches.map((v) => (
-                                  <button 
-                                    key={v.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setSearchQuery(v.title);
-                                      setActiveTab("vacancies");
-                                      window.scrollTo({ top: 0, behavior: "smooth" });
-                                    }}
-                                    className="w-full text-left bg-slate-900/50 hover:bg-slate-900 border border-slate-800 p-2 rounded-xl transition flex items-center justify-between cursor-pointer group"
-                                  >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                      <span className="text-sm shrink-0 bg-slate-950 p-1.5 rounded-lg border border-slate-800 text-slate-300">
-                                        {getVacancyIcon(v.category)}
-                                      </span>
-                                      <div className="min-w-0">
-                                        <p className="text-xs font-bold text-slate-200 group-hover:text-amber-400 truncate">{v.title}</p>
-                                        <p className="text-[10px] text-slate-400 truncate">{v.flag} {v.country} • {v.salary}</p>
-                                      </div>
-                                    </div>
-                                    <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-slate-300" />
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        {/* Fallback if no matches */}
-                        {(() => {
-                          const query = searchQuery.toLowerCase();
-                          const matchesGirlsJobs = query.includes("girl") || query.includes("women") || query.includes("female") || query.includes("welfare") || query.includes("safe") || query.includes("pink") || query.includes("hostel");
-                          const matchesFlights = query.includes("flight") || query.includes("ticket") || query.includes("qatar") || query.includes("airway") || query.includes("plane") || query.includes("pnr") || query.includes("pkr") || query.includes("booking") || query.includes("travel");
-                          const matchesTracker = query.includes("track") || query.includes("passport") || query.includes("status") || query.includes("live") || query.includes("verify") || query.includes("check") || query.includes("stamping");
-                          const matchesPortal = query.includes("portal") || query.includes("secure") || query.includes("client") || query.includes("login") || query.includes("dashboard") || query.includes("pay");
-                          const matchesCountryPicker = query.includes("picker") || query.includes("standards") || query.includes("whatsapp") || query.includes("choose") || query.includes("number");
-                          
-                          const hasGuides = CITY_CARDS.some(c => c.country.toLowerCase().includes(query) || c.city.toLowerCase().includes(query));
-                          const hasJobs = VACANCIES.some(v => v.title.toLowerCase().includes(query) || v.category.toLowerCase().includes(query) || v.country.toLowerCase().includes(query));
-
-                          if (matchesGirlsJobs || matchesFlights || matchesTracker || matchesPortal || matchesCountryPicker || hasGuides || hasJobs) return null;
-
-                          return (
-                            <div className="p-6 text-center text-slate-500 space-y-2">
-                              <p className="text-sm">No exact matches found for "{searchQuery}"</p>
-                              <p className="text-xs">Try searching for "girls", "tickets", "Germany", "nursing", or "tracker".</p>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
+                    <span className="text-2xl leading-none">{flag.emoji}</span>
+                    <span className="font-semibold">{flag.name}</span>
+                    <span className="text-[10px] text-[#F5D76E] font-mono bg-[#111111] px-1.5 py-0.5 rounded border border-[#D4AF37]/30 font-bold">Vacancy</span>
                   </div>
-                )}
+                ))}
               </div>
-
-              {/* Verified Trust Badges */}
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-slate-900 max-w-lg">
-                <div>
-                  <h3 className="text-2xl font-bold text-white font-display">
-                    <AnimatedCounter target={2445} suffix="+" />
-                  </h3>
-                  <p className="text-xs text-slate-400">Successful Reviews</p>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white font-display">3 Steps</h3>
-                  <p className="text-xs text-slate-400">Live Transparent Tracking</p>
-                </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-white font-display">PKR / Local</h3>
-                  <p className="text-xs text-slate-400">EasyPaisa & JazzCash support</p>
-                </div>
-              </div>
-
             </div>
 
-            {/* Right Interactive Visual Column (Interactive Passport Quick-Tracker Box) */}
-            <div className="lg:col-span-5 bg-slate-900/80 border border-slate-800/80 p-6 sm:p-8 rounded-3xl shadow-2xl relative">
-              <div className="absolute top-0 right-0 -mt-3 -mr-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 text-xs font-bold py-1 px-3 rounded-lg shadow-lg rotate-3">
-                SECURE VISA ESCROW
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <div className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
-                    <SearchCode className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-lg text-white">Live Passport Tracker</h3>
-                    <p className="text-xs text-slate-400">View real status, embassies notes & fees</p>
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-800 space-y-3">
-                  <div>
-                    <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
-                      File Reference Number
-                    </label>
-                    <input 
-                      type="text" 
-                      value={trackingEmail}
-                      onChange={(e) => setTrackingEmail(e.target.value)}
-                      placeholder="e.g. REF-849201"
-                      className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs w-full focus:outline-none focus:border-amber-500 text-slate-100 font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-1">
-                      Passport / Tracking ID
-                    </label>
-                    <input 
-                      type="text" 
-                      value={trackingId}
-                      onChange={(e) => setTrackingId(e.target.value)}
-                      placeholder="e.g. PK-78601"
-                      className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs w-full focus:outline-none focus:border-amber-500 font-mono text-amber-400"
-                    />
-                  </div>
-                  <button 
+            {/* Line 2 - Slides Right */}
+            <div className="relative flex overflow-x-hidden w-full bg-[#0B0B0B]/80 py-2.5 border-b border-[#D4AF37]/20">
+              <div className="animate-marquee-right flex gap-4">
+                {[...marqueeFlagsRow2, ...marqueeFlagsRow2, ...marqueeFlagsRow2].map((flag, idx) => (
+                  <div 
+                    key={`row2-${flag.code}-${idx}`} 
                     onClick={() => {
-                      handleTrackPassport(trackingId, trackingEmail);
-                      setActiveTab("tracker");
+                      setSelectedCountry(flag.name);
+                      setSelectedCountryGuide(flag.name);
+                      setSelectedRegion("All");
+                      setActiveTab("vacancies");
+                      setTimeout(() => {
+                        const el = document.getElementById("vacancies-section-top");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 150);
                     }}
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 py-2.5 rounded-lg text-xs font-extrabold transition uppercase tracking-wider shadow"
+                    className="flex items-center gap-3 bg-[#111111] border border-[#D4AF37]/25 hover:border-[#D4AF37] rounded-xl px-4 py-2 text-sm text-slate-200 cursor-pointer transition shrink-0 shadow-md"
                   >
-                    Track Verified File
-                  </button>
-                </div>
-
-                {/* Micro preview of passport if tracked */}
-                {trackData ? (
-                  <div className="bg-slate-950/40 p-4 rounded-xl border border-dashed border-slate-800 space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-300">{trackData.name}</span>
-                      <span className="text-amber-400 font-mono">{trackData.country}</span>
-                    </div>
-                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                      <div 
-                        className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
-                        style={{ 
-                          width: `${
-                            (trackData.steps.filter(s => s.status === 'completed').length || 0) * 33.3 + 
-                            (trackData.steps.filter(s => s.status === 'current').length || 0) * 16.6
-                          }%` 
-                        }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                      <span>Total: PKR {(trackData.totalFee || 0).toLocaleString()}</span>
-                      <span className="text-emerald-400">Paid: PKR {(trackData.totalPaid || 0).toLocaleString()}</span>
-                    </div>
+                    <span className="text-2xl leading-none">{flag.emoji}</span>
+                    <span className="font-semibold">{flag.name}</span>
+                    <span className="text-[10px] text-emerald-400 font-mono bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">Europe</span>
                   </div>
-                ) : (
-                  <div className="bg-slate-950/30 py-6 text-center rounded-xl border border-dashed border-slate-800">
-                    <p className="text-xs text-slate-500">No active file loaded. Try searching above!</p>
-                  </div>
-                )}
-
-                <button 
-                  onClick={() => setIsChatOpen(true)}
-                  className="w-full py-3 bg-slate-950/60 hover:bg-slate-950 hover:text-white border border-slate-800 text-slate-300 text-xs font-bold rounded-xl transition flex items-center justify-center gap-2"
-                >
-                  <MessageSquare className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Start Live Interview Prep with AI</span>
-                </button>
-
+                ))}
               </div>
             </div>
+          </section>
 
-          </div>
-        </section>
+          <SmartJobRecommendations
+            vacancies={VACANCIES}
+            onSelectVacancy={(v) => {
+              setApplyingVacancy(v);
+              setActiveTab("vacancies");
+            }}
+          />
+        </>
       )}
-
-      {/* 2-Line Automatic Sliding Flags Marquee Section */}
-      <section id="flags-marquee-section" className="py-8 bg-slate-950 border-y border-slate-900/60 overflow-hidden space-y-4">
-        <div className="max-w-7xl mx-auto px-4 text-center mb-4">
-          <span className="text-[11px] font-mono tracking-widest text-amber-500 uppercase">Worldwide Placement Network</span>
-          <h2 className="text-xl sm:text-2xl font-display font-extrabold text-white mt-1">
-            Gulf & Schengen Country Vacancies
-          </h2>
-        </div>
-
-        {/* Line 1 - Slides Left */}
-        <div className="relative flex overflow-x-hidden w-full bg-slate-900/30 py-2.5">
-          <div className="animate-marquee-left flex gap-4">
-            {[...marqueeFlagsRow1, ...marqueeFlagsRow1, ...marqueeFlagsRow1].map((flag, idx) => (
-              <div 
-                key={`row1-${flag.code}-${idx}`} 
-                onClick={() => {
-                  setSelectedCountry(flag.name);
-                  setSelectedCountryGuide(flag.name);
-                  setSelectedRegion("All");
-                  setActiveTab("vacancies");
-                  setTimeout(() => {
-                    const el = document.getElementById("vacancies-section-top");
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }, 150);
-                }}
-                className="flex items-center gap-3 bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-xl px-4 py-2 text-sm text-slate-200 cursor-pointer transition shrink-0 shadow-sm"
-              >
-                <span className="text-2xl leading-none">{flag.emoji}</span>
-                <span className="font-medium">{flag.name}</span>
-                <span className="text-[10px] text-amber-400 font-mono bg-amber-500/5 px-1.5 py-0.5 rounded">Vacancy</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Line 2 - Slides Right */}
-        <div className="relative flex overflow-x-hidden w-full bg-slate-900/30 py-2.5">
-          <div className="animate-marquee-right flex gap-4">
-            {[...marqueeFlagsRow2, ...marqueeFlagsRow2, ...marqueeFlagsRow2].map((flag, idx) => (
-              <div 
-                key={`row2-${flag.code}-${idx}`} 
-                onClick={() => {
-                  setSelectedCountry(flag.name);
-                  setSelectedCountryGuide(flag.name);
-                  setSelectedRegion("All");
-                  setActiveTab("vacancies");
-                  setTimeout(() => {
-                    const el = document.getElementById("vacancies-section-top");
-                    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }, 150);
-                }}
-                className="flex items-center gap-3 bg-slate-900/90 border border-slate-800 hover:border-amber-500/50 rounded-xl px-4 py-2 text-sm text-slate-200 cursor-pointer transition shrink-0 shadow-sm"
-              >
-                <span className="text-2xl leading-none">{flag.emoji}</span>
-                <span className="font-medium">{flag.name}</span>
-                <span className="text-[10px] text-teal-400 font-mono bg-teal-500/5 px-1.5 py-0.5 rounded">Europe</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10 pb-28 sm:pb-16 overflow-x-hidden">
 
         {activeTab !== "home" && (
-          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/40 border border-slate-800/80 p-4 rounded-2xl animate-fade-in">
+          <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0B0B0B] border border-[#D4AF37]/30 p-4 rounded-2xl animate-fade-in shadow-xl">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setActiveTab("home")}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs uppercase tracking-wider transition duration-300 shadow-lg shadow-amber-500/10 group cursor-pointer"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37] hover:bg-[#F5D76E] text-[#050505] font-black text-xs uppercase tracking-wider transition duration-300 shadow-lg shadow-[#D4AF37]/10 group cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                 <span>Back to Home</span>
@@ -1873,7 +1405,7 @@ export default function App() {
               
               <button 
                 onClick={() => setActiveTab("home")}
-                className="flex items-center justify-center p-2.5 rounded-xl bg-slate-950/60 hover:bg-slate-950 text-slate-400 hover:text-amber-400 border border-slate-800 hover:border-amber-500/20 transition-all cursor-pointer group"
+                className="flex items-center justify-center p-2.5 rounded-xl bg-[#111111] hover:bg-[#1a170e] text-[#A7A7A7] hover:text-[#F5D76E] border border-[#D4AF37]/30 hover:border-[#D4AF37] transition-all cursor-pointer group"
                 title="Close and return home"
               >
                 <X className="w-4 h-4 transition-transform group-hover:rotate-90 duration-300" />
@@ -1881,9 +1413,9 @@ export default function App() {
             </div>
             
             <div className="flex items-center gap-2 text-xs font-mono">
-              <span className="text-slate-500 hover:text-slate-300 cursor-pointer transition" onClick={() => setActiveTab("home")}>ConsulPortal</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-700" />
-              <span className="text-amber-500 font-bold uppercase tracking-wider bg-amber-500/5 px-2.5 py-1 rounded-lg border border-amber-500/10">
+              <span className="text-[#A7A7A7] hover:text-[#F5D76E] cursor-pointer transition" onClick={() => setActiveTab("home")}>ConsulPortal</span>
+              <ChevronRight className="w-3.5 h-3.5 text-[#D4AF37]/50" />
+              <span className="text-[#F5D76E] font-bold uppercase tracking-wider bg-[#111111] px-2.5 py-1 rounded-lg border border-[#D4AF37]/30">
                 {activeTab === "vacancies" ? "Overseas Vacancies Board" : 
                  activeTab === "tracker" ? "Live Passport Tracking" : 
                  activeTab === "flights" ? "Flight Booking Desk" : 
@@ -1904,70 +1436,135 @@ export default function App() {
         {activeTab === "home" && (
           <div className="space-y-16">
 
-            {/* Content Bar & Animated Country/City Cards Grid */}
-            <section id="animated-cities" className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-                <div>
-                  <span className="text-xs font-mono text-amber-500 uppercase tracking-widest">Featured Landscapes</span>
-                  <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-white">
-                    Premium European & GCC Hubs
+            {/* Premium European & GCC Hubs Section with Consular Gold Theme & Interactive Filters */}
+            <section id="animated-cities" className="relative rounded-3xl bg-[#080808] border border-[#D4AF37]/30 p-6 sm:p-8 space-y-6 shadow-[0_20px_50px_rgba(0,0,0,0.9)] overflow-hidden">
+              {/* Background ambient gold lighting */}
+              <div className="absolute -top-24 -right-24 w-72 h-72 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#D4AF37]/50 to-transparent z-10" />
+
+              {/* Header & Filter Controls */}
+              <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 relative z-10">
+                <div className="space-y-1.5">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#F5D76E] text-xs font-mono font-bold tracking-wide">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37] animate-pulse" />
+                    <span>WORLDWIDE DIPLOMATIC &amp; EMPLOYMENT HUBS</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight">
+                    Premium European &amp; GCC Hubs
                   </h2>
-                  <p className="text-slate-400 text-sm mt-1">Explore job distributions in the most coveted global business cities</p>
+                  <p className="text-slate-400 text-sm max-w-2xl">
+                    Explore verified employment quotas, high-salary positions, and consular processing hubs across the Gulf Cooperation Council &amp; Schengen Zone.
+                  </p>
                 </div>
-                <button 
-                  onClick={() => setActiveTab("vacancies")} 
-                  className="text-amber-400 hover:text-amber-300 transition text-sm font-semibold flex items-center gap-1.5 shrink-0 self-start sm:self-auto"
-                >
-                  <span>View All Vacancies</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+
+                <div className="flex flex-wrap items-center gap-3 shrink-0">
+                  {/* Region Filter Switcher */}
+                  <div className="flex items-center bg-[#050505] p-1 rounded-xl border border-[#D4AF37]/25 text-xs font-mono shadow-inner">
+                    {(["All", "GCC", "Schengen"] as const).map((region) => {
+                      const isActive = hubRegionFilter === region;
+                      return (
+                        <button
+                          key={region}
+                          onClick={() => setHubRegionFilter(region)}
+                          className={`px-3 py-1.5 rounded-lg font-bold transition-all duration-200 cursor-pointer ${
+                            isActive
+                              ? "bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-[#050505] shadow-[0_0_12px_rgba(212,175,55,0.4)]"
+                              : "text-slate-400 hover:text-white hover:bg-[#111111]"
+                          }`}
+                        >
+                          {region === "All" ? "All Hubs" : region === "GCC" ? "🌴 GCC Tax-Free" : "🇪🇺 Schengen Europe"}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button 
+                    onClick={() => setActiveTab("vacancies")} 
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-[#050505] font-extrabold text-xs tracking-wider uppercase hover:brightness-110 transition shadow-[0_0_20px_rgba(212,175,55,0.3)] flex items-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <span>View All Vacancies</span>
+                    <ChevronRight className="w-4 h-4 text-[#050505]" />
+                  </button>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {CITY_CARDS.map((city, idx) => (
-                  <div 
-                    key={`city-${idx}`}
+              {/* Grid of Interactive City Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8 gap-3.5 sm:gap-4 relative z-10">
+                {CITY_CARDS.filter((city) => {
+                  if (hubRegionFilter === "GCC") {
+                    return ["Saudi Arabia", "United Arab Emirates", "Qatar", "Oman", "Kuwait", "Bahrain"].includes(city.country);
+                  }
+                  if (hubRegionFilter === "Schengen") {
+                    return ["Germany", "Italy", "Poland", "France", "Spain", "Netherlands", "Czech Republic", "Austria"].includes(city.country);
+                  }
+                  return true;
+                }).map((city, idx) => (
+                  <motion.div 
+                    key={`city-${city.city}-${idx}`}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: idx * 0.04 }}
+                    whileHover={{ y: -6, scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      setSearchQuery(city.country);
+                      setSelectedCountry(city.country);
+                      setSelectedCountryGuide(city.country);
+                      setSelectedRegion("All");
                       setActiveTab("vacancies");
+                      setTimeout(() => {
+                        const el = document.getElementById("vacancies-section-top");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+                      }, 150);
                     }}
-                    className="relative overflow-hidden rounded-2xl border border-slate-800/80 hover:border-slate-600/80 cursor-pointer hover:-translate-y-1 transition-all duration-300 group text-center flex flex-col justify-between min-h-[170px]"
+                    className="relative overflow-hidden rounded-2xl border border-[#D4AF37]/30 hover:border-[#D4AF37] hover:shadow-[0_0_28px_rgba(212,175,55,0.4)] cursor-pointer transition-all duration-300 group text-center flex flex-col justify-between min-h-[200px] bg-[#0B0B0B]"
                   >
-                    {/* Background Image with Hover zoom effect */}
+                    {/* Top Golden Shimmer Line on Hover */}
+                    <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-30" />
+
+                    {/* Background Image with Scale Zoom */}
                     {city.imageUrl ? (
                       <div 
-                        className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-115"
                         style={{ backgroundImage: `url(${city.imageUrl})` }}
                       />
                     ) : (
                       <div className={`absolute inset-0 bg-gradient-to-b ${city.bgGradient}`} />
                     )}
                     
-                    {/* Dark scrim overlay to ensure rich text legibility */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/40 group-hover:via-slate-950/50 transition-all duration-300" />
+                    {/* Dark scrim overlay with subtle gold tint */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/75 to-black/30 group-hover:via-[#050505]/60 transition-all duration-300 z-10" />
 
-                    {/* Content (relative to sit on top of background) */}
-                    <div className="relative z-10 p-4 flex flex-col justify-between h-full flex-grow">
-                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-mono text-slate-200 font-medium drop-shadow-md">{city.country}</span>
-                        <span className="text-lg drop-shadow">{city.flag}</span>
+                    {/* Content Layer */}
+                    <div className="relative z-20 p-3 sm:p-3.5 flex flex-col justify-between h-full flex-grow">
+                      {/* Header Badge */}
+                      <div className="flex justify-between items-center w-full">
+                        <span className="text-[10px] font-mono text-[#F5D76E] bg-[#050505]/90 px-2 py-0.5 rounded-full border border-[#D4AF37]/35 backdrop-blur-md font-bold shadow-md truncate max-w-[82%] text-left">
+                          {city.country}
+                        </span>
+                        <span className="text-lg drop-shadow-md shrink-0">{city.flag}</span>
                       </div>
                       
-                      <div className="my-3 space-y-1">
-                        {/* Animated Floating Emoji representing city feature */}
-                        <span className="inline-block text-2xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 drop-shadow-lg">
+                      {/* Center City & Icon */}
+                      <div className="my-2 space-y-1">
+                        <span className="inline-block text-2xl group-hover:scale-125 group-hover:rotate-12 transition-transform duration-300 drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]">
                           {city.animatedIcon}
                         </span>
-                        <h4 className="font-display font-bold text-white text-base tracking-tight group-hover:text-amber-400 transition-colors drop-shadow-md">
+                        <h4 className="font-serif font-black text-white text-base tracking-tight group-hover:text-[#F5D76E] transition-colors drop-shadow-md">
                           {city.city}
                         </h4>
                       </div>
 
-                      <div className="bg-slate-950/90 rounded-lg py-1 px-2 text-[10px] font-mono text-amber-400 inline-block w-fit mx-auto border border-amber-500/20 shadow-md backdrop-blur-xs">
-                        <strong>{city.jobsCount}</strong> active positions
+                      {/* Footer Positions Badge */}
+                      <div className="bg-[#050505]/90 rounded-xl py-1 px-2 text-[10px] font-mono text-[#F5D76E] border border-[#D4AF37]/40 shadow-lg backdrop-blur-md flex items-center justify-center gap-1.5 group-hover:bg-[#D4AF37] group-hover:text-[#050505] group-hover:border-[#D4AF37] transition-all duration-300 font-extrabold">
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#D4AF37] group-hover:bg-[#050505] opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D4AF37] group-hover:bg-[#050505]"></span>
+                        </span>
+                        <span><strong>{city.jobsCount}</strong> Active</span>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </section>
@@ -1986,53 +1583,40 @@ export default function App() {
               }}
             />
 
-            {/* Interactive Country Guide Section */}
-            <CountryGuideSection 
-              selectedCountry={selectedCountryGuide}
-              onSelectCountry={(countryName) => setSelectedCountryGuide(countryName)}
-              onViewVacancies={(countryName) => {
-                setSelectedCountry(countryName);
-                setSelectedRegion("All");
-                setActiveTab("vacancies");
-                setTimeout(() => {
-                  const el = document.getElementById("vacancies-section-top");
-                  if (el) el.scrollIntoView({ behavior: "smooth" });
-                }, 100);
-              }}
-            />
-
-            {/* Girls Jobs Abroad Dedicated Premium Showcase */}
-            <section id="girls-jobs-banner" className="relative rounded-3xl overflow-hidden border border-rose-950 shadow-2xl bg-gradient-to-tr from-slate-950 via-purple-950/20 to-slate-950">
-              {/* Background Image of confident professional woman working, positioned beautifully */}
+            {/* Girls Jobs Abroad Dedicated Premium Showcase with Consular Gold Theme */}
+            <section id="girls-jobs-banner" className="relative rounded-3xl overflow-hidden border border-[#D4AF37]/35 shadow-[0_20px_50px_rgba(0,0,0,0.9)] bg-[#080808]">
+              {/* Background Image with gold scrim overlay */}
               <div className="absolute inset-0 z-0">
                 <img 
                   src={womenWorkingImg} 
                   alt="Professional Women Careers" 
-                  className="w-full h-full object-cover object-center scale-100 transform hover:scale-105 transition-transform duration-1000 opacity-65"
+                  className="w-full h-full object-cover object-center scale-100 transform hover:scale-105 transition-transform duration-1000 opacity-40"
                   referrerPolicy="no-referrer"
                 />
-                {/* Custom glowing gradient overlay - rose, indigo, slate for highly premium look */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/95 to-purple-950/65 lg:bg-gradient-to-r lg:from-slate-950/95 lg:via-slate-950/80 lg:to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/90 to-black/60 lg:bg-gradient-to-r lg:from-[#050505] lg:via-[#050505]/85 lg:to-transparent" />
               </div>
 
+              {/* Background ambient gold lighting */}
+              <div className="absolute top-0 right-1/4 w-80 h-80 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+
               {/* Main Container with generous spacing */}
-              <div className="relative z-10 py-16 px-6 sm:px-12 lg:px-16 flex flex-col lg:flex-row items-center justify-between gap-12">
+              <div className="relative z-10 py-12 sm:py-16 px-6 sm:px-12 lg:px-16 flex flex-col lg:flex-row items-center justify-between gap-10">
                 {/* Left Side: Brand Story & High Impact Titles */}
                 <div className="space-y-6 max-w-2xl text-left">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/25 text-rose-300 font-mono text-[10px] uppercase font-bold tracking-widest">
-                      <Heart className="w-3.5 h-3.5 fill-rose-500/20 animate-pulse text-rose-400" />
-                      SOCIALLY COMPLIANT & SAFE PLACEMENTS
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#F5D76E] font-mono text-[10px] uppercase font-bold tracking-widest shadow-md">
+                      <Heart className="w-3.5 h-3.5 fill-[#D4AF37]/30 text-[#D4AF37] animate-pulse" />
+                      SOCIALLY COMPLIANT &amp; SAFE PLACEMENTS
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-950/60 border border-purple-500/30 text-purple-300 font-mono text-[9px] uppercase font-bold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#0B0B0B]/80 border border-[#D4AF37]/25 text-[#F5D76E] font-mono text-[9px] uppercase font-bold">
                       🛡️ Verified Housing Provided
                     </span>
                   </div>
 
                   <div className="space-y-3">
-                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-white tracking-tight leading-[1.15]">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-black text-white tracking-tight leading-[1.15]">
                       Empowering Global Careers <br />
-                      <span className="bg-gradient-to-r from-rose-400 via-pink-300 to-amber-300 bg-clip-text text-transparent">
+                      <span className="bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] bg-clip-text text-transparent">
                         For Female Professionals
                       </span>
                     </h2>
@@ -2043,17 +1627,17 @@ export default function App() {
 
                   {/* Fast-Track Career Verticals */}
                   <div className="grid sm:grid-cols-2 gap-4 pt-2">
-                    <div className="bg-slate-950/50 backdrop-blur-sm border border-rose-500/10 p-3 rounded-xl hover:border-rose-500/30 transition">
-                      <p className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                    <div className="bg-[#0B0B0B]/90 backdrop-blur-md border border-[#D4AF37]/25 p-3.5 rounded-xl hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition duration-300">
+                      <p className="text-xs font-bold text-[#F5D76E] flex items-center gap-1.5">
                         🏥 Elite European Healthcare
                       </p>
                       <p className="text-[11px] text-slate-400 mt-1">
-                        Schengen state-sponsored fast-track nursing & elderly care portfolios with fully integrated language training.
+                        Schengen state-sponsored fast-track nursing &amp; elderly care portfolios with fully integrated language training.
                       </p>
                     </div>
 
-                    <div className="bg-slate-950/50 backdrop-blur-sm border border-rose-500/10 p-3 rounded-xl hover:border-rose-500/30 transition">
-                      <p className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                    <div className="bg-[#0B0B0B]/90 backdrop-blur-md border border-[#D4AF37]/25 p-3.5 rounded-xl hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition duration-300">
+                      <p className="text-xs font-bold text-[#F5D76E] flex items-center gap-1.5">
                         ⭐ 5-Star Hospitality Guest Relations
                       </p>
                       <p className="text-[11px] text-slate-400 mt-1">
@@ -2061,8 +1645,8 @@ export default function App() {
                       </p>
                     </div>
 
-                    <div className="bg-slate-950/50 backdrop-blur-sm border border-rose-500/10 p-3 rounded-xl hover:border-rose-500/30 transition">
-                      <p className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                    <div className="bg-[#0B0B0B]/90 backdrop-blur-md border border-[#D4AF37]/25 p-3.5 rounded-xl hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition duration-300">
+                      <p className="text-xs font-bold text-[#F5D76E] flex items-center gap-1.5">
                         💼 Executive Corporate Support
                       </p>
                       <p className="text-[11px] text-slate-400 mt-1">
@@ -2070,8 +1654,8 @@ export default function App() {
                       </p>
                     </div>
 
-                    <div className="bg-slate-950/50 backdrop-blur-sm border border-rose-500/10 p-3 rounded-xl hover:border-rose-500/30 transition">
-                      <p className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                    <div className="bg-[#0B0B0B]/90 backdrop-blur-md border border-[#D4AF37]/25 p-3.5 rounded-xl hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition duration-300">
+                      <p className="text-xs font-bold text-[#F5D76E] flex items-center gap-1.5">
                         👩‍🏫 Overseas Educational Guides
                       </p>
                       <p className="text-[11px] text-slate-400 mt-1">
@@ -2082,22 +1666,22 @@ export default function App() {
                 </div>
 
                 {/* Right Side: Interactive Trust Card & Action Desk */}
-                <div className="w-full lg:w-[360px] shrink-0 bg-slate-950/90 backdrop-blur-md rounded-2xl border border-rose-500/25 p-6 space-y-6 shadow-2xl relative">
-                  {/* Decorative corner tag */}
-                  <div className="absolute -top-3 -right-3 bg-gradient-to-r from-rose-600 to-pink-500 text-white text-[9px] font-mono font-black uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
+                <div className="w-full lg:w-[360px] shrink-0 bg-[#0B0B0B] backdrop-blur-md rounded-2xl border border-[#D4AF37]/35 p-6 space-y-6 shadow-2xl relative">
+                  {/* Gold corner tag */}
+                  <div className="absolute -top-3 -right-3 bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] text-[#050505] text-[9px] font-mono font-black uppercase tracking-widest px-3.5 py-1 rounded-full shadow-lg">
                     100% Secure
                   </div>
 
                   {/* Trust Pillars */}
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-900 pb-2">
-                      <span className="text-[10px] font-mono text-rose-400 uppercase font-extrabold tracking-wider">Applicant Welfare Checklist</span>
-                      <span className="text-[10px] font-mono text-slate-500">ISO 9001</span>
+                    <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-2">
+                      <span className="text-[10px] font-mono text-[#F5D76E] uppercase font-extrabold tracking-wider">Applicant Welfare Checklist</span>
+                      <span className="text-[10px] font-mono text-slate-400">ISO 9001</span>
                     </div>
 
                     <div className="space-y-3.5 text-left">
                       <div className="flex items-start gap-2.5">
-                        <div className="bg-rose-500/10 text-rose-400 p-1 rounded-lg mt-0.5 border border-rose-500/20">
+                        <div className="bg-[#D4AF37]/10 text-[#D4AF37] p-1 rounded-lg mt-0.5 border border-[#D4AF37]/30">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                         </div>
                         <div>
@@ -2107,7 +1691,7 @@ export default function App() {
                       </div>
 
                       <div className="flex items-start gap-2.5">
-                        <div className="bg-rose-500/10 text-rose-400 p-1 rounded-lg mt-0.5 border border-rose-500/20">
+                        <div className="bg-[#D4AF37]/10 text-[#D4AF37] p-1 rounded-lg mt-0.5 border border-[#D4AF37]/30">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                         </div>
                         <div>
@@ -2117,7 +1701,7 @@ export default function App() {
                       </div>
 
                       <div className="flex items-start gap-2.5">
-                        <div className="bg-rose-500/10 text-rose-400 p-1 rounded-lg mt-0.5 border border-rose-500/20">
+                        <div className="bg-[#D4AF37]/10 text-[#D4AF37] p-1 rounded-lg mt-0.5 border border-[#D4AF37]/30">
                           <CheckCircle2 className="w-3.5 h-3.5" />
                         </div>
                         <div>
@@ -2128,12 +1712,12 @@ export default function App() {
                     </div>
                   </div>
 
-                  <div className="h-px bg-slate-900" />
+                  <div className="h-px bg-[#D4AF37]/20" />
 
                   {/* Immediate Engagement Block */}
                   <div className="space-y-3">
-                    <div className="bg-gradient-to-r from-rose-950/40 to-pink-950/40 rounded-xl p-3 border border-rose-500/10 text-center space-y-1">
-                      <p className="text-[10px] font-mono font-bold text-rose-300 uppercase">Interactive CV Desk Active</p>
+                    <div className="bg-[#050505] rounded-xl p-3 border border-[#D4AF37]/25 text-center space-y-1">
+                      <p className="text-[10px] font-mono font-bold text-[#F5D76E] uppercase">Interactive CV Desk Active</p>
                       <p className="text-[11px] text-slate-300">
                         Our specialized female counselors are waiting to review your application portfolio.
                       </p>
@@ -2145,12 +1729,12 @@ export default function App() {
                         setActiveTab("girls-jobs");
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }}
-                      className="w-full bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl transition duration-300 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-rose-950/50 border border-rose-400/30"
+                      className="w-full bg-gradient-to-r from-[#D4AF37] via-[#F5D76E] to-[#AA7C11] hover:brightness-110 text-[#050505] font-black text-xs uppercase tracking-widest py-3.5 rounded-xl transition duration-300 cursor-pointer flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(212,175,55,0.35)] border border-[#D4AF37]"
                     >
                       <span>Explore Girls Board 🌸</span>
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-4 h-4 text-[#050505]" />
                     </button>
-                    <span className="text-[9px] text-slate-500 block text-center font-mono">
+                    <span className="text-[9px] text-slate-400 block text-center font-mono">
                       * Strictly compliant with international labor law protection
                     </span>
                   </div>
@@ -2158,37 +1742,39 @@ export default function App() {
               </div>
             </section>
 
-            {/* Quick Passport Tracking Block & Info */}
-            <section id="tracker-overview" className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6 sm:p-10 grid lg:grid-cols-12 gap-8 items-center">
-              <div className="lg:col-span-7 space-y-5">
-                <span className="bg-amber-500/10 text-amber-400 text-xs font-mono uppercase tracking-widest px-3 py-1 rounded-full border border-amber-500/20">
+            {/* Quick Passport Tracking Block & Info with Consular Gold Theme */}
+            <section id="tracker-overview" className="bg-[#080808] border border-[#D4AF37]/35 rounded-3xl p-6 sm:p-10 grid lg:grid-cols-12 gap-8 items-center shadow-[0_20px_50px_rgba(0,0,0,0.9)] relative overflow-hidden">
+              <div className="absolute -top-20 -left-20 w-64 h-64 bg-[#D4AF37]/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="lg:col-span-7 space-y-5 relative z-10">
+                <span className="bg-[#D4AF37]/10 text-[#F5D76E] text-xs font-mono uppercase tracking-widest px-3.5 py-1.5 rounded-full border border-[#D4AF37]/35 font-bold">
                   REAL-TIME CONSULAR FEED
                 </span>
-                <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">
-                  Have an Active Application? Track Your Passport & Visa Endorsement Sticker!
+                <h3 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight">
+                  Have an Active Application? Track Your Passport &amp; Visa Endorsement Sticker!
                 </h3>
-                <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
+                <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
                   We maintain direct synchronization with Gulf medical portals (GAMCA), Saudi Ministry of Foreign Affairs (MOFA), and Schengen Schengen Information Systems (SIS). Input your tracking code to witness precisely what steps have been fulfilled, view your pending fee structures, and instantly pay through EasyPaisa, JazzCash, or bank cards.
                 </p>
 
-                <div className="flex flex-wrap gap-4 text-xs font-mono text-slate-300">
-                  <div className="flex items-center gap-1.5 bg-slate-950/60 p-2 rounded-lg border border-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                <div className="flex flex-wrap gap-3 text-xs font-mono text-slate-200">
+                  <div className="flex items-center gap-1.5 bg-[#050505] p-2.5 rounded-xl border border-[#D4AF37]/25">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <span>Step 1: File Submission</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-slate-950/60 p-2 rounded-lg border border-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <div className="flex items-center gap-1.5 bg-[#050505] p-2.5 rounded-xl border border-[#D4AF37]/25">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                     <span>Step 2: Embassy Review</span>
                   </div>
-                  <div className="flex items-center gap-1.5 bg-slate-950/60 p-2 rounded-lg border border-slate-800">
-                    <CheckCircle2 className="w-4 h-4 text-amber-500" />
+                  <div className="flex items-center gap-1.5 bg-[#050505] p-2.5 rounded-xl border border-[#D4AF37]/35">
+                    <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
                     <span>Step 3: Passport Stamping</span>
                   </div>
                 </div>
 
-                <div className="pt-4 bg-slate-950/80 p-5 rounded-2xl border border-slate-800 max-w-xl space-y-4">
-                  <p className="text-xs font-mono text-slate-300 font-bold uppercase tracking-wider">
-                    🔐 Candidate Secured Credentials Verification
+                <div className="pt-4 bg-[#050505] p-5 rounded-2xl border border-[#D4AF37]/30 max-w-xl space-y-4 shadow-xl">
+                  <p className="text-xs font-mono text-[#F5D76E] font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span>🔐 Candidate Secured Credentials Verification</span>
                   </p>
                   <div className="grid sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
@@ -2200,7 +1786,7 @@ export default function App() {
                         value={trackingEmail}
                         onChange={(e) => setTrackingEmail(e.target.value)}
                         placeholder="e.g. REF-849201"
-                        className="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs w-full focus:outline-none focus:border-amber-500 text-slate-200 font-mono"
+                        className="bg-[#111111] border border-[#D4AF37]/30 rounded-xl px-3.5 py-2.5 text-xs w-full focus:outline-none focus:border-[#D4AF37] text-white font-mono"
                       />
                     </div>
                     <div className="space-y-1">
@@ -2212,7 +1798,7 @@ export default function App() {
                         value={trackingId}
                         onChange={(e) => setTrackingId(e.target.value)}
                         placeholder="e.g. PK-78601"
-                        className="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs w-full focus:outline-none focus:border-amber-500 font-mono text-amber-400"
+                        className="bg-[#111111] border border-[#D4AF37]/30 rounded-xl px-3.5 py-2.5 text-xs w-full focus:outline-none focus:border-[#D4AF37] font-mono text-[#F5D76E]"
                       />
                     </div>
                   </div>
@@ -2222,71 +1808,70 @@ export default function App() {
                       setActiveTab("tracker");
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }}
-                    className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition uppercase tracking-wider shadow-lg shadow-amber-500/10"
+                    className="w-full bg-gradient-to-r from-[#D4AF37] to-[#AA7C11] hover:brightness-110 text-[#050505] font-black py-3 rounded-xl text-xs transition uppercase tracking-wider shadow-[0_0_20px_rgba(212,175,55,0.3)] cursor-pointer"
                   >
-                    Authenticate & Track My File
+                    Authenticate &amp; Track My File
                   </button>
                 </div>
               </div>
 
-              <div className="lg:col-span-5 bg-slate-950 p-6 rounded-2xl border border-slate-800/80 space-y-4">
-                <h4 className="font-display font-semibold text-white text-sm">Typical processing schedule:</h4>
+              <div className="lg:col-span-5 bg-[#0B0B0B] p-6 rounded-2xl border border-[#D4AF37]/30 space-y-4 shadow-xl relative z-10">
+                <h4 className="font-serif font-bold text-white text-sm text-[#F5D76E]">Typical consular processing schedule:</h4>
                 <div className="space-y-3">
                   <div className="flex gap-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">1</div>
+                    <div className="w-6 h-6 rounded-full bg-[#D4AF37]/15 text-[#F5D76E] border border-[#D4AF37]/30 flex items-center justify-center shrink-0 text-xs font-bold font-mono">1</div>
                     <div>
                       <p className="text-xs font-semibold text-slate-200">Legal attestation (HEC/MOFA)</p>
-                      <p className="text-[10px] text-slate-500">Takes 5-7 business days depending on credential speed.</p>
+                      <p className="text-[10px] text-slate-400">Takes 5-7 business days depending on credential speed.</p>
                     </div>
                   </div>
-                  <div className="flex gap-3 border-t border-slate-900 pt-3">
-                    <div className="w-6 h-6 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">2</div>
+                  <div className="flex gap-3 border-t border-[#D4AF37]/20 pt-3">
+                    <div className="w-6 h-6 rounded-full bg-[#D4AF37]/15 text-[#F5D76E] border border-[#D4AF37]/30 flex items-center justify-center shrink-0 text-xs font-bold font-mono">2</div>
                     <div>
-                      <p className="text-xs font-semibold text-slate-200">Embassy Interview & Fingerprint</p>
-                      <p className="text-[10px] text-slate-500">Biometrics taken at VFS Global or Embassy Consulate.</p>
+                      <p className="text-xs font-semibold text-slate-200">Embassy Interview &amp; Fingerprint</p>
+                      <p className="text-[10px] text-slate-400">Biometrics taken at VFS Global or Embassy Consulate.</p>
                     </div>
                   </div>
-                  <div className="flex gap-3 border-t border-slate-900 pt-3">
-                    <div className="w-6 h-6 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0 text-xs font-bold font-mono">3</div>
+                  <div className="flex gap-3 border-t border-[#D4AF37]/20 pt-3">
+                    <div className="w-6 h-6 rounded-full bg-[#D4AF37]/15 text-[#F5D76E] border border-[#D4AF37]/30 flex items-center justify-center shrink-0 text-xs font-bold font-mono">3</div>
                     <div>
                       <p className="text-xs font-semibold text-slate-200">Visa Sticker Delivery</p>
-                      <p className="text-[10px] text-slate-500">Secure passport return via Leopard or TCS courier.</p>
+                      <p className="text-[10px] text-slate-400">Secure passport return via Leopard or TCS courier.</p>
                     </div>
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Flight Search Section (Direct CTA) */}
-            <section id="flight-cta" className="relative overflow-hidden rounded-3xl border border-rose-950/60 shadow-2xl">
+            {/* Flight Search Section (Direct CTA) with Consular Gold Theme */}
+            <section id="flight-cta" className="relative overflow-hidden rounded-3xl border border-[#D4AF37]/35 shadow-[0_20px_50px_rgba(0,0,0,0.9)] bg-[#080808]">
               {/* Background Image of Qatar Airways plane with deep maroon color overlay */}
               <div className="absolute inset-0 z-0">
                 <img 
                   src={qatarPlaneImg} 
                   alt="Qatar Airways Plane" 
-                  className="w-full h-full object-cover object-center scale-105 transform hover:scale-100 transition-transform duration-700"
+                  className="w-full h-full object-cover object-center scale-105 transform hover:scale-100 transition-transform duration-700 opacity-30"
                   referrerPolicy="no-referrer"
                 />
-                {/* Deep luxurious color gradient overlay: maroon to pitch black slate */}
-                <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-purple-950/80 to-slate-950/70" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#050505] via-[#050505]/90 to-black/80" />
               </div>
 
               <div className="relative z-10 p-6 sm:p-10 grid lg:grid-cols-12 gap-8 items-center">
                 <div className="lg:col-span-8 space-y-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-mono text-[10px] uppercase font-bold tracking-wider">
-                      <Sparkles className="w-3.5 h-3.5" />
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#F5D76E] font-mono text-[10px] uppercase font-bold tracking-wider">
+                      <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
                       Premium Airline Partner
                     </span>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-950/60 border border-rose-500/30 text-rose-300 font-mono text-[9px] uppercase font-bold">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#0B0B0B]/80 border border-[#D4AF37]/25 text-[#F5D76E] font-mono text-[9px] uppercase font-bold">
                       🏆 World's Best Airline
                     </span>
                   </div>
 
                   <div className="space-y-3">
-                    <h3 className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight leading-tight">
+                    <h3 className="text-2xl sm:text-3xl font-serif font-black text-white tracking-tight leading-tight">
                       Experience 5-Star Luxury <br />
-                      <span className="bg-gradient-to-r from-amber-300 via-amber-200 to-rose-300 bg-clip-text text-transparent">
+                      <span className="bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] bg-clip-text text-transparent">
                         With Qatar Airways Flight Placements
                       </span>
                     </h3>
@@ -2337,410 +1922,27 @@ export default function App() {
               </div>
             </section>
 
-            {/* 2445 Successful Reviews & Testimonials Section */}
-            <section id="reviews-section" className="space-y-6">
-              <div className="text-center max-w-2xl mx-auto space-y-2">
-                <span className="text-xs font-mono text-amber-500 uppercase tracking-widest">Candidate Voices</span>
-                <h2 className="text-3xl font-display font-extrabold text-white">
-                  Trusted by Over <AnimatedCounter target={2445} suffix="+" /> Applicants
-                </h2>
-                <p className="text-sm text-slate-400">
-                  Read genuine feedback from candidates who found vacancies and successfully tracked and stamped their passports.
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-                {REVIEWS.map((review) => (
-                  <div 
-                    key={review.id} 
-                    className="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between space-y-4"
-                  >
-                    <div className="space-y-2">
-                      <div className="flex gap-1">
-                        {Array.from({ length: review.stars }).map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400 shrink-0" />
-                        ))}
-                      </div>
-                      <p className="text-xs text-slate-300 italic leading-relaxed">
-                        "{review.comment}"
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-3 pt-3 border-t border-slate-900">
-                      <img 
-                        src={review.avatar} 
-                        alt={review.name}
-                        className="w-10 h-10 rounded-full object-cover border border-slate-800"
-                        onError={(e) => {
-                          // Fallback avatar if unsplash fails
-                          (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${review.name}`;
-                        }}
-                      />
-                      <div>
-                        <h4 className="text-xs font-bold text-white">{review.name}</h4>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                          <span>{review.location}, USA</span>
-                          <span>•</span>
-                          <span className="text-amber-500 font-medium">{review.countryGranted}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Verified Count Bar */}
-              <div className="bg-gradient-to-r from-slate-950 via-amber-500/5 to-slate-950 border border-slate-900 py-6 px-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-400">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">Consular Guarantee Certification</h4>
-                    <p className="text-xs text-slate-500">Every contract is strictly vetted under licensed overseas promoters regulation.</p>
-                  </div>
-                </div>
-                <div className="text-right sm:text-right text-center">
-                  <span className="text-2xl font-black text-amber-400 font-display">
-                    <AnimatedCounter target={2445} /> / 2,450
-                  </span>
-                  <p className="text-[10px] text-slate-400 font-mono uppercase tracking-wider">Perfect Files Complete</p>
-                </div>
-              </div>
-            </section>
+            {/* 2445 Successful Reviews & Testimonials Section with Stacked Cards */}
+            <Suspense fallback={<ModuleSkeleton />}>
+              <StackedReviewsSection 
+                whatsAppNum={whatsAppNum} 
+                onOpenBookingDesk={() => setActiveTab("flight-booking")}
+              />
+            </Suspense>
 
           </div>
         )}
 
         {/* TAB 2: OVERSEAS VACANCIES BOARD */}
         {activeTab === "vacancies" && (
-          <div id="vacancies-section-top" className="space-y-8">
-            
-            {/* Vacancy Search & Region Filter Banner */}
-            <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800/80 space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl sm:text-3xl font-display font-extrabold text-white">
-                    Verified Job Vacancies
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-400">All opportunities support formal embassy sponsorship and immediate departure schedules.</p>
-                </div>
-
-                <div className="flex items-center gap-2 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start md:self-auto overflow-x-auto max-w-full">
-                  {(["All", "Gulf", "Schengen", "Europe"] as const).map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => { setSelectedRegion(r); setSelectedCountry("All"); }}
-                      className={`px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition ${selectedRegion === r ? "bg-amber-500 text-slate-950" : "text-slate-400 hover:text-white"}`}
-                    >
-                      {r === "All" ? "All Sectors" : r}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Real-time filters */}
-              <div className="grid sm:grid-cols-12 gap-3">
-                <div className="sm:col-span-8 flex items-center gap-2 bg-slate-950 px-3 py-2 rounded-xl border border-slate-800">
-                  
-                  {/* Flag Select Dropdown inside search bar */}
-                  <div className="relative shrink-0 border-r border-slate-800 pr-2">
-                    <button 
-                      onClick={() => setIsFlagDropdownOpen(!isFlagDropdownOpen)}
-                      className="flex items-center gap-1 hover:bg-slate-900/60 p-1 px-1.5 rounded-lg transition text-slate-300 text-xs font-bold"
-                      title="Select country flag"
-                    >
-                      <span className="text-base leading-none">{selectedCountry === "All" ? "🌍" : (
-                        [
-                          { name: "Saudi Arabia", emoji: "🇸🇦" },
-                          { name: "Germany", emoji: "🇩🇪" },
-                          { name: "United Kingdom", emoji: "🇬🇧" },
-                          { name: "United Arab Emirates", emoji: "🇦🇪" },
-                          { name: "Poland", emoji: "🇵🇱" },
-                          { name: "France", emoji: "🇫🇷" },
-                          { name: "Qatar", emoji: "🇶🇦" },
-                          { name: "Italy", emoji: "🇮🇹" },
-                          { name: "Kuwait", emoji: "🇰🇼" },
-                          { name: "Spain", emoji: "🇪🇸" },
-                          { name: "Netherlands", emoji: "🇳🇱" },
-                          { name: "Switzerland", emoji: "🇨🇭" },
-                          { name: "Oman", emoji: "🇴🇲" },
-                          { name: "Austria", emoji: "🇦🇹" },
-                          { name: "Belgium", emoji: "🇧🇪" },
-                          { name: "Sweden", emoji: "🇸🇪" },
-                          { name: "Bahrain", emoji: "🇧🇭" }
-                        ].find(c => c.name.toLowerCase() === selectedCountry.toLowerCase())?.emoji || "🌍"
-                      )}</span>
-                      <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
-                    </button>
-                    {isFlagDropdownOpen && (
-                      <div className="absolute left-0 mt-3 w-56 bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 max-h-64 overflow-y-auto">
-                        <div className="text-[9px] text-amber-500 font-mono uppercase tracking-wider p-1.5 border-b border-slate-850">Filter by Country:</div>
-                        <button 
-                          onClick={() => { setSelectedCountry("All"); setIsFlagDropdownOpen(false); }}
-                          className={`w-full flex items-center gap-2.5 p-2 hover:bg-slate-800 rounded-xl text-left text-xs ${selectedCountry === "All" ? "text-amber-400 bg-amber-500/5 font-semibold" : "text-slate-300"}`}
-                        >
-                          <span className="text-sm">🌍</span>
-                          <span>All Countries</span>
-                        </button>
-                        {[
-                          { name: "Saudi Arabia", emoji: "🇸🇦" },
-                          { name: "Germany", emoji: "🇩🇪" },
-                          { name: "United Kingdom", emoji: "🇬🇧" },
-                          { name: "United Arab Emirates", emoji: "🇦🇪" },
-                          { name: "Poland", emoji: "🇵🇱" },
-                          { name: "France", emoji: "🇫🇷" },
-                          { name: "Qatar", emoji: "🇶🇦" },
-                          { name: "Italy", emoji: "🇮🇹" },
-                          { name: "Kuwait", emoji: "🇰🇼" },
-                          { name: "Spain", emoji: "🇪🇸" },
-                          { name: "Netherlands", emoji: "🇳🇱" },
-                          { name: "Switzerland", emoji: "🇨🇭" },
-                          { name: "Oman", emoji: "🇴🇲" },
-                          { name: "Austria", emoji: "🇦🇹" },
-                          { name: "Belgium", emoji: "🇧🇪" },
-                          { name: "Sweden", emoji: "🇸🇪" },
-                          { name: "Bahrain", emoji: "🇧🇭" }
-                        ].map(c => (
-                          <button 
-                            key={c.name}
-                            onClick={() => { setSelectedRegion("All"); setSelectedCountry(c.name); setIsFlagDropdownOpen(false); }}
-                            className={`w-full flex items-center gap-2.5 p-2 hover:bg-slate-800 rounded-xl text-left text-xs ${selectedCountry.toLowerCase() === c.name.toLowerCase() ? "text-amber-400 bg-amber-500/5 font-semibold" : "text-slate-300"}`}
-                          >
-                            <span className="text-sm">{c.emoji}</span>
-                            <span>{c.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <Search className="w-4 h-4 text-slate-400 shrink-0" />
-                  <input 
-                    type="text" 
-                    placeholder="Search by country, skill, or keyword (e.g. Riyadh, Supervisor, German...)"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-transparent w-full focus:outline-none text-xs text-slate-200 placeholder-slate-500"
-                  />
-                </div>
-                <div className="sm:col-span-4">
-                  <button 
-                    onClick={() => { setSearchQuery(""); setSelectedRegion("All"); setSelectedCountry("All"); }}
-                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2.5 px-4 rounded-xl transition"
-                  >
-                    Clear Search Filters
-                  </button>
-                </div>
-              </div>
-
-              {/* Quick Country Flag Selection Bar */}
-              <div className="bg-slate-950/40 p-4 rounded-2xl border border-slate-800 space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-mono text-amber-500 uppercase tracking-wider font-bold">Quick Country Flag Search:</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { name: "Saudi Arabia", emoji: "🇸🇦" },
-                    { name: "Germany", emoji: "🇩🇪" },
-                    { name: "United Kingdom", emoji: "🇬🇧" },
-                    { name: "United Arab Emirates", emoji: "🇦🇪" },
-                    { name: "Poland", emoji: "🇵🇱" },
-                    { name: "France", emoji: "🇫🇷" },
-                    { name: "Qatar", emoji: "🇶🇦" },
-                    { name: "Italy", emoji: "🇮🇹" },
-                    { name: "Kuwait", emoji: "🇰🇼" },
-                    { name: "Spain", emoji: "🇪🇸" },
-                    { name: "Netherlands", emoji: "🇳🇱" },
-                    { name: "Switzerland", emoji: "🇨🇭" },
-                    { name: "Oman", emoji: "🇴🇲" },
-                    { name: "Austria", emoji: "🇦🇹" },
-                    { name: "Belgium", emoji: "🇧🇪" },
-                    { name: "Sweden", emoji: "🇸🇪" },
-                    { name: "Bahrain", emoji: "🇧🇭" }
-                  ].map((c) => {
-                    const isSelected = selectedCountry.toLowerCase() === c.name.toLowerCase();
-                    return (
-                      <button
-                        key={c.name}
-                        onClick={() => {
-                          setSelectedRegion("All");
-                          setSelectedCountry(isSelected ? "All" : c.name);
-                        }}
-                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl border transition cursor-pointer ${
-                          isSelected 
-                            ? "bg-amber-500/20 text-amber-400 border-amber-500/50 shadow" 
-                            : "bg-slate-900 hover:bg-slate-850 text-slate-300 border-slate-800"
-                        }`}
-                      >
-                        <span className="text-sm leading-none">{c.emoji}</span>
-                        <span>{c.name}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {selectedCountry !== "All" && (
-                <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 p-3 rounded-2xl text-xs animate-fade-in">
-                  <span className="text-amber-400 font-bold">Country Filter Active:</span>
-                  <span className="bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800 text-slate-200 font-mono font-bold text-[10px]">{selectedCountry}</span>
-                  <button 
-                    onClick={() => setSelectedCountry("All")}
-                    className="text-amber-500 hover:text-amber-400 underline font-semibold ml-auto flex items-center gap-1 text-[11px]"
-                  >
-                    <span>Reset to All Countries</span>
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-
-
-            {/* Vacancy Cards Grid */}
-            {filteredVacancies.length > 0 ? (
-              <div className="grid md:grid-cols-2 gap-8 lg:gap-10">
-                {filteredVacancies.map((vacancy) => (
-                  <div 
-                    key={vacancy.id}
-                    className="group bg-slate-950/70 rounded-3xl border border-slate-800/80 overflow-hidden flex flex-col justify-between hover:border-amber-500/30 hover:-translate-y-1 transition-all duration-300 shadow-xl"
-                  >
-                    {/* Job Representation Picture Banner */}
-                    <div className="relative h-48 sm:h-56 overflow-hidden">
-                      <img 
-                        src={getJobImageByTitle(vacancy.title) || vacancy.imageUrl || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"} 
-                        alt={vacancy.title} 
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        referrerPolicy="no-referrer"
-                      />
-                      {/* Overlay shading */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/25 to-transparent" />
-                      
-                      {/* Overlaid Badges inside image */}
-                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10">
-                        <span className="bg-amber-500 text-slate-950 text-[10px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md">
-                          {vacancy.spots} SPOTS LEFT
-                        </span>
-                        <span className="bg-slate-950/95 text-emerald-400 text-[10px] font-mono border border-slate-800/80 px-2.5 py-1 rounded-lg font-bold">
-                          {vacancy.salary}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Core Card Content */}
-                    <div className="p-5 sm:p-6 flex-grow flex flex-col justify-between space-y-4">
-                      <div className="space-y-4">
-                        {/* Icon + Title container */}
-                        <div className="flex items-start gap-3">
-                          <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400 shrink-0 mt-0.5 border border-amber-500/10">
-                            {getVacancyIcon(vacancy.category)}
-                          </div>
-                          <div>
-                            <h3 className="text-base sm:text-lg font-display font-bold text-white group-hover:text-amber-400 transition-colors">
-                              {vacancy.title}
-                            </h3>
-                            <p className="text-[10px] font-mono text-slate-500 flex items-center gap-1.5 pt-0.5">
-                              <span>{vacancy.flag}</span>
-                              <span className="text-slate-400 font-semibold">{vacancy.country}</span>
-                              <span>•</span>
-                              <span>{vacancy.company}</span>
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                          {vacancy.description}
-                        </p>
-
-                        {/* Dynamic tags underneath */}
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {getVacancyTags(vacancy.id).map((tagStr, tIdx) => (
-                            <span 
-                              key={tIdx} 
-                              className="text-[9px] uppercase font-mono font-semibold text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800/80"
-                            >
-                              {tagStr}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Employer Guarantees / Requisites section in highlighted box */}
-                        <div className="bg-slate-950/80 p-4 rounded-2xl border border-slate-800/80 space-y-2.5">
-                          <p className="text-[10px] font-mono text-amber-500 uppercase tracking-widest font-extrabold">MANDATORY FILE REQUISITES</p>
-                          <ul className="space-y-1.5 text-xs text-slate-300">
-                            {vacancy.requirements.map((reqStr, idx) => (
-                              <li key={idx} className="flex items-start gap-2">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                <span>{reqStr}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      {/* Action Button at bottom */}
-                      <div className="pt-4 border-t border-slate-900/60">
-                        <button 
-                          onClick={() => setApplyingVacancy(vacancy)}
-                          className="w-full bg-slate-900/30 hover:bg-slate-900/60 border border-slate-800 hover:border-amber-500/30 rounded-xl flex items-center justify-center gap-2 p-3 text-xs font-mono font-bold tracking-wider text-amber-400 cursor-pointer transition-all duration-300 shadow-md uppercase"
-                        >
-                          <Search className="w-4 h-4 text-amber-500" />
-                          <span>Apply via Escrow Portal</span>
-                          <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-slate-900/40 p-12 text-center rounded-2xl border border-dashed border-slate-800 space-y-4">
-                <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
-                <div>
-                  <h3 className="text-lg font-bold text-white">No vacancies found matching "{searchQuery}"</h3>
-                  <p className="text-xs text-slate-400 mt-1">Try searching for alternative regions or wider keywords such as "Germany", "Saudi", "Supervisor", or "Engineer".</p>
-                </div>
-                <button 
-                  onClick={() => { setSearchQuery(""); setSelectedRegion("All"); }}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-2 px-4 rounded-xl transition"
-                >
-                  Reset Job Board
-                </button>
-              </div>
-            )}
-
-            {/* AI Assistant Callout for help in recruitment */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="space-y-2 max-w-2xl">
-                <h4 className="text-lg font-display font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
-                  <span>Unsure about your Gulf & Schengen qualifications?</span>
-                </h4>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Our customized Senior AI Visa & Recruitment Consultant handles online assessment in real-time. Discuss degree attestation, medical tests (GAMCA), local fee deposits, and prepare for Embassy questions.
-                </p>
-              </div>
-              <button 
-                onClick={() => {
-                  setIsChatOpen(true);
-                  handleSendMessage(undefined, "I need guidance regarding Germany and Poland visa eligibility.");
-                }}
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 px-6 rounded-xl text-xs uppercase tracking-wider transition shrink-0"
-              >
-                Discuss Eligibility with AI
-              </button>
-            </div>
-
-            {/* Global Common Jobs & Salaries Directory */}
-            <GlobalJobDirectory 
-              whatsAppNum={whatsAppNum} 
-              selectedCountry={selectedCountry}
-              setSelectedCountry={setSelectedCountry}
-            />
-
+          <div id="vacancies-section-top">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <GlobalJobDirectory
+                whatsAppNum={whatsAppNum}
+                selectedCountry={selectedCountry}
+                setSelectedCountry={setSelectedCountry}
+              />
+            </Suspense>
           </div>
         )}
 
@@ -2829,6 +2031,33 @@ export default function App() {
                 
                 {/* Left Side: Steps Visual Timeline */}
                 <div className="lg:col-span-8 bg-slate-900/60 border border-slate-800 p-6 sm:p-8 rounded-3xl space-y-6">
+                  
+                  {/* 📡 Live Consular Record Status Banner with Radar Ping Animation Overlay */}
+                  <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#0d1527] via-[#0b101d] to-[#070b14] border border-[#D4AF37]/50 p-4 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 radar-ping-overlay">
+                    <div className="flex items-center gap-3.5 relative z-10">
+                      <div className="relative flex items-center justify-center w-9 h-9 rounded-full bg-emerald-500/20 border border-emerald-500/60 shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                        <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping absolute" />
+                        <span className="w-3 h-3 rounded-full bg-emerald-400 relative z-10" />
+                        <div className="absolute inset-0 rounded-full border border-emerald-400/80 radar-ping-ring" />
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-mono font-black text-[#F5D76E] tracking-wider uppercase">CONSULAR RECORD STATUS</span>
+                          <span className="px-2.5 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-[9px] font-bold uppercase tracking-wide flex items-center gap-1 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>LIVE SYNCHRONIZED</span>
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-300 font-sans mt-0.5 leading-snug">
+                          MOFA &amp; Schengen SIS Embassy Clearance Ledger • Continuous Live Sync
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative z-10 text-right shrink-0 font-mono text-[10px] text-amber-300 bg-[#050505]/90 px-3 py-1.5 rounded-xl border border-[#D4AF37]/40 shadow-inner">
+                      <span>DOSSIER: <strong className="text-white font-bold">REC-{trackData.passportNum}</strong></span>
+                    </div>
+                  </div>
+
                   <div className="flex flex-wrap justify-between items-center gap-4 border-b border-slate-800 pb-4">
                     <div>
                       <span className="text-[10px] font-mono text-slate-400">PASSPORT OWNER</span>
@@ -3534,456 +2763,240 @@ export default function App() {
         {/* TAB: VISA CONSULTANTS */}
         {activeTab === "consultants" && (
           <div className="animate-fade-in">
-            <VisaConsultantsDesk />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <VisaConsultantsDesk />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 4: CLIENT PORTAL */}
         {activeTab === "portal" && (
           <div className="animate-fade-in">
-            <ClientPortal 
-              whatsAppNum={whatsAppNum}
-              paymentMethods={paymentMethods}
-            />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <ClientPortal 
+                whatsAppNum={whatsAppNum}
+                paymentMethods={paymentMethods}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 4: ADMIN PORTAL */}
         {activeTab === "admin" && (
           <div className="animate-fade-in">
-            <AdminPortal 
-              whatsAppNum={whatsAppNum}
-              whatsAppDisplay={whatsAppDisplay}
-              paymentMethods={paymentMethods}
-              onSettingsChange={(newSettings) => {
-                if (newSettings.whatsAppNum) setWhatsAppNum(newSettings.whatsAppNum);
-                if (newSettings.whatsAppDisplay) setWhatsAppDisplay(newSettings.whatsAppDisplay);
-                if (newSettings.paymentMethods) setPaymentMethods(newSettings.paymentMethods);
-              }}
-            />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <AdminPortal 
+                whatsAppNum={whatsAppNum}
+                whatsAppDisplay={whatsAppDisplay}
+                paymentMethods={paymentMethods}
+                onSettingsChange={(newSettings) => {
+                  if (newSettings.whatsAppNum) setWhatsAppNum(newSettings.whatsAppNum);
+                  if (newSettings.whatsAppDisplay) setWhatsAppDisplay(newSettings.whatsAppDisplay);
+                  if (newSettings.paymentMethods) setPaymentMethods(newSettings.paymentMethods);
+                }}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 5: AI EMPLOYEES HUB (CONSULPORTAL AI V2.0) */}
         {activeTab === "ai-employees" && (
           <div className="animate-fade-in">
-            <AiEmployeesHub />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <AiEmployeesHub />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 6: AI INTEGRATION SHOWCASE & SIMULATOR */}
         {activeTab === "ai-showcase" && (
           <div className="animate-fade-in">
-            <AiShowcasePortal />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <AiShowcasePortal />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 6: GIRLS JOBS ABROAD */}
         {activeTab === "girls-jobs" && (
           <div className="animate-fade-in">
-            <GirlsJobsAbroad />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <GirlsJobsAbroad />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 7: COUNTRY EXPLORER INTEGRATION */}
         {activeTab === "country-picker" && (
           <div className="animate-fade-in">
-            <CountryExplorer 
-              onApplyJob={(job) => {
-                const mappedVacancy: Vacancy = {
-                  id: job.id,
-                  title: job.title,
-                  company: job.company,
-                  country: job.country || "Germany",
-                  region: "Europe",
-                  salary: job.salary,
-                  requirements: job.requirements,
-                  description: job.description,
-                  category: job.category || "General",
-                  flag: "🌍",
-                  spots: 3
-                };
-                setApplyingVacancy(mappedVacancy);
-              }} 
-            />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <CountryExplorer 
+                onApplyJob={(job) => {
+                  const mappedVacancy: Vacancy = {
+                    id: job.id,
+                    title: job.title,
+                    company: job.company,
+                    country: job.country || "Germany",
+                    region: "Europe",
+                    salary: job.salary,
+                    requirements: job.requirements,
+                    description: job.description,
+                    category: job.category || "General",
+                    flag: "🌍",
+                    spots: 3
+                  };
+                  setApplyingVacancy(mappedVacancy);
+                }} 
+              />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 8: CURRENCY CONVERTER INTEGRATION */}
         {activeTab === "currency" && (
           <div className="animate-fade-in">
-            <CurrencyConverter />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <CurrencyConverter />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 9: VISA EXPENSES & 3-STEP FEE CALCULATOR PAGE */}
         {activeTab === "visa-expenses" && (
           <div className="animate-fade-in">
-            <VisaExpensesPage 
-              whatsAppNum={whatsAppNum}
-              whatsAppDisplay={whatsAppDisplay}
-              onNavigateToTracker={(tId) => {
-                if (tId) setTrackingId(tId);
-                setActiveTab("tracker");
-              }}
-              onOpenPaymentModal={(stepTitle, amountPkr) => {
-                setActiveTab("tracker");
-                handleTrackPassport(trackingId || "PK8492019", trackingEmail || "REF-849201");
-              }}
-            />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <VisaExpensesPage 
+                whatsAppNum={whatsAppNum}
+                whatsAppDisplay={whatsAppDisplay}
+                onNavigateToTracker={(tId) => {
+                  if (tId) setTrackingId(tId);
+                  setActiveTab("tracker");
+                }}
+                onOpenPaymentModal={(stepTitle, amountPkr) => {
+                  setActiveTab("tracker");
+                  handleTrackPassport(trackingId || "PK8492019", trackingEmail || "REF-849201");
+                }}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 10: AI MATCH EVALUATOR & EMBASSY INTERVIEW SIMULATOR */}
         {activeTab === "ai-evaluator" && (
           <div className="animate-fade-in">
-            <AiMatchEvaluator 
-              whatsAppNum={whatsAppNum}
-              whatsAppDisplay={whatsAppDisplay}
-              onNavigateToVacancies={() => setActiveTab("vacancies")}
-            />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <AiMatchEvaluator 
+                whatsAppNum={whatsAppNum}
+                whatsAppDisplay={whatsAppDisplay}
+                onNavigateToVacancies={() => setActiveTab("vacancies")}
+              />
+            </Suspense>
           </div>
         )}
 
         {/* TAB 11: AGENCY B2B EMPLOYER & DEMAND LETTER PORTAL */}
         {activeTab === "agency-b2b" && (
           <div className="animate-fade-in">
-            <AgencyB2BPortal 
-              whatsAppNum={whatsAppNum}
-              whatsAppDisplay={whatsAppDisplay}
-            />
+            <Suspense fallback={<ModuleSkeleton />}>
+              <AgencyB2BPortal 
+                whatsAppNum={whatsAppNum}
+                whatsAppDisplay={whatsAppDisplay}
+              />
+            </Suspense>
           </div>
         )}
+
+        {/* TAB 12: VISA SERVICES */}
+        {activeTab === "visa-services" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <VisaConsultantsDesk />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB 13: CONTACT US */}
+        {activeTab === "contact" && (
+          <div className="animate-fade-in max-w-4xl mx-auto space-y-6 bg-slate-900/60 p-8 rounded-3xl border border-slate-800">
+            <div className="text-center space-y-2">
+              <span className="text-xs font-mono text-amber-400 font-bold uppercase tracking-wider">Direct Helpline &amp; Office Contact</span>
+              <h2 className="text-2xl sm:text-3xl font-display font-black text-white">ConsulPortal Embassy Services Desk</h2>
+              <p className="text-xs sm:text-sm text-slate-300">Contact our certified overseas delegates for Gulf &amp; Schengen visa processing.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4 pt-4">
+              <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3 text-center sm:text-left">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg mb-2">💬</div>
+                <h3 className="font-bold text-white text-base">WhatsApp Helpline 1</h3>
+                <p className="text-xs text-slate-400">Instant visa status updates &amp; employer demand verification.</p>
+                <a 
+                  href={`https://wa.me/${whatsAppNum}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs uppercase"
+                >
+                  Message {whatsAppDisplay}
+                </a>
+              </div>
+
+              <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3 text-center sm:text-left">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg mb-2">💬</div>
+                <h3 className="font-bold text-white text-base">WhatsApp Helpline 2</h3>
+                <p className="text-xs text-slate-400">Flight reservations, ticket verification &amp; escrow deposits.</p>
+                <a 
+                  href={`https://wa.me/${whatsAppNum2}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs uppercase"
+                >
+                  Message {whatsAppDisplay2}
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 14: PAYMENT PAGE */}
+        {activeTab === "payment" && (
+          <div className="animate-fade-in max-w-2xl mx-auto bg-slate-900 p-8 rounded-3xl border border-slate-800 text-center space-y-4">
+            <h2 className="text-2xl font-bold text-white">Escrow Payment Gateway</h2>
+            <p className="text-xs text-slate-300">
+              Pay securely via EasyPaisa, JazzCash, NayaPay, or Local Bank Transfer under government licensed escrow protection.
+            </p>
+            <button
+              onClick={() => setActiveTab("tracker")}
+              className="bg-amber-400 text-slate-950 font-extrabold px-6 py-3 rounded-xl text-xs uppercase"
+            >
+              Go to Passport Tracking &amp; Payment Ledger
+            </button>
+          </div>
+        )}
+
+        {/* TAB 15: PARTNERS PAGE */}
+        {activeTab === "partners" && (
+          <div className="animate-fade-in max-w-7xl mx-auto">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <PartnersSection whatsAppNum={whatsAppNum} whatsAppDisplay={whatsAppDisplay} />
+            </Suspense>
+          </div>
+        )}
+
 
       </main>
 
-      {/* FOOTER: With major partners and licensing references */}
-      <footer id="main-footer" className="bg-slate-950 border-t border-slate-900/80 pt-16 pb-8 text-slate-400 text-xs mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          
-          {/* Partner Companies Grid (OEC, Fauji Foundation, POEPA, HBL, BinLadin etc.) */}
-          <div className="space-y-4">
-            <div className="text-center sm:text-left">
-              <span className="text-[10px] font-mono text-amber-500 uppercase tracking-widest">Global Sourcing Allies</span>
-              <h3 className="text-lg font-display font-extrabold text-white mt-1">
-                Authorized Regulatory & Corporate Partners
-              </h3>
-              <p className="text-slate-500 text-xs">We coordinate with leading government & corporate sectors globally and GCC nations.</p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-              {PARTNERS.map((partner, idx) => (
-                <div 
-                  key={idx}
-                  className="bg-slate-900/40 border border-slate-900 hover:border-slate-800 p-4 rounded-xl flex flex-col justify-between space-y-3 text-center transition"
-                >
-                  <div className="flex items-center justify-center h-12">
-                    <BrandLogoDispatcher name={partner.name} size={40} className="mx-auto" />
-                  </div>
-                  <div>
-                    <h4 className="text-[11px] font-extrabold text-white leading-tight">{partner.name}</h4>
-                    <p className="text-[9px] text-slate-500 mt-0.5">{partner.location}</p>
-                  </div>
-                  <span className="text-[8px] font-mono bg-slate-950 text-amber-400 py-0.5 rounded border border-slate-900">
-                    {partner.type}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Bottom Branding, Links, and Trust Details */}
-          <div className="grid md:grid-cols-12 gap-8 border-t border-slate-900 pt-8 text-slate-500">
-            
-            <div className="md:col-span-4 space-y-3 text-center sm:text-left">
-              <div className="flex items-center gap-2 justify-center sm:justify-start">
-                <div className="w-6 h-6 rounded bg-amber-500 flex items-center justify-center">
-                  <Plane className="w-3.5 h-3.5 text-slate-950 -rotate-45" />
-                </div>
-                <span className="font-display font-bold text-base text-white">ConsulPortal</span>
-              </div>
-              <p className="text-[11px] leading-relaxed max-w-sm">
-                ConsulPortal is a premium visa consultancy, legal attestation guidance, and career recruitment aggregator. Supporting candidates for Gulf Cooperation Council (GCC) and Schengen European States.
-              </p>
-              <p className="text-[10px] font-mono text-slate-600">
-                OEP License Num: MPD/2445/ICT/2018
-              </p>
-            </div>
-
-            <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <h4 className="text-white text-[11px] font-extrabold font-mono uppercase tracking-wider">Gulf Regions</h4>
-                <ul className="space-y-1.5 text-[11px]">
-                  <li><a onClick={() => { setSearchQuery("Saudi Arabia"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">Saudi Arabia (Riyadh & NEOM)</a></li>
-                  <li><a onClick={() => { setSearchQuery("United Arab Emirates"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">United Arab Emirates (Dubai)</a></li>
-                  <li><a onClick={() => { setSearchQuery("Qatar"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">Qatar (Doha Infrastructure)</a></li>
-                  <li><a onClick={() => { setSearchQuery("Kuwait"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">Kuwait City (Hospitality)</a></li>
-                </ul>
-              </div>
-
-              <div className="space-y-2">
-                <h4 className="text-white text-[11px] font-extrabold font-mono uppercase tracking-wider">Schengen Europe</h4>
-                <ul className="space-y-1.5 text-[11px]">
-                  <li><a onClick={() => { setSearchQuery("Germany"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">Germany (Frankfurt Engineers)</a></li>
-                  <li><a onClick={() => { setSearchQuery("Poland"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">Poland (Warsaw Logistics)</a></li>
-                  <li><a onClick={() => { setSearchQuery("Italy"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">Italy (Rome & Milan Medicals)</a></li>
-                  <li><a onClick={() => { setSearchQuery("France"); setActiveTab("vacancies"); }} className="hover:text-amber-400 cursor-pointer">France (Paris Systems Engineering)</a></li>
-                </ul>
-              </div>
-
-              <div className="space-y-2 col-span-2 sm:col-span-1">
-                <h4 className="text-white text-[11px] font-extrabold font-mono uppercase tracking-wider">Contact & Support</h4>
-                <p className="text-[11px] leading-relaxed">
-                  First St SE, Washington, D.C. 20004
-                </p>
-                <div className="space-y-1 pt-1">
-                  <a 
-                    href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 transition-colors font-mono"
-                  >
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
-                      <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-                    </svg>
-                    <span>US: {whatsAppDisplay}</span>
-                  </a>
-                  <a 
-                    href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1.5 transition-colors font-mono"
-                  >
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0">
-                      <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-                    </svg>
-                    <span>UK: {whatsAppDisplay2}</span>
-                  </a>
-                </div>
-                <div className="pt-2">
-                  <button 
-                    onClick={() => { setActiveTab("admin"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                    className="text-[10px] text-slate-500 hover:text-amber-400 font-mono underline block text-left"
-                  >
-                    🔐 Executive Staff Administration Login
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          <div className="text-center text-[10px] text-slate-600 pt-4 border-t border-slate-900">
-            © 2018 ConsulPortal Pvt. Ltd. All rights reserved. Managed in partnership with Government Overseas Employment departments.
-          </div>
-
-        </div>
-      </footer>
-
-      {/* FLOATING WHATSAPP BUTTON (Fixed on Right Side) */}
-      <div id="whatsapp-float-container" className="fixed bottom-20 right-3 sm:bottom-24 sm:right-6 z-40 flex flex-col gap-2 items-end">
-        <a 
-          href={`https://wa.me/${whatsAppNum}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-          target="_blank"
-          rel="noopener noreferrer"
-          id="whatsapp-floating-us-btn"
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center shadow-2xl hover:bg-emerald-400 hover:scale-110 transition-all duration-300 group relative"
-          title={`Chat with US WhatsApp (${whatsAppDisplay})`}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950">
-            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-          </svg>
-          <span className="absolute right-13 sm:right-14 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap shadow-xl">
-            WhatsApp US ({whatsAppDisplay}) 💬
-          </span>
-          <span className="absolute -top-1 -right-1 bg-emerald-700 text-white text-[7px] font-bold px-1 rounded border border-slate-950 font-mono">
-            US
-          </span>
-        </a>
-
-        <a 
-          href={`https://wa.me/${whatsAppNum2}?text=Hello%20ConsulPortal%20Immigration%20Team%2C%20I%20am%20interested%20in%20your%20overseas%20vacancies%20and%20visa%20processing%20services.`}
-          target="_blank"
-          rel="noopener noreferrer"
-          id="whatsapp-floating-uk-btn"
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-emerald-600 text-slate-950 flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:scale-110 transition-all duration-300 group relative"
-          title={`Chat with UK WhatsApp (${whatsAppDisplay2})`}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6 text-slate-950">
-            <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.96 9.96 0 001.37 5.024L2 22l5.13-1.346a9.914 9.914 0 004.882 1.28h.005c5.507 0 9.99-4.478 9.99-9.985C22 4.478 17.517 2 12.012 2zm6.09 14.184c-.25.706-1.46 1.378-2.02 1.464-.5.076-1.15.117-3.35-.785-2.82-1.157-4.607-4.043-4.75-4.23-.135-.187-1.114-1.48-1.114-2.822 0-1.343.705-2 .955-2.257.25-.256.556-.32.744-.32h.536c.162 0 .38.062.592.573.218.528.744 1.81.807 1.94.062.13.106.28.02.45-.088.173-.13.28-.263.435-.13.155-.276.347-.393.465-.13.13-.268.272-.112.536.155.264.693 1.144 1.487 1.85.993.88 1.83 1.153 2.088 1.282.256.13.406.11.556-.063.15-.174.643-.75.813-1.006.17-.256.337-.217.57-.13.23.087 1.468.69 1.718.815.25.124.418.187.48.293.063.106.063.616-.187 1.322z" />
-          </svg>
-          <span className="absolute right-13 sm:right-14 top-1/2 -translate-y-1/2 bg-slate-900 border border-slate-800 text-slate-200 text-xs py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-300 whitespace-nowrap shadow-xl">
-            WhatsApp UK ({whatsAppDisplay2}) 💬
-          </span>
-          <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[7px] font-bold px-1 rounded border border-slate-950 font-mono">
-            UK
-          </span>
-        </a>
+      {/* Partner Companies Grid (OEC, Fauji Foundation, POEPA, HBL, BinLadin etc.) */}
+      <div id="partner-sourcing-allies" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <PartnersSection whatsAppNum={whatsAppNum} whatsAppDisplay={whatsAppDisplay} />
       </div>
 
-      {/* FLOATING AI ASSISTANT PANEL */}
-      <div id="ai-chat-container" className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-40">
-        
-        {/* Toggle Button */}
-        <button 
-          id="chat-toggle-floating"
-          onClick={() => setIsChatOpen(!isChatOpen)}
-          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 flex items-center justify-center shadow-2xl hover:scale-105 transition-transform group relative"
-        >
-          {isChatOpen ? (
-            <X className="w-5 h-5 sm:w-6 sm:h-6" />
-          ) : (
-            <>
-              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6" />
-              <span className="absolute -top-1 -right-1 bg-emerald-500 text-white text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full border border-slate-950 hidden sm:inline-block">
-                LIVE AI
-              </span>
-            </>
-          )}
-        </button>
 
-        {/* Floating Chat Box Panel */}
-        {isChatOpen && (
-          <div className="fixed sm:absolute inset-x-3 bottom-16 sm:inset-auto sm:bottom-16 sm:right-0 w-auto sm:w-96 h-[460px] max-h-[80vh] bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-200 z-50">
-            
-            {/* Chat Box Header */}
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 text-slate-950 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-slate-950 text-amber-400 flex items-center justify-center">
-                  <Sparkles className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black">Consul Portal AI</h4>
-                  <p className="text-[9px] font-mono tracking-wider opacity-80 uppercase">24/7 Visa & Immigration Assistant</p>
-                </div>
-              </div>
-              
-              <button 
-                onClick={() => setIsChatOpen(false)}
-                className="text-slate-950 hover:opacity-80 transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Chat Messages Logs */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-950">
-              {chatMessages.map((msg, idx) => (
-                <div 
-                  key={idx} 
-                  className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
-                >
-                  <div className={`max-w-[85%] rounded-xl p-3 text-xs leading-relaxed ${
-                    msg.role === "user" 
-                      ? "bg-amber-500 text-slate-950 font-medium rounded-tr-none" 
-                      : "bg-slate-900 text-slate-200 rounded-tl-none border border-slate-800"
-                  }`}>
-                    {msg.role === "assistant" ? renderMessageContent(msg.content) : msg.content}
-                  </div>
-                  
-                  {/* Satisfaction Feedback Buttons for AI replies */}
-                  {msg.role === "assistant" && (
-                    <div className="mt-1 ml-1 flex items-center gap-2 text-[10px]">
-                      {feedbackSubmitted[idx] ? (
-                        <span className="text-emerald-400 font-medium animate-pulse">Thank you for your feedback! 💖</span>
-                      ) : (
-                        <div className="flex items-center gap-1.5 text-slate-400 hover:text-slate-300 transition-colors">
-                          <span>Was this helpful?</span>
-                          <button
-                            type="button"
-                            onClick={() => handleFeedback(idx, "satisfied")}
-                            className="hover:text-amber-400 font-bold transition duration-150 p-0.5 cursor-pointer"
-                            title="Helpful (Thumbs Up)"
-                          >
-                            👍
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleFeedback(idx, "dissatisfied")}
-                            className="hover:text-amber-400 font-bold transition duration-150 p-0.5 cursor-pointer"
-                            title="Not Helpful (Thumbs Down)"
-                          >
-                            👎
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {chatLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-none p-3 max-w-[80%] flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce"></span>
-                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce delay-75"></span>
-                    <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce delay-150"></span>
-                  </div>
-                </div>
-              )}
-              <div ref={chatEndRef}></div>
-            </div>
-
-            {/* Quick Suggestion Presets */}
-            <div className="p-2 bg-slate-900 border-t border-slate-800/85 overflow-x-auto flex gap-1.5 whitespace-nowrap scrollbar-none">
-              <button 
-                type="button"
-                onClick={() => handleSendMessage(undefined, "Our Services")}
-                className="bg-slate-950 border border-slate-800 text-[10px] text-amber-400 font-semibold px-2.5 py-1 rounded-full transition hover:bg-slate-800 shrink-0 cursor-pointer"
-              >
-                💼 Our Services
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleSendMessage(undefined, "Pricing")}
-                className="bg-slate-950 border border-slate-800 text-[10px] text-amber-400 font-semibold px-2.5 py-1 rounded-full transition hover:bg-slate-800 shrink-0 cursor-pointer"
-              >
-                💸 Pricing & Fees
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleSendMessage(undefined, "Contact Us")}
-                className="bg-slate-950 border border-slate-800 text-[10px] text-amber-400 font-semibold px-2.5 py-1 rounded-full transition hover:bg-slate-800 shrink-0 cursor-pointer"
-              >
-                📞 Contact Us
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleSendMessage(undefined, "Book a Consultation")}
-                className="bg-slate-950 border border-slate-800 text-[10px] text-amber-400 font-semibold px-2.5 py-1 rounded-full transition hover:bg-slate-800 shrink-0 cursor-pointer"
-              >
-                📅 Book a Consultation
-              </button>
-              <button 
-                type="button"
-                onClick={() => handleSendMessage(undefined, "Frequently Asked Questions")}
-                className="bg-slate-950 border border-slate-800 text-[10px] text-amber-400 font-semibold px-2.5 py-1 rounded-full transition hover:bg-slate-800 shrink-0 cursor-pointer"
-              >
-                ❓ FAQ Desk
-              </button>
-            </div>
-
-            {/* Input Message Form */}
-            <form onSubmit={(e) => handleSendMessage(e)} className="p-3 bg-slate-900 border-t border-slate-800 flex gap-2">
-              <input 
-                type="text"
-                placeholder="Ask about visas, fees, flights..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-500 flex-1"
-              />
-              <button 
-                type="submit"
-                className="bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
-
-          </div>
-        )}
-
-      </div>
+      {/* FLOATING WHATSAPP BUTTONS (With Drop-from-Top & Destination Jumping Effects) */}
+      <FloatingWhatsAppButtons
+        whatsAppNum={whatsAppNum}
+        whatsAppDisplay={whatsAppDisplay}
+        whatsAppNum2={whatsAppNum2}
+        whatsAppDisplay2={whatsAppDisplay2}
+      />
 
       {/* MODAL 1: VISA OR JOB APPLY FORM */}
       <AnimatePresence>
@@ -4337,6 +3350,13 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Luxury Footer (Test Theme #1) */}
+      <LuxuryFooter
+        onNavigateTab={(tab) => setActiveTab(tab)}
+        whatsAppDisplay={whatsAppNum}
+        whatsAppDisplay2={whatsAppNum2}
+      />
 
     </div>
   );
