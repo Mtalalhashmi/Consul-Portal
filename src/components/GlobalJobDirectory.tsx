@@ -15,6 +15,8 @@ import {
   Clock, 
   Briefcase, 
   ChevronDown, 
+  ChevronLeft,
+  ChevronRight,
   X, 
   Bookmark, 
   ArrowRight, 
@@ -506,6 +508,32 @@ export default function GlobalJobDirectory({
   const [isContract, setIsContract] = useState(true);
   const [isLatest, setIsLatest] = useState(false);
 
+  // High-performance Pagination State (18 jobs per page for snappy rendering)
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 18;
+
+  // Reset pagination to page 1 whenever any filter or search query changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchQuery,
+    selectedCountry,
+    selectedCity,
+    selectedSalaryRange,
+    selectedCategory,
+    selectedIndustry,
+    selectedExperience,
+    selectedEducation,
+    visaOnly,
+    accommodationOnly,
+    medicalOnly,
+    remoteStatus,
+    isFullTime,
+    isPartTime,
+    isContract,
+    isLatest
+  ]);
+
   // Saved Jobs State
   const [savedJobIds, setSavedJobIds] = useState<string[]>([]);
   
@@ -856,6 +884,22 @@ export default function GlobalJobDirectory({
       sponsoredJobs: sponsoredCount
     };
   }, [filteredJobs]);
+
+  // Paginated subset of jobs for optimal DOM performance
+  const totalPages = Math.max(1, Math.ceil(filteredJobs.length / itemsPerPage));
+  const paginatedJobs = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredJobs.slice(start, start + itemsPerPage);
+  }, [filteredJobs, currentPage, itemsPerPage]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    const element = document.getElementById("vacancies-results-top");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   // Featured Country Chips for the AI Search Header
   const displayedCountryChips = useMemo(() => {
@@ -1455,191 +1499,264 @@ export default function GlobalJobDirectory({
               ))}
             </div>
           ) : filteredJobs.length > 0 ? (
-            /* Responsive Job Cards Grid */
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredJobs.map((job) => (
-                <div 
-                  key={job.id}
-                  id={`job-card-${job.id}`}
-                  className={`group relative rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between hover:scale-[1.02] shadow-md hover:shadow-xl ${isDarkMode ? "bg-slate-950/70 border-slate-850 hover:border-amber-500/40" : "bg-white border-slate-200 hover:border-amber-500"}`}
-                >
-                  
-                  {/* Job Sector Image Banner */}
-                  <div className="relative h-44 overflow-hidden shrink-0">
-                    <img 
-                      src={getJobImageByTitle(job.title) || job.jobImage || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"} 
-                      alt={job.title} 
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                    
-                    {/* Status Badges Overlaid inside Image */}
-                    <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10">
-                      {job.featured && (
-                        <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-slate-950" />
-                          <span>Featured Job</span>
-                        </span>
-                      )}
-                      {job.urgentHiring && (
-                        <span className="bg-gradient-to-r from-rose-500 to-red-600 text-white text-[9px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1 animate-pulse">
-                          <Flame className="w-3 h-3 fill-white" />
-                          <span>Urgent Hiring</span>
-                        </span>
-                      )}
-                      {job.hiringNow && (
-                        <span className="bg-emerald-500 text-slate-950 text-[9px] font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 w-max">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-ping"></span>
-                          <span>Hiring Now</span>
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10 gap-2">
-                      <span className="text-[11px] text-emerald-300 bg-slate-950/90 border border-emerald-500/30 px-2.5 py-1 rounded-xl font-bold font-mono flex items-center gap-1.5 shadow-lg">
-                        <span className="relative flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        <span>LIVE JOB</span>
-                      </span>
-                      <span className="text-[11px] text-amber-300 bg-slate-950/90 border border-amber-500/30 px-2.5 py-1 rounded-xl font-bold font-mono flex items-center gap-1 shadow-lg">
-                        <Users className="w-3.5 h-3.5 text-amber-400" />
-                        <span>{job.vacancies || 18} Vacancies Left</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Core Card Content */}
-                  <div className="p-5 flex-grow flex flex-col justify-between space-y-4">
-                    
-                    <div className="space-y-3">
-                      {/* Employer Info Row */}
-                      <div className="flex items-start gap-3">
-                        {/* Company Logo */}
-                        <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-base bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-850 shadow-inner shrink-0 overflow-hidden">
-                          {job.companyLogo && (job.companyLogo.startsWith("http://") || job.companyLogo.startsWith("https://")) ? (
-                            <img src={job.companyLogo} alt={job.companyName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          ) : (
-                            <span>{job.companyLogo || job.title?.charAt(0) || "🏢"}</span>
-                          )}
-                        </div>
-                        
-                        <div className="space-y-0.5">
-                          <h4 className={`text-sm sm:text-base font-bold font-display leading-tight group-hover:text-amber-400 transition-colors ${isDarkMode ? "text-white" : "text-slate-900"}`}>
-                            {job.title}
-                          </h4>
-                          
-                          <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 flex-wrap">
-                            <span className="font-bold hover:underline cursor-pointer">{job.companyName}</span>
-                            <span>•</span>
-                            <span className="flex items-center gap-1 text-emerald-400">
-                              <ShieldCheck className="w-3 h-3" />
-                              <span>Verified Employer</span>
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Flag, City & Country Row */}
-                      <div className="flex items-center gap-1 text-[11px] text-slate-300 font-mono">
-                        <span className="text-sm leading-none">{job.countryFlag}</span>
-                        <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{job.country}</span>
-                        <span className="text-slate-500">•</span>
-                        <span className="text-slate-400">{job.city}</span>
-                      </div>
-
-                      {/* Key Job Specifications Block */}
-                      <div className={`p-3.5 rounded-2xl border space-y-2 text-xs transition-colors ${isDarkMode ? "bg-slate-950/80 border-slate-850" : "bg-slate-50 border-slate-200"}`}>
-                        {/* Monthly Salary */}
-                        <div className="flex justify-between items-center pb-1.5 border-b border-slate-800/20">
-                          <span className="text-slate-400 font-mono text-[10px] uppercase">MONTHLY SALARY</span>
-                          <span className="text-emerald-400 font-mono font-black">{job.salary}</span>
-                        </div>
-
-                        {/* Contract Details */}
-                        <div className="grid grid-cols-2 gap-2 text-[11px] font-sans">
-                          <div>
-                            <span className="text-slate-500 block text-[9px] font-mono uppercase">CONTRACT</span>
-                            <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{job.contractDuration}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block text-[9px] font-mono uppercase">HOURS</span>
-                            <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{job.workingHours}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block text-[9px] font-mono uppercase">ACCOMMODATION</span>
-                            <span className="text-amber-400 font-semibold">{job.accommodation.includes("Free") ? "Free Provided" : "Paid Stipend"}</span>
-                          </div>
-                          <div>
-                            <span className="text-slate-500 block text-[9px] font-mono uppercase">EXPERIENCE</span>
-                            <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{job.experienceRequired}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons row at bottom of card */}
-                    <div className="space-y-2 pt-3 border-t border-slate-800/20">
-                      
-                      {/* View Details Primary Trigger */}
-                      <button 
-                        onClick={() => {
-                          setSelectedJobDetails(job);
-                          setApplySuccess(false);
-                        }}
-                        className="w-full bg-amber-500 hover:bg-amber-600 effect-shimmer-button text-slate-950 rounded-xl flex items-center justify-center gap-2 p-3 text-xs font-bold tracking-wider cursor-pointer transition-all shadow-md uppercase"
-                      >
-                        <span>View Details & Apply</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </button>
-
-                      {/* Auxiliary Actions (Save, Share, WhatsApp) */}
-                      <div className="grid grid-cols-3 gap-2">
-                        {/* Save Job */}
-                        <button
-                          onClick={(e) => handleToggleSaveJob(job.id, e)}
-                          className={`py-2 rounded-xl border flex items-center justify-center gap-1 text-[10px] font-bold font-mono transition-all ${
-                            savedJobIds.includes(job.id)
-                              ? "bg-amber-500/10 border-amber-500 text-amber-400 font-extrabold"
-                              : isDarkMode ? "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700" : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
-                          }`}
-                          title={savedJobIds.includes(job.id) ? "Remove Saved" : "Save Job Opportunity"}
-                        >
-                          <Bookmark className={`w-3.5 h-3.5 ${savedJobIds.includes(job.id) ? "fill-amber-400" : ""}`} />
-                          <span>{savedJobIds.includes(job.id) ? "Saved" : "Save"}</span>
-                        </button>
-
-                        {/* Share Job */}
-                        <button
-                          onClick={(e) => handleShareJob(job, e)}
-                          className={`py-2 rounded-xl border flex items-center justify-center gap-1 text-[10px] font-bold font-mono transition-all ${
-                            sharedJobId === job.id
-                              ? "bg-emerald-500/15 border-emerald-500 text-emerald-400"
-                              : isDarkMode ? "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white" : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
-                          }`}
-                        >
-                          {sharedJobId === job.id ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
-                          <span>Share</span>
-                        </button>
-
-                        {/* WhatsApp Inquiry */}
-                        <a
-                          href={`https://wa.me/${whatsAppNum}?text=Hello!%20I%20am%20interested%20in%20applying%20for%20the%20position%20of%20*${encodeURIComponent(job.title)}*%20in%20*${encodeURIComponent(job.country)}*%20(Job%20ID:%20${job.id}).%20Please%20verify%20my%2520credentials.`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/20 text-emerald-400 flex items-center justify-center gap-1 text-[10px] font-bold font-mono transition-all cursor-pointer"
-                        >
-                          <PhoneCall className="w-3 h-3 text-emerald-400" />
-                          <span>Inquire</span>
-                        </a>
-                      </div>
-                    </div>
-
-                  </div>
+            <div className="space-y-8">
+              {/* Top Result Count / Status Bar */}
+              <div id="vacancies-results-top" className="flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-slate-400 pb-1 border-b border-slate-800/30">
+                <div>
+                  Showing <span className="text-amber-400 font-bold">{(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredJobs.length)}</span> of <span className="text-white font-bold">{filteredJobs.length}</span> Verified Opportunities
                 </div>
-              ))}
+                {totalPages > 1 && (
+                  <div className="text-[11px] text-slate-400">
+                    Page <span className="text-amber-400 font-bold">{currentPage}</span> of <span className="text-white font-bold">{totalPages}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Responsive Job Cards Grid (GPU Accelerated & Virtualized) */}
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedJobs.map((job) => (
+                  <div 
+                    key={job.id}
+                    id={`job-card-${job.id}`}
+                    className={`group relative rounded-3xl border transition-all duration-300 overflow-hidden flex flex-col justify-between hover:scale-[1.02] shadow-md hover:shadow-xl content-visibility-auto ${isDarkMode ? "bg-slate-950/70 border-slate-850 hover:border-amber-500/40" : "bg-white border-slate-200 hover:border-amber-500"}`}
+                  >
+                    
+                    {/* Job Sector Image Banner */}
+                    <div className="relative h-44 overflow-hidden shrink-0">
+                      <img 
+                        src={getJobImageByTitle(job.title) || job.jobImage || "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=600"} 
+                        alt={job.title} 
+                        loading="lazy"
+                        decoding="async"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                      
+                      {/* Status Badges Overlaid inside Image */}
+                      <div className="absolute top-4 left-4 flex flex-col gap-1.5 z-10">
+                        {job.featured && (
+                          <span className="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 text-[9px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-slate-950" />
+                            <span>Featured Job</span>
+                          </span>
+                        )}
+                        {job.urgentHiring && (
+                          <span className="bg-gradient-to-r from-rose-500 to-red-600 text-white text-[9px] font-mono font-black uppercase tracking-wider px-2.5 py-1 rounded-lg shadow-md flex items-center gap-1 animate-pulse">
+                            <Flame className="w-3 h-3 fill-white" />
+                            <span>Urgent Hiring</span>
+                          </span>
+                        )}
+                        {job.hiringNow && (
+                          <span className="bg-emerald-500 text-slate-950 text-[9px] font-mono font-black uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-md flex items-center gap-1 w-max">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-ping"></span>
+                            <span>Hiring Now</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between z-10 gap-2">
+                        <span className="text-[11px] text-emerald-300 bg-slate-950/90 border border-emerald-500/30 px-2.5 py-1 rounded-xl font-bold font-mono flex items-center gap-1.5 shadow-lg">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span>LIVE JOB</span>
+                        </span>
+                        <span className="text-[11px] text-amber-300 bg-slate-950/90 border border-amber-500/30 px-2.5 py-1 rounded-xl font-bold font-mono flex items-center gap-1 shadow-lg">
+                          <Users className="w-3.5 h-3.5 text-amber-400" />
+                          <span>{job.vacancies || 18} Vacancies Left</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Core Card Content */}
+                    <div className="p-5 flex-grow flex flex-col justify-between space-y-4">
+                      
+                      <div className="space-y-3">
+                        {/* Employer Info Row */}
+                        <div className="flex items-start gap-3">
+                          {/* Company Logo */}
+                          <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-white text-base bg-gradient-to-br from-slate-800 to-slate-950 border border-slate-850 shadow-inner shrink-0 overflow-hidden">
+                            {job.companyLogo && (job.companyLogo.startsWith("http://") || job.companyLogo.startsWith("https://")) ? (
+                              <img src={job.companyLogo} alt={job.companyName} loading="lazy" decoding="async" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              <span>{job.companyLogo || job.title?.charAt(0) || "🏢"}</span>
+                            )}
+                          </div>
+                          
+                          <div className="space-y-0.5">
+                            <h4 className={`text-sm sm:text-base font-bold font-display leading-tight group-hover:text-amber-400 transition-colors ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+                              {job.title}
+                            </h4>
+                            
+                            <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-400 flex-wrap">
+                              <span className="font-bold hover:underline cursor-pointer">{job.companyName}</span>
+                              <span>•</span>
+                              <span className="flex items-center gap-1 text-emerald-400">
+                                <ShieldCheck className="w-3 h-3" />
+                                <span>Verified Employer</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Flag, City & Country Row */}
+                        <div className="flex items-center gap-1 text-[11px] text-slate-300 font-mono">
+                          <span className="text-sm leading-none">{job.countryFlag}</span>
+                          <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{job.country}</span>
+                          <span className="text-slate-500">•</span>
+                          <span className="text-slate-400">{job.city}</span>
+                        </div>
+
+                        {/* Key Job Specifications Block */}
+                        <div className={`p-3.5 rounded-2xl border space-y-2 text-xs transition-colors ${isDarkMode ? "bg-slate-950/80 border-slate-850" : "bg-slate-50 border-slate-200"}`}>
+                          {/* Monthly Salary */}
+                          <div className="flex justify-between items-center pb-1.5 border-b border-slate-800/20">
+                            <span className="text-slate-400 font-mono text-[10px] uppercase">MONTHLY SALARY</span>
+                            <span className="text-emerald-400 font-mono font-black">{job.salary}</span>
+                          </div>
+
+                          {/* Contract Details */}
+                          <div className="grid grid-cols-2 gap-2 text-[11px] font-sans">
+                            <div>
+                              <span className="text-slate-500 block text-[9px] font-mono uppercase">CONTRACT</span>
+                              <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{job.contractDuration}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] font-mono uppercase">HOURS</span>
+                              <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{job.workingHours}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] font-mono uppercase">ACCOMMODATION</span>
+                              <span className="text-amber-400 font-semibold">{job.accommodation.includes("Free") ? "Free Provided" : "Paid Stipend"}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] font-mono uppercase">EXPERIENCE</span>
+                              <span className={`font-semibold ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{job.experienceRequired}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons row at bottom of card */}
+                      <div className="space-y-2 pt-3 border-t border-slate-800/20">
+                        
+                        {/* View Details Primary Trigger */}
+                        <button 
+                          onClick={() => {
+                            setSelectedJobDetails(job);
+                            setApplySuccess(false);
+                          }}
+                          className="w-full bg-amber-500 hover:bg-amber-600 effect-shimmer-button text-slate-950 rounded-xl flex items-center justify-center gap-2 p-3 text-xs font-bold tracking-wider cursor-pointer transition-all shadow-md uppercase"
+                        >
+                          <span>View Details & Apply</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+
+                        {/* Auxiliary Actions (Save, Share, WhatsApp) */}
+                        <div className="grid grid-cols-3 gap-2">
+                          {/* Save Job */}
+                          <button
+                            onClick={(e) => handleToggleSaveJob(job.id, e)}
+                            className={`py-2 rounded-xl border flex items-center justify-center gap-1 text-[10px] font-bold font-mono transition-all ${
+                              savedJobIds.includes(job.id)
+                                ? "bg-amber-500/10 border-amber-500 text-amber-400 font-extrabold"
+                                : isDarkMode ? "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white hover:border-slate-700" : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
+                            }`}
+                            title={savedJobIds.includes(job.id) ? "Remove Saved" : "Save Job Opportunity"}
+                          >
+                            <Bookmark className={`w-3.5 h-3.5 ${savedJobIds.includes(job.id) ? "fill-amber-400" : ""}`} />
+                            <span>{savedJobIds.includes(job.id) ? "Saved" : "Save"}</span>
+                          </button>
+
+                          {/* Share Job */}
+                          <button
+                            onClick={(e) => handleShareJob(job, e)}
+                            className={`py-2 rounded-xl border flex items-center justify-center gap-1 text-[10px] font-bold font-mono transition-all ${
+                              sharedJobId === job.id
+                                ? "bg-emerald-500/15 border-emerald-500 text-emerald-400"
+                                : isDarkMode ? "bg-slate-900/40 border-slate-800 text-slate-400 hover:text-white" : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            {sharedJobId === job.id ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                            <span>Share</span>
+                          </button>
+
+                          {/* WhatsApp Inquiry */}
+                          <a
+                            href={`https://wa.me/${whatsAppNum}?text=Hello!%20I%20am%20interested%20in%20applying%20for%20the%20position%20of%20*${encodeURIComponent(job.title)}*%20in%20*${encodeURIComponent(job.country)}*%20(Job%20ID:%20${job.id}).%20Please%20verify%20my%2520credentials.`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/25 border border-emerald-500/20 text-emerald-400 flex items-center justify-center gap-1 text-[10px] font-bold font-mono transition-all cursor-pointer"
+                          >
+                            <PhoneCall className="w-3 h-3 text-emerald-400" />
+                            <span>Inquire</span>
+                          </a>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* High-Performance Pagination Bar */}
+              {totalPages > 1 && (
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-6 pb-2 border-t border-slate-800/30">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
+                      currentPage === 1
+                        ? "opacity-30 cursor-not-allowed border-slate-850 text-slate-600"
+                        : "bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/50 cursor-pointer"
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 2)
+                      .map((page, idx, array) => {
+                        const prevPage = array[idx - 1];
+                        const showEllipsis = prevPage && page - prevPage > 1;
+                        return (
+                          <React.Fragment key={page}>
+                            {showEllipsis && (
+                              <span className="px-2 text-slate-600 text-xs font-mono">...</span>
+                            )}
+                            <button
+                              onClick={() => handlePageChange(page)}
+                              className={`w-9 h-9 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                                currentPage === page
+                                  ? "bg-amber-500 text-slate-950 shadow-md scale-105"
+                                  : "bg-slate-900/60 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700"
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          </React.Fragment>
+                        );
+                      })}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2.5 rounded-xl border text-xs font-mono font-bold flex items-center gap-1.5 transition-all ${
+                      currentPage === totalPages
+                        ? "opacity-30 cursor-not-allowed border-slate-850 text-slate-600"
+                        : "bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/50 cursor-pointer"
+                    }`}
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             /* Elegant Empty State */

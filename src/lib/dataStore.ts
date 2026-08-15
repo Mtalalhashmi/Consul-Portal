@@ -293,8 +293,13 @@ export async function addStoredActivity(activity: any): Promise<any[]> {
 // 6. Settings
 export function getStoredSettings(): any {
   return getLocalStorage<any>(STORAGE_KEYS.SETTINGS, {
-    whatsAppNum: "923001234567",
-    whatsAppDisplay: "+92 300 1234567",
+    whatsAppNum: "12513734858",
+    whatsAppDisplay: "+1 (251) 373-4858",
+    whatsAppNum2: "447848186539",
+    whatsAppDisplay2: "+44 7848 186539",
+    whatsAppNum3: "15878389106",
+    whatsAppDisplay3: "+1 (587) 838-9106",
+    address: "145 NE 18th Ave, Camas, Washington",
     paymentMethods: []
   });
 }

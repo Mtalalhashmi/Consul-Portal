@@ -18,6 +18,7 @@ import {
 import { PassportTrack, PassportStep } from "../types";
 import { RAW_COUNTRIES } from "../utils/countriesData";
 import { addAdminJob, updateAdminJob, deleteAdminJob, validateJobDatabase, searchStructuredJobs, StructuredJob } from "../utils/jobDatabase";
+import { AdminEmailManager } from "./AdminEmailManager";
 
 export interface ClientRecord {
   id: string;
@@ -182,6 +183,11 @@ const DEFAULT_PASSPORTS: PassportAdminInfo[] = [];
 interface AdminPortalProps {
   whatsAppNum: string;
   whatsAppDisplay: string;
+  whatsAppNum2?: string;
+  whatsAppDisplay2?: string;
+  whatsAppNum3?: string;
+  whatsAppDisplay3?: string;
+  address?: string;
   paymentMethods: any[];
   onSettingsChange: (newSettings: any) => void;
 }
@@ -189,6 +195,11 @@ interface AdminPortalProps {
 export default function AdminPortal({
   whatsAppNum,
   whatsAppDisplay,
+  whatsAppNum2 = "447848186539",
+  whatsAppDisplay2 = "+44 7848 186539",
+  whatsAppNum3 = "15878389106",
+  whatsAppDisplay3 = "+1 (587) 838-9106",
+  address = "145 NE 18th Ave, Camas, Washington",
   paymentMethods,
   onSettingsChange
 }: AdminPortalProps) {
@@ -204,7 +215,7 @@ export default function AdminPortal({
   const [selectedClientDetail, setSelectedClientDetail] = useState<ClientRecord | null>(null);
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [clientStatusFilter, setClientStatusFilter] = useState<string>("All");
-  const [adminTab, setAdminTab] = useState<"applications" | "clients" | "passports" | "payments" | "activities" | "settings" | "chatbot" | "fees" | "jobs">("applications");
+  const [adminTab, setAdminTab] = useState<"applications" | "clients" | "passports" | "payments" | "activities" | "settings" | "chatbot" | "fees" | "jobs" | "emails">("applications");
   
   // Jobs Management & Database Audit State
   const [adminJobCountryFilter, setAdminJobCountryFilter] = useState("All");
@@ -551,6 +562,11 @@ export default function AdminPortal({
   // Local settings states
   const [localWhatsAppNum, setLocalWhatsAppNum] = useState(whatsAppNum);
   const [localWhatsAppDisplay, setLocalWhatsAppDisplay] = useState(whatsAppDisplay);
+  const [localWhatsAppNum2, setLocalWhatsAppNum2] = useState(whatsAppNum2);
+  const [localWhatsAppDisplay2, setLocalWhatsAppDisplay2] = useState(whatsAppDisplay2);
+  const [localWhatsAppNum3, setLocalWhatsAppNum3] = useState(whatsAppNum3);
+  const [localWhatsAppDisplay3, setLocalWhatsAppDisplay3] = useState(whatsAppDisplay3);
+  const [localAddress, setLocalAddress] = useState(address);
   const [localPaymentMethods, setLocalPaymentMethods] = useState<any[]>(paymentMethods);
 
   useEffect(() => {
@@ -560,6 +576,26 @@ export default function AdminPortal({
   useEffect(() => {
     setLocalWhatsAppDisplay(whatsAppDisplay);
   }, [whatsAppDisplay]);
+
+  useEffect(() => {
+    setLocalWhatsAppNum2(whatsAppNum2);
+  }, [whatsAppNum2]);
+
+  useEffect(() => {
+    setLocalWhatsAppDisplay2(whatsAppDisplay2);
+  }, [whatsAppDisplay2]);
+
+  useEffect(() => {
+    setLocalWhatsAppNum3(whatsAppNum3);
+  }, [whatsAppNum3]);
+
+  useEffect(() => {
+    setLocalWhatsAppDisplay3(whatsAppDisplay3);
+  }, [whatsAppDisplay3]);
+
+  useEffect(() => {
+    setLocalAddress(address);
+  }, [address]);
 
   useEffect(() => {
     setLocalPaymentMethods(paymentMethods);
@@ -1588,6 +1624,11 @@ export default function AdminPortal({
       const newSettingsPayload = {
         whatsAppNum: localWhatsAppNum,
         whatsAppDisplay: localWhatsAppDisplay,
+        whatsAppNum2: localWhatsAppNum2,
+        whatsAppDisplay2: localWhatsAppDisplay2,
+        whatsAppNum3: localWhatsAppNum3,
+        whatsAppDisplay3: localWhatsAppDisplay3,
+        address: localAddress,
         paymentMethods: localPaymentMethods
       };
       await saveStoredSettings(newSettingsPayload);
@@ -2078,6 +2119,20 @@ export default function AdminPortal({
           <span>Global Jobs DB & Audit</span>
           <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold">
             10,725 Jobs
+          </span>
+        </button>
+        <button 
+          onClick={() => setAdminTab("emails")}
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
+            adminTab === "emails" 
+              ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <Mail className="w-4 h-4 text-purple-400" />
+          <span>Automated Email System</span>
+          <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold">
+            Brevo & Resend
           </span>
         </button>
       </div>
@@ -3685,32 +3740,117 @@ export default function AdminPortal({
             
             {/* WhatsApp Settings Section */}
             <div className="space-y-4">
-              <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-wider">📞 WhatsApp Support Routing</h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-mono uppercase block">WhatsApp Primary Country/Number ID (Digits Only)</label>
-                  <input 
-                    type="text" 
-                    required
-                    placeholder="e.g. 12513734858"
-                    value={localWhatsAppNum}
-                    onChange={(e) => setLocalWhatsAppNum(e.target.value.replace(/\D/g, ''))}
-                    className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
-                  />
-                  <span className="text-[10px] text-slate-500 leading-normal block">Primary US WhatsApp: +1 (251) 373-4858 | UK WhatsApp: +44 7848 186539</span>
+              <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-wider">📞 Global WhatsApp Helplines & Physical Facility Routing</h4>
+              
+              {/* WhatsApp 1: US Desk */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40 uppercase">US Consular Helpline</span>
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-mono uppercase block">US WhatsApp ID (Digits Only)</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. 12513734858"
+                      value={localWhatsAppNum}
+                      onChange={(e) => setLocalWhatsAppNum(e.target.value.replace(/\D/g, ''))}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-mono uppercase block">US Formatted Display</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. +1 (251) 373-4858"
+                      value={localWhatsAppDisplay}
+                      onChange={(e) => setLocalWhatsAppDisplay(e.target.value)}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
 
+              {/* WhatsApp 2: UK Desk */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-blue-950/80 text-blue-400 border border-blue-500/40 uppercase">UK & Europe Helpline</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-mono uppercase block">UK WhatsApp ID (Digits Only)</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. 447848186539"
+                      value={localWhatsAppNum2}
+                      onChange={(e) => setLocalWhatsAppNum2(e.target.value.replace(/\D/g, ''))}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-mono uppercase block">UK Formatted Display</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. +44 7848 186539"
+                      value={localWhatsAppDisplay2}
+                      onChange={(e) => setLocalWhatsAppDisplay2(e.target.value)}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* WhatsApp 3: Canada Desk */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-rose-950/80 text-rose-400 border border-rose-500/40 uppercase">Canada Consular Helpline</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-mono uppercase block">Canada WhatsApp ID (Digits Only)</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. 15878389106"
+                      value={localWhatsAppNum3}
+                      onChange={(e) => setLocalWhatsAppNum3(e.target.value.replace(/\D/g, ''))}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-mono uppercase block">Canada Formatted Display</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. +1 (587) 838-9106"
+                      value={localWhatsAppDisplay3}
+                      onChange={(e) => setLocalWhatsAppDisplay3(e.target.value)}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Physical Office Address */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-500/40 uppercase">🏢 Official Consular Address</span>
+                </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] text-slate-400 font-mono uppercase block">WhatsApp Display Number (Text Formatted)</label>
+                  <label className="text-[10px] text-slate-400 font-mono uppercase block">Full Physical Office Address</label>
                   <input 
                     type="text" 
                     required
-                    placeholder="e.g. +1 (251) 373-4858"
-                    value={localWhatsAppDisplay}
-                    onChange={(e) => setLocalWhatsAppDisplay(e.target.value)}
-                    className="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500"
+                    placeholder="e.g. 145 NE 18th Ave, Camas, Washington"
+                    value={localAddress}
+                    onChange={(e) => setLocalAddress(e.target.value)}
+                    className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-white w-full focus:outline-none focus:border-amber-500"
                   />
-                  <span className="text-[10px] text-slate-500 leading-normal block">The customer-facing label shown in headers, buttons, and footers.</span>
+                  <span className="text-[10px] text-slate-500 leading-normal block">Shown across footer, contact pages, client invoices, and AI consultant responses.</span>
                 </div>
               </div>
             </div>
@@ -5003,6 +5143,12 @@ export default function AdminPortal({
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {adminTab === "emails" && (
+        <div className="w-full animate-fade-in">
+          <AdminEmailManager />
         </div>
       )}
 

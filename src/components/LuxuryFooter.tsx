@@ -21,12 +21,16 @@ interface LuxuryFooterProps {
   onNavigateTab: (tabName: string) => void;
   whatsAppDisplay?: string;
   whatsAppDisplay2?: string;
+  whatsAppDisplay3?: string;
+  address?: string;
 }
 
 export const LuxuryFooter: React.FC<LuxuryFooterProps> = ({
   onNavigateTab,
   whatsAppDisplay = "+1 (251) 373-4858",
-  whatsAppDisplay2 = "+44 7848 186539"
+  whatsAppDisplay2 = "+44 7848 186539",
+  whatsAppDisplay3 = "+1 (587) 838-9106",
+  address = "145 NE 18th Ave, Camas, Washington"
 }) => {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
@@ -304,13 +308,26 @@ export const LuxuryFooter: React.FC<LuxuryFooterProps> = ({
             </h4>
             <div className="space-y-3">
               <div className="p-3 rounded-xl bg-[#0B0B0B] border border-[#D4AF37]/25 space-y-2">
-                <div className="flex items-center gap-2 text-white font-bold text-xs">
-                  <PhoneCall className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>WhatsApp: {whatsAppDisplay}</span>
+                <div className="flex items-center justify-between text-white font-bold text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <PhoneCall className="w-3.5 h-3.5 text-rose-400" />
+                    <span>WhatsApp (CA): {whatsAppDisplay3}</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-rose-300 bg-rose-950/40 border border-rose-500/30 px-1.5 py-0.5 rounded">CA</span>
                 </div>
-                <div className="flex items-center gap-2 text-[#A7A7A7] text-[11px]">
-                  <PhoneCall className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>Backup: {whatsAppDisplay2}</span>
+                <div className="flex items-center justify-between text-[#A7A7A7] text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <PhoneCall className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>WhatsApp (US): {whatsAppDisplay}</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-[#F5D76E] bg-[#1a170e] border border-[#D4AF37]/30 px-1.5 py-0.5 rounded">US</span>
+                </div>
+                <div className="flex items-center justify-between text-[#A7A7A7] text-[11px]">
+                  <div className="flex items-center gap-1.5">
+                    <PhoneCall className="w-3.5 h-3.5 text-blue-400" />
+                    <span>WhatsApp (UK): {whatsAppDisplay2}</span>
+                  </div>
+                  <span className="text-[9px] font-mono text-blue-300 bg-blue-950/40 border border-blue-500/30 px-1.5 py-0.5 rounded">UK</span>
                 </div>
               </div>
 
@@ -321,7 +338,7 @@ export const LuxuryFooter: React.FC<LuxuryFooterProps> = ({
                 </div>
                 <div className="flex items-start gap-2 text-[#A7A7A7]">
                   <MapPin className="w-3.5 h-3.5 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <span>Lahore (HQ) • Dubai • Riyadh • Berlin</span>
+                  <span>{address}</span>
                 </div>
                 <div className="flex items-center gap-2 text-[#A7A7A7]">
                   <Clock className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />

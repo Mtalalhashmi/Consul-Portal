@@ -148,6 +148,9 @@ export default function App() {
   const [whatsAppDisplay, setWhatsAppDisplay] = useState("+1 (251) 373-4858");
   const [whatsAppNum2, setWhatsAppNum2] = useState("447848186539");
   const [whatsAppDisplay2, setWhatsAppDisplay2] = useState("+44 7848 186539");
+  const [whatsAppNum3, setWhatsAppNum3] = useState("15878389106");
+  const [whatsAppDisplay3, setWhatsAppDisplay3] = useState("+1 (587) 838-9106");
+  const [officeAddress, setOfficeAddress] = useState("145 NE 18th Ave, Camas, Washington");
   const [paymentMethods, setPaymentMethods] = useState<any[]>(PAKISTANI_PAYMENT_METHODS);
 
   // Fetch settings from server on mount with resilient retries
@@ -161,6 +164,11 @@ export default function App() {
         if (!active) return;
         if (data.whatsAppNum) setWhatsAppNum(data.whatsAppNum);
         if (data.whatsAppDisplay) setWhatsAppDisplay(data.whatsAppDisplay);
+        if (data.whatsAppNum2) setWhatsAppNum2(data.whatsAppNum2);
+        if (data.whatsAppDisplay2) setWhatsAppDisplay2(data.whatsAppDisplay2);
+        if (data.whatsAppNum3) setWhatsAppNum3(data.whatsAppNum3);
+        if (data.whatsAppDisplay3) setWhatsAppDisplay3(data.whatsAppDisplay3);
+        if (data.address) setOfficeAddress(data.address);
         if (data.paymentMethods) setPaymentMethods(data.paymentMethods);
       } catch (err) {
         if (!active) return;
@@ -263,7 +271,6 @@ export default function App() {
   const [applySuccess, setApplySuccess] = useState(false);
   const [isSubmittingApply, setIsSubmittingApply] = useState(false);
   const [applyError, setApplyError] = useState("");
-
 
   // Flags Marquee Lines
   const marqueeFlagsRow1 = [
@@ -1150,14 +1157,23 @@ export default function App() {
           </button>
 
           {/* Bottom Call Buttons matching green style in screenshot */}
-          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="pt-2 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <a 
+              href={`https://wa.me/${whatsAppNum3}`} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black px-4 py-3 rounded-2xl text-xs flex items-center justify-between transition shadow-lg"
+            >
+              <span className="text-sm font-extrabold">{whatsAppDisplay3}</span>
+              <span className="bg-slate-950 text-rose-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">CA</span>
+            </a>
             <a 
               href={`https://wa.me/${whatsAppNum}`} 
               target="_blank" 
               rel="noopener noreferrer" 
               className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black px-4 py-3 rounded-2xl text-xs flex items-center justify-between transition shadow-lg"
             >
-              <span className="text-sm font-extrabold">+1 (251) 373-4858</span>
+              <span className="text-sm font-extrabold">{whatsAppDisplay}</span>
               <span className="bg-slate-950 text-emerald-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">US</span>
             </a>
             <a 
@@ -1166,7 +1182,7 @@ export default function App() {
               rel="noopener noreferrer" 
               className="bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black px-4 py-3 rounded-2xl text-xs flex items-center justify-between transition shadow-lg"
             >
-              <span className="text-sm font-extrabold">+44 7848 186539</span>
+              <span className="text-sm font-extrabold">{whatsAppDisplay2}</span>
               <span className="bg-slate-950 text-emerald-400 font-mono text-[10px] font-bold px-2 py-0.5 rounded uppercase">UK</span>
             </a>
           </div>
@@ -2788,10 +2804,20 @@ export default function App() {
               <AdminPortal 
                 whatsAppNum={whatsAppNum}
                 whatsAppDisplay={whatsAppDisplay}
+                whatsAppNum2={whatsAppNum2}
+                whatsAppDisplay2={whatsAppDisplay2}
+                whatsAppNum3={whatsAppNum3}
+                whatsAppDisplay3={whatsAppDisplay3}
+                address={officeAddress}
                 paymentMethods={paymentMethods}
                 onSettingsChange={(newSettings) => {
                   if (newSettings.whatsAppNum) setWhatsAppNum(newSettings.whatsAppNum);
                   if (newSettings.whatsAppDisplay) setWhatsAppDisplay(newSettings.whatsAppDisplay);
+                  if (newSettings.whatsAppNum2) setWhatsAppNum2(newSettings.whatsAppNum2);
+                  if (newSettings.whatsAppDisplay2) setWhatsAppDisplay2(newSettings.whatsAppDisplay2);
+                  if (newSettings.whatsAppNum3) setWhatsAppNum3(newSettings.whatsAppNum3);
+                  if (newSettings.whatsAppDisplay3) setWhatsAppDisplay3(newSettings.whatsAppDisplay3);
+                  if (newSettings.address) setOfficeAddress(newSettings.address);
                   if (newSettings.paymentMethods) setPaymentMethods(newSettings.paymentMethods);
                 }}
               />
@@ -2917,40 +2943,80 @@ export default function App() {
 
         {/* TAB 13: CONTACT US */}
         {activeTab === "contact" && (
-          <div className="animate-fade-in max-w-4xl mx-auto space-y-6 bg-slate-900/60 p-8 rounded-3xl border border-slate-800">
+          <div className="animate-fade-in max-w-5xl mx-auto space-y-6 bg-slate-900/60 p-6 sm:p-8 rounded-3xl border border-[#D4AF37]/30">
             <div className="text-center space-y-2">
-              <span className="text-xs font-mono text-amber-400 font-bold uppercase tracking-wider">Direct Helpline &amp; Office Contact</span>
-              <h2 className="text-2xl sm:text-3xl font-display font-black text-white">ConsulPortal Embassy Services Desk</h2>
-              <p className="text-xs sm:text-sm text-slate-300">Contact our certified overseas delegates for Gulf &amp; Schengen visa processing.</p>
+              <span className="text-xs font-mono text-[#F5D76E] font-bold uppercase tracking-wider">Direct Helpline &amp; Official Consular Offices</span>
+              <h2 className="text-2xl sm:text-3xl font-display font-black text-white">ConsulPortal Global Helpdesks</h2>
+              <p className="text-xs sm:text-sm text-slate-300">Contact our certified overseas immigration delegates for Gulf, European &amp; Canadian visa clearance.</p>
             </div>
 
-            <div className="grid sm:grid-cols-2 gap-4 pt-4">
-              <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3 text-center sm:text-left">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg mb-2">💬</div>
-                <h3 className="font-bold text-white text-base">WhatsApp Helpline 1</h3>
-                <p className="text-xs text-slate-400">Instant visa status updates &amp; employer demand verification.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+              <div className="bg-slate-950 p-5 rounded-2xl border border-rose-500/30 space-y-2.5 text-center sm:text-left">
+                <div className="flex items-center justify-between">
+                  <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold text-base">💬</div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-rose-950/60 text-rose-400 border border-rose-500/30">CANADA DESK</span>
+                </div>
+                <h3 className="font-bold text-white text-sm">Canada Consular Helpline</h3>
+                <p className="text-xs text-slate-400">Canada LMIA jobs, provincial nominations &amp; direct immigration clearance.</p>
+                <a 
+                  href={`https://wa.me/${whatsAppNum3}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block w-full text-center mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs uppercase transition shadow-md"
+                >
+                  Message {whatsAppDisplay3}
+                </a>
+              </div>
+
+              <div className="bg-slate-950 p-5 rounded-2xl border border-emerald-500/30 space-y-2.5 text-center sm:text-left">
+                <div className="flex items-center justify-between">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-base">💬</div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950/60 text-emerald-400 border border-emerald-500/30">USA / GLOBAL</span>
+                </div>
+                <h3 className="font-bold text-white text-sm">US Consular Helpline</h3>
+                <p className="text-xs text-slate-400">Direct embassy attestation, biometric appointments &amp; document verifications.</p>
                 <a 
                   href={`https://wa.me/${whatsAppNum}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs uppercase"
+                  className="inline-block w-full text-center mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs uppercase transition shadow-md"
                 >
                   Message {whatsAppDisplay}
                 </a>
               </div>
 
-              <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3 text-center sm:text-left">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-lg mb-2">💬</div>
-                <h3 className="font-bold text-white text-base">WhatsApp Helpline 2</h3>
-                <p className="text-xs text-slate-400">Flight reservations, ticket verification &amp; escrow deposits.</p>
+              <div className="bg-slate-950 p-5 rounded-2xl border border-blue-500/30 space-y-2.5 text-center sm:text-left">
+                <div className="flex items-center justify-between">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-base">💬</div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-950/60 text-blue-400 border border-blue-500/30">UK &amp; EUROPE</span>
+                </div>
+                <h3 className="font-bold text-white text-sm">UK Consular Helpline</h3>
+                <p className="text-xs text-slate-400">Schengen visas, UK work permits, flight reservations &amp; escrow deposits.</p>
                 <a 
                   href={`https://wa.me/${whatsAppNum2}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-block mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-4 py-2 rounded-xl text-xs uppercase"
+                  className="inline-block w-full text-center mt-2 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold px-3 py-2 rounded-xl text-xs uppercase transition shadow-md"
                 >
                   Message {whatsAppDisplay2}
                 </a>
+              </div>
+            </div>
+
+            {/* Official Headquarters Location Card */}
+            <div className="p-4 rounded-2xl bg-[#090909] border border-[#D4AF37]/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 text-[#F5D76E] flex items-center justify-center font-bold text-lg shrink-0">
+                  📍
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Official Physical Address</h4>
+                  <p className="text-[#A7A7A7]">{officeAddress}</p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-[10px] font-mono font-bold text-[#D4AF37] block">AUTHORIZED CONSULAR FACILITY</span>
+                <span className="text-slate-400 text-[11px]">Working Hours: Mon-Sat 09:00 AM - 09:00 PM</span>
               </div>
             </div>
           </div>
@@ -2996,6 +3062,8 @@ export default function App() {
         whatsAppDisplay={whatsAppDisplay}
         whatsAppNum2={whatsAppNum2}
         whatsAppDisplay2={whatsAppDisplay2}
+        whatsAppNum3={whatsAppNum3}
+        whatsAppDisplay3={whatsAppDisplay3}
       />
 
       {/* MODAL 1: VISA OR JOB APPLY FORM */}
@@ -3354,8 +3422,10 @@ export default function App() {
       {/* Luxury Footer (Test Theme #1) */}
       <LuxuryFooter
         onNavigateTab={(tab) => setActiveTab(tab)}
-        whatsAppDisplay={whatsAppNum}
-        whatsAppDisplay2={whatsAppNum2}
+        whatsAppDisplay={whatsAppDisplay}
+        whatsAppDisplay2={whatsAppDisplay2}
+        whatsAppDisplay3={whatsAppDisplay3}
+        address={officeAddress}
       />
 
     </div>

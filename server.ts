@@ -7,6 +7,8 @@ import { createServer as createViteServer } from "vite";
 import { createClient } from "@supabase/supabase-js";
 import { RAW_COUNTRIES } from "./src/utils/countriesData";
 import { getCountry, getLiveJobs } from "./src/utils/countryDb";
+import emailRouter from "./server/email/routes";
+import { sendTransactionalEmail, sendAdminNotification, getEmailConfig } from "./server/email/emailService";
 
 // Load environment variables
 dotenv.config();
@@ -500,8 +502,13 @@ const SENT_EMAILS: EmailNotification[] = [
 
 // App settings state
 const APP_SETTINGS = {
-  whatsAppNum: "16065154971",
-  whatsAppDisplay: "+1 (606) 515-4971",
+  whatsAppNum: "12513734858",
+  whatsAppDisplay: "+1 (251) 373-4858",
+  whatsAppNum2: "447848186539",
+  whatsAppDisplay2: "+44 7848 186539",
+  whatsAppNum3: "15878389106",
+  whatsAppDisplay3: "+1 (587) 838-9106",
+  address: "145 NE 18th Ave, Camas, Washington",
   paymentMethods: [
     {
       id: "easypaisa",
@@ -891,6 +898,10 @@ app.use("/api/admin", (req, res, next) => {
   (req as any).adminSession = session;
   next();
 });
+
+// Mount Automated Email System Router
+app.use("/api/admin/email", emailRouter);
+app.use("/api", emailRouter);
 
 let GMAIL_ACCESS_TOKEN: string | null = "SIMULATED_TOKEN_CONSULPORTALL";
 let GMAIL_AUTHORIZED_EMAIL: string | null = "consulportall@gmail.com";
@@ -1632,169 +1643,65 @@ async function triggerNotification(
     return cached.result;
   }
 
-  const websiteName = "Bridge Visa Migration";
-  const dateStr = new Date().toISOString().split("T")[0];
-  const fullDetails = {
-    recipientName: cleanName,
-    websiteName,
-    submissionDate: dateStr,
-    date: dateStr,
-    id: details.id || "APP-" + Math.floor(10000 + Math.random() * 90000),
-    vacancyTitle: details.vacancyTitle || "Visa Application File",
-    country: details.country || "Schengen Division",
-    amount: details.amount ? Number(details.amount).toLocaleString() : "0",
+  // Map legacy type names to central emailService template types
+  let templateType: any = type;
+  if (type === "application_submitted") templateType = "application_received";
+  if (type === "payment_requested") templateType = "payment_reminder";
+  if (type === "reminder_job") templateType = details.docList ? "documents_required" : "payment_reminder";
+
+  const variables: Record<string, any> = {
+    client_name: cleanName,
+    name: cleanName,
+    recipient_email: cleanEmail,
+    application_id: details.id || details.referenceId || details.trackingNumber || ("APP-" + Math.floor(10000 + Math.random() * 90000)),
+    job_title: details.vacancyTitle || details.jobTitle || "Logistics & Placement Dossier",
+    vacancy_title: details.vacancyTitle || "Visa Application File",
+    country: details.country || "Schengen Europe",
+    service_name: details.stepTitle || details.vacancyTitle || "Consular Processing Step",
+    amount: details.amount || 0,
     currency: details.currency || "PKR",
-    paymentRef: details.paymentRef || details.paymentId || "INV-" + Math.floor(100000 + Math.random() * 900000),
-    paymentId: details.paymentId || "PAY-" + Math.floor(100000 + Math.random() * 900000),
-    transactionId: details.transactionId || "TXN-" + Math.floor(100000 + Math.random() * 900000),
-    rejectionReason: details.rejectionReason || "Qualifications do not fulfill current consular trade criteria.",
-    docList: Array.isArray(details.requiredDocs) ? details.requiredDocs.join(", ") : (details.docList || "Attested HEC Degree, MOFA Verification Seal"),
-    deadline: details.deadline || new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString().split("T")[0],
-    dueDate: details.dueDate || new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split("T")[0],
+    payment_id: details.paymentId || details.paymentRef || ("PAY-" + Math.floor(100000 + Math.random() * 900000)),
+    transaction_id: details.transactionId || ("TXN-" + Math.floor(100000 + Math.random() * 900000)),
+    payment_method: details.method || details.paymentStatus || "Escrow Account",
+    rejection_reason: details.rejectionReason || "Qualifications do not fulfill current consular trade criteria.",
+    documents_list: Array.isArray(details.requiredDocs) ? details.requiredDocs.join(", ") : (details.docList || "Attested Credentials, Police Clearance"),
+    deadline: details.deadline || "Within 7 business days",
+    verification_code: details.code || details.verificationCode || "786012",
+    reset_token: details.resetToken || details.token || "984210",
     event: details.event || type,
-    clientName: details.clientName || cleanName,
-    clientEmail: details.clientEmail || cleanEmail,
-    details: details.details || "Consular file update.",
-    mainText: details.mainText || "",
-    subject: details.subject || ""
+    details: details.details || `Triggered event ${type}`
   };
 
-  let subject = "";
-  let bodyHtml = "";
-  let badgeText = "NOTIFICATION";
-  let badgeColor = "#3b82f6";
-  let ctaText = "Log In to Client Portal";
-  let ctaUrl = "https://consulportal.tech/portal";
+  try {
+    const res = await sendTransactionalEmail({
+      to: cleanEmail,
+      recipientName: cleanName,
+      template: templateType,
+      variables,
+      applicationId: variables.application_id,
+      paymentId: variables.payment_id
+    });
 
-  // Check if dynamic custom template exists in EMAIL_TEMPLATES
-  const templateDef = EMAIL_TEMPLATES[type];
-  if (templateDef && templateDef.enabled) {
-    subject = renderTemplateHtml(templateDef.subject, fullDetails);
-    const renderedBody = renderTemplateHtml(templateDef.htmlBody, fullDetails);
+    const success = res.success;
+    RECENT_NOTIFICATIONS_CACHE.set(refKey, { timestamp: nowMs, result: success });
 
-    switch (type) {
-      case "welcome_email":
-        badgeText = "WELCOME";
-        badgeColor = "#10b981";
-        ctaText = "Log In to Portal";
-        break;
-      case "application_submitted":
-        badgeText = "SUBMITTED";
-        badgeColor = "#3b82f6";
-        ctaText = "View Application Status";
-        break;
-      case "application_under_review":
-        badgeText = "UNDER REVIEW";
-        badgeColor = "#f59e0b";
-        ctaText = "Track File Progression";
-        break;
-      case "application_approved":
-        badgeText = "APPROVED";
-        badgeColor = "#10b981";
-        ctaText = "View Approval & Next Steps";
-        break;
-      case "application_rejected":
-        badgeText = "APPLICATION UPDATE";
-        badgeColor = "#ef4444";
-        ctaText = "View Account Options";
-        break;
-      case "documents_required":
-        badgeText = "ACTION REQUIRED";
-        badgeColor = "#ec4899";
-        ctaText = "Upload Requested Documents";
-        break;
-      case "payment_requested":
-        badgeText = "INVOICE DUE";
-        badgeColor = "#8b5cf6";
-        ctaText = "Pay Invoice Now";
-        ctaUrl = details.paymentLink || "https://consulportal.tech/pay";
-        break;
-      case "payment_successful":
-        badgeText = "PAYMENT CONFIRMED";
-        badgeColor = "#10b981";
-        ctaText = "Download Official Receipt";
-        break;
-      case "payment_failed":
-        badgeText = "PAYMENT FAILED";
-        badgeColor = "#ef4444";
-        ctaText = "Retry Payment Transaction";
-        break;
-      case "payment_pending":
-        badgeText = "PAYMENT PENDING";
-        badgeColor = "#f59e0b";
-        ctaText = "Check Verification Status";
-        break;
-      case "reminder_job":
-        badgeText = "2-HOUR REMINDER";
-        badgeColor = "#eab308";
-        ctaText = details.ctaText || "Complete Required Action";
-        ctaUrl = details.ctaUrl || "https://consulportal.tech/portal";
-        break;
-      case "admin_notification":
-        badgeText = "ADMIN ALERT";
-        badgeColor = "#dc2626";
-        ctaText = "Open Admin Console";
-        ctaUrl = "https://consulportal.tech/admin";
-        break;
+    // Also notify Admin on critical candidate actions
+    if (type.includes("application") || type.includes("payment")) {
+      sendAdminNotification({
+        event: `Client Action: ${type.replace(/_/g, " ").toUpperCase()}`,
+        clientName: cleanName,
+        clientEmail: cleanEmail,
+        applicationId: variables.application_id,
+        paymentId: variables.payment_id,
+        details: `Automatic notification (${templateType}) sent to candidate.`
+      }).catch(adminErr => console.warn("[Admin Notification Warn]:", adminErr));
     }
 
-    bodyHtml = renderBrandedEmailHtml({
-      title: subject,
-      badgeText,
-      badgeColor,
-      recipientName: cleanName,
-      contentHtml: renderedBody,
-      ctaText,
-      ctaUrl
-    });
-  } else {
-    // Default Fallback Renderer
-    subject = `${websiteName} - Consular Notification`;
-    bodyHtml = renderBrandedEmailHtml({
-      title: "Consular System Notification",
-      recipientName: cleanName,
-      mainText: `An update has occurred on your consular file (Ref: ${fullDetails.id}). Please log in to your Client Portal to review the details.`
-    });
+    return success;
+  } catch (err: any) {
+    console.error(`[triggerNotification Exception] Failed for ${cleanEmail}:`, err);
+    return false;
   }
-
-  const success = await sendGmailIfConnectedDirect(cleanEmail, subject, bodyHtml, false);
-  RECENT_NOTIFICATIONS_CACHE.set(refKey, { timestamp: nowMs, result: success });
-
-  // Forward Admin Alert Copy to consulportall@gmail.com for Application Receive & Payment Receipt events
-  const adminTargetEmail = "consulportall@gmail.com";
-  if (cleanEmail.toLowerCase() !== adminTargetEmail && (type.includes("application") || type.includes("payment"))) {
-    const adminSubject = `🚨 [ADMIN COPY] ${subject} - ${cleanName}`;
-    const adminBodyHtml = renderBrandedEmailHtml({
-      title: `Consular Event Alert: ${type.replace('_', ' ').toUpperCase()}`,
-      badgeText: "ADMIN NOTIFICATION",
-      badgeColor: "#dc2626",
-      recipientName: "Consular Management Team",
-      mainText: `A new client activity event has been logged on the portal. Below is a copy of the notification sent to <strong>${cleanName}</strong> (${cleanEmail}):`,
-      detailsTable: [
-        { label: "Client Name", value: cleanName },
-        { label: "Client Email", value: cleanEmail },
-        { label: "Reference ID", value: fullDetails.id || fullDetails.paymentId || fullDetails.paymentRef },
-        { label: "Vacancy / Step", value: fullDetails.vacancyTitle || fullDetails.event },
-        { label: "Amount / Status", value: fullDetails.amount ? `${fullDetails.currency} ${fullDetails.amount}` : fullDetails.event },
-        { label: "Logged Date", value: new Date().toLocaleString() }
-      ],
-      contentHtml: bodyHtml,
-      ctaText: "Open Admin Console",
-      ctaUrl: "https://consulportal.tech/admin"
-    });
-
-    sendGmailIfConnectedDirect(adminTargetEmail, adminSubject, adminBodyHtml, false).catch(err => {
-      console.error(`[Admin Copy Email] Failed to dispatch copy to ${adminTargetEmail}:`, err);
-    });
-
-    if (SMTP_CONFIG.adminNotificationEmail && SMTP_CONFIG.adminNotificationEmail.toLowerCase() !== adminTargetEmail) {
-      sendGmailIfConnectedDirect(SMTP_CONFIG.adminNotificationEmail, adminSubject, adminBodyHtml, false).catch(err => {
-        console.error(`[Admin Copy Email] Failed to dispatch copy to ${SMTP_CONFIG.adminNotificationEmail}:`, err);
-      });
-    }
-  }
-
-  return success;
 }
 
 // Schedule 2-Hour Automated Reminder Job
@@ -2135,9 +2042,14 @@ app.get("/api/settings", (req, res) => {
 
 // Admin settings edit endpoint
 app.post("/api/admin/settings", (req, res) => {
-  const { whatsAppNum, whatsAppDisplay, paymentMethods } = req.body;
+  const { whatsAppNum, whatsAppDisplay, whatsAppNum2, whatsAppDisplay2, whatsAppNum3, whatsAppDisplay3, address, paymentMethods } = req.body;
   if (whatsAppNum !== undefined) APP_SETTINGS.whatsAppNum = String(whatsAppNum).trim();
   if (whatsAppDisplay !== undefined) APP_SETTINGS.whatsAppDisplay = String(whatsAppDisplay).trim();
+  if (whatsAppNum2 !== undefined) APP_SETTINGS.whatsAppNum2 = String(whatsAppNum2).trim();
+  if (whatsAppDisplay2 !== undefined) APP_SETTINGS.whatsAppDisplay2 = String(whatsAppDisplay2).trim();
+  if (whatsAppNum3 !== undefined) APP_SETTINGS.whatsAppNum3 = String(whatsAppNum3).trim();
+  if (whatsAppDisplay3 !== undefined) APP_SETTINGS.whatsAppDisplay3 = String(whatsAppDisplay3).trim();
+  if (address !== undefined) APP_SETTINGS.address = String(address).trim();
   if (paymentMethods !== undefined && Array.isArray(paymentMethods)) {
     APP_SETTINGS.paymentMethods = paymentMethods;
   }
@@ -4780,10 +4692,11 @@ ${activeVacanciesDescription}
 - Actions: Review applicants, update tracking milestones, manage escrow payments, and monitor live AI chatbot analytics.
 
 7. CONTACT & HELPLINE INFORMATION
-- WhatsApp Support & Phone Contact: ${APP_SETTINGS.whatsAppDisplay || "+1 (606) 515-4971"} (Linkable number format: ${APP_SETTINGS.whatsAppNum || "16065154971"})
-- Helpline Direct: +1 (606) 515-4971
-- Email Support: process@consulportal.com.pk (or Brigevisaimigration@gmail.com)
-- Physical Location: First St SE, Washington, D.C. 20004
+- WhatsApp US Desk: ${APP_SETTINGS.whatsAppDisplay || "+1 (251) 373-4858"} (Direct: ${APP_SETTINGS.whatsAppNum || "12513734858"})
+- WhatsApp UK & Europe Desk: ${APP_SETTINGS.whatsAppDisplay2 || "+44 7848 186539"} (Direct: ${APP_SETTINGS.whatsAppNum2 || "447848186539"})
+- WhatsApp Canada Desk: ${APP_SETTINGS.whatsAppDisplay3 || "+1 (587) 838-9106"} (Direct: ${APP_SETTINGS.whatsAppNum3 || "15878389106"})
+- Email Support: process@consulportal.com.pk (or pehnawa179@gmail.com)
+- Physical Location: ${APP_SETTINGS.address || "145 NE 18th Ave, Camas, Washington"}
 
 8. FAQS & ESCROW REFUND POLICIES
 - Q: Are my payments safe?
@@ -4793,7 +4706,7 @@ ${activeVacanciesDescription}
 - Q: How do I pay fees?
   A: We accept EasyPaisa (0345-0907861), JazzCash (0300-8800786), NayaPay (@consulportal), and HBL Bank Transfers.
 - Q: How long does processing take?
-  A: Schengen European visas take 60-90 days. Gulf GCC visas take 15-30 days.
+  A: Schengen European visas take 60-90 days. Gulf GCC visas take 15-30 days. Canada work permits take 45-75 days.
 
 ============================================================
 `;
@@ -4803,7 +4716,7 @@ function getSmartMockResponse(message: string): string {
   const msg = message.toLowerCase().trim();
   
   if (msg.includes("service") || msg.includes("what do you do") || msg.includes("our services")) {
-    return "We offer premium visa consultancy and career sourcing for Gulf and Schengen European countries. You can explore open vacancies, track your visa milestones via our secure escrow tracker, or secure flight placeholders. Check out our [Overseas Vacancies](tab:vacancies) or [Live Passport Tracker](tab:tracker) pages!";
+    return "We offer premium visa consultancy and career sourcing for Gulf, Schengen European, and Canadian immigration. You can explore open vacancies, track your visa milestones via our secure escrow tracker, or secure flight placeholders. Check out our [Overseas Vacancies](tab:vacancies) or [Live Passport Tracker](tab:tracker) pages!";
   }
   if (msg.includes("pricing") || msg.includes("fee") || msg.includes("cost") || msg.includes("pay") || msg.includes("charge")) {
     return "All processing fees are processed held in our Secure Escrow Wallet! For instance:\n- Step 1: HEC/MOFA Document Attestation: PKR 15k - 18k\n- Step 2: Embassy Processing & Biometrics: PKR 35k - 45k\n- Step 3: Passport Stamping & Courier Dispatch: PKR 15k - 25k\nWe support EasyPaisa, JazzCash, NayaPay, and Bank Transfer. Unreleased milestone fees are 100% refundable if the visa gets rejected!";
@@ -4812,10 +4725,10 @@ function getSmartMockResponse(message: string): string {
     return "Yes! All fee deposits are fully protected by a Secure Escrow Wallet. Funds are only released to recruiters once a step is verified. If the embassy rejects your visa application, any unreleased milestone fees are 100% refundable within 5 business days!";
   }
   if (msg.includes("contact") || msg.includes("whatsapp") || msg.includes("phone") || msg.includes("address") || msg.includes("email") || msg.includes("support")) {
-    return `You can connect with us directly:\n- **Phone & WhatsApp Contact**: ${APP_SETTINGS.whatsAppDisplay || "+1 (606) 515-4971"}\n- **Email**: process@consulportal.com.pk\n- **Office**: First St SE, Washington, D.C. 20004\nYou can also use the contact forms on our Home portal!`;
+    return `You can connect with us directly:\n- **US Desk**: ${APP_SETTINGS.whatsAppDisplay || "+1 (251) 373-4858"}\n- **UK Desk**: ${APP_SETTINGS.whatsAppDisplay2 || "+44 7848 186539"}\n- **Canada Desk**: ${APP_SETTINGS.whatsAppDisplay3 || "+1 (587) 838-9106"}\n- **Email**: process@consulportal.com.pk\n- **Office**: ${APP_SETTINGS.address || "145 NE 18th Ave, Camas, Washington"}\nYou can also use the contact forms on our Home portal!`;
   }
   if (msg.includes("consultation") || msg.includes("book") || msg.includes("appointment")) {
-    return `You can book a premium career consultation by reaching out to our WhatsApp support at **${APP_SETTINGS.whatsAppDisplay || "+1 (606) 515-4971"}** or submit a call-back request on the [Home Portal](tab:home).`;
+    return `You can book a premium career consultation by reaching out to our WhatsApp support:\n- **US Desk**: ${APP_SETTINGS.whatsAppDisplay || "+1 (251) 373-4858"}\n- **UK Desk**: ${APP_SETTINGS.whatsAppDisplay2 || "+44 7848 186539"}\n- **Canada Desk**: ${APP_SETTINGS.whatsAppDisplay3 || "+1 (587) 838-9106"}\nOr submit a call-back request on the [Home Portal](tab:home).`;
   }
   if (msg.includes("faq") || msg.includes("frequently asked") || msg.includes("question")) {
     return "Our top FAQs are: 1. Are fees refundable? (Yes, 100% refund via Escrow if rejected). 2. How to pay? (EasyPaisa, JazzCash, Bank Transfer). 3. How long does it take? (Schengen 60-90 days, Gulf 15-30 days). Try asking me about specific refund rules or payment methods!";

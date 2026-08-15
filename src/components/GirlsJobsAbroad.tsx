@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { saveApplicationSupabaseClient } from "../lib/supabase";
 import { 
   Briefcase, 
@@ -870,29 +870,49 @@ export default function GirlsJobsAbroad() {
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
+  // Pagination for Girls Jobs to ensure buttery smooth 60fps scrolling
+  const [currentPage, setCurrentPage] = useState(1);
+  const JOBS_PER_PAGE = 18;
+
+  // Reset page on filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedRegion, selectedCountryFilter]);
+
   // Get available countries dynamically based on the selected region
-  const availableCountries = Array.from(
-    new Set(
-      FEMALE_VACANCIES
-        .filter((job) => selectedRegion === "All" || job.region === selectedRegion)
-        .map((job) => job.country)
-    )
-  );
+  const availableCountries = React.useMemo(() => {
+    return Array.from(
+      new Set(
+        FEMALE_VACANCIES
+          .filter((job) => selectedRegion === "All" || job.region === selectedRegion)
+          .map((job) => job.country)
+      )
+    );
+  }, [selectedRegion]);
 
   // Filtered Vacancies
-  const filteredJobs = FEMALE_VACANCIES.filter((job) => {
-    const matchesSearch = 
-      job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.country.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.city.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.education.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredJobs = React.useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return FEMALE_VACANCIES.filter((job) => {
+      const matchesSearch = !q ||
+        job.title.toLowerCase().includes(q) ||
+        job.company.toLowerCase().includes(q) ||
+        job.country.toLowerCase().includes(q) ||
+        job.city.toLowerCase().includes(q) ||
+        job.education.toLowerCase().includes(q);
 
-    const matchesRegion = selectedRegion === "All" || job.region === selectedRegion;
-    const matchesCountry = selectedCountryFilter === "All" || job.country === selectedCountryFilter;
+      const matchesRegion = selectedRegion === "All" || job.region === selectedRegion;
+      const matchesCountry = selectedCountryFilter === "All" || job.country === selectedCountryFilter;
 
-    return matchesSearch && matchesRegion && matchesCountry;
-  });
+      return matchesSearch && matchesRegion && matchesCountry;
+    });
+  }, [searchTerm, selectedRegion, selectedCountryFilter]);
+
+  const totalPages = Math.ceil(filteredJobs.length / JOBS_PER_PAGE) || 1;
+  const paginatedJobs = React.useMemo(() => {
+    const start = (currentPage - 1) * JOBS_PER_PAGE;
+    return filteredJobs.slice(start, start + JOBS_PER_PAGE);
+  }, [filteredJobs, currentPage]);
 
   // Handle apply submission
   const handleApplySubmit = async (e: React.FormEvent) => {
@@ -961,7 +981,7 @@ export default function GirlsJobsAbroad() {
             <Heart className="w-3.5 h-3.5 fill-[#D4AF37]/20 text-[#D4AF37] animate-pulse" />
             Official Overseas Women's Board
           </div>
-          <h1 className="text-3xl sm:text-4xl font-serif font-black text-white leading-tight">
+          <h1 id="girls-jobs-header-title" className="text-3xl sm:text-4xl font-serif font-black text-white leading-tight">
             Girls Jobs Abroad <br className="hidden sm:inline" />
             <span className="bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] bg-clip-text text-transparent">
               Verified Placements &amp; Secure Careers
@@ -1193,8 +1213,8 @@ export default function GirlsJobsAbroad() {
 
       {/* GRID LISTING OF VACANCIES */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredJobs.length > 0 ? (
-          filteredJobs.map((job) => (
+        {paginatedJobs.length > 0 ? (
+          paginatedJobs.map((job) => (
             <div 
               key={job.id} 
               className="bg-slate-950/60 p-6 rounded-2xl border border-slate-850/80 hover:border-slate-700/60 transition-all flex flex-col justify-between space-y-6 relative overflow-hidden group shadow-md"
@@ -1204,6 +1224,8 @@ export default function GirlsJobsAbroad() {
                 <img 
                   src={getJobImageByTitle(job.title) || "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&q=80&w=600"} 
                   alt={job.title}
+                  loading="lazy"
+                  decoding="async"
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                 />
@@ -1378,6 +1400,58 @@ export default function GirlsJobsAbroad() {
           })()
         )}
       </div>
+
+      {/* Pagination Controls for Girls Jobs */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-950/60 border border-slate-900 px-6 py-4 rounded-2xl">
+          <div className="text-xs font-mono text-slate-400">
+            Showing <span className="text-amber-400 font-bold">{Math.min((currentPage - 1) * JOBS_PER_PAGE + 1, filteredJobs.length)}</span> to{" "}
+            <span className="text-amber-400 font-bold">{Math.min(currentPage * JOBS_PER_PAGE, filteredJobs.length)}</span> of{" "}
+            <span className="text-white font-bold">{filteredJobs.length}</span> positions
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => {
+                setCurrentPage((p) => Math.max(1, p - 1));
+                const el = document.getElementById("girls-jobs-header-title");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition border ${
+                currentPage === 1
+                  ? "opacity-40 cursor-not-allowed border-slate-800 text-slate-600"
+                  : "border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/50 hover:bg-slate-900 cursor-pointer"
+              }`}
+            >
+              ← Prev
+            </button>
+
+            <div className="flex items-center gap-1 font-mono text-xs text-slate-400 px-2">
+              Page <span className="text-amber-400 font-bold mx-1">{currentPage}</span> of{" "}
+              <span className="text-slate-300 mx-1">{totalPages}</span>
+            </div>
+
+            <button
+              type="button"
+              disabled={currentPage >= totalPages}
+              onClick={() => {
+                setCurrentPage((p) => Math.min(totalPages, p + 1));
+                const el = document.getElementById("girls-jobs-header-title");
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition border ${
+                currentPage >= totalPages
+                  ? "opacity-40 cursor-not-allowed border-slate-800 text-slate-600"
+                  : "border-slate-800 text-slate-300 hover:text-white hover:border-amber-500/50 hover:bg-slate-900 cursor-pointer"
+              }`}
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* SAFETY ADVISORY DESK FOR FEMALE APPLICANTS */}
       <div className="bg-slate-950 p-6 sm:p-8 rounded-3xl border border-amber-500/15 space-y-6">
