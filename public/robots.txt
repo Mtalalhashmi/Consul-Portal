@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+Allow: /jobs
+Allow: /countries
+Allow: /visa
+Allow: /work-permit
+Allow: /passport-tracker
+Allow: /official-verification
+Allow: /currency-converter
+Allow: /fee-calculator
+Allow: /ai-evaluator
+Allow: /girls-jobs
+Allow: /flights
+Allow: /about
+Allow: /faq
+Allow: /terms
+Allow: /privacy-policy
+
+Disallow: /admin
+Disallow: /portal
+Disallow: /api/
+
+Sitemap: https://consulportal.tech/sitemap.xml
+Sitemap: https://consulportal.tech/sitemap-pages.xml
+Sitemap: https://consulportal.tech/sitemap-countries.xml
+Sitemap: https://consulportal.tech/sitemap-visa.xml
+Sitemap: https://consulportal.tech/sitemap-jobs.xml
+Sitemap: https://consulportal.tech/sitemap-categories.xml

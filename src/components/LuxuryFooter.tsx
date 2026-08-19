@@ -376,11 +376,19 @@ export const LuxuryFooter: React.FC<LuxuryFooterProps> = ({
             © 2018 ConsulPortal International Recruitment &amp; Consular Services. All Rights Reserved. OEP License No. 3918/LHR.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <button onClick={() => onNavigateTab("home")} className="hover:text-white transition cursor-pointer">
+            <button onClick={() => onNavigateTab("about")} className="hover:text-white transition cursor-pointer">
+              About Us
+            </button>
+            <span>•</span>
+            <button onClick={() => onNavigateTab("faq")} className="hover:text-white transition cursor-pointer">
+              FAQ
+            </button>
+            <span>•</span>
+            <button onClick={() => onNavigateTab("privacy")} className="hover:text-white transition cursor-pointer">
               Privacy Policy
             </button>
             <span>•</span>
-            <button onClick={() => onNavigateTab("home")} className="hover:text-white transition cursor-pointer">
+            <button onClick={() => onNavigateTab("terms")} className="hover:text-white transition cursor-pointer">
               Terms of Service
             </button>
             <span>•</span>

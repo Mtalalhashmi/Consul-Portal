@@ -9,6 +9,17 @@ import { RAW_COUNTRIES } from "./src/utils/countriesData";
 import { getCountry, getLiveJobs } from "./src/utils/countryDb";
 import emailRouter from "./server/email/routes";
 import { sendTransactionalEmail, sendAdminNotification, getEmailConfig } from "./server/email/emailService";
+import { 
+  generateRobotsTxt, 
+  generateSitemapIndex, 
+  generatePagesSitemap, 
+  generateCountriesSitemap, 
+  generateVisaSitemap, 
+  generateJobsSitemap, 
+  generateCategoriesSitemap 
+} from "./src/utils/sitemapEngine";
+import { getSeoMetadataForRoute } from "./src/utils/seoMeta";
+import { parseCurrentRoute, SITE_URL } from "./src/utils/seoRoutes";
 
 // Load environment variables
 dotenv.config();
@@ -6212,6 +6223,105 @@ app.post("/api/global-search", async (req, res) => {
   }
 });
 
+// ==========================================
+// TECHNICAL SEO & SITEMAP ROUTES
+// ==========================================
+
+// 1. Robots.txt
+app.get("/robots.txt", (req, res) => {
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(generateRobotsTxt());
+});
+
+// 2. Master Sitemap Index
+app.get("/sitemap.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(generateSitemapIndex());
+});
+
+// 3. Static Pages Sitemap
+app.get("/sitemap-pages.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(generatePagesSitemap());
+});
+
+// 4. Countries Profiles Sitemap
+app.get("/sitemap-countries.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(generateCountriesSitemap());
+});
+
+// 5. Visa Hubs Sitemap
+app.get("/sitemap-visa.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(generateVisaSitemap());
+});
+
+// 6. Live Job Postings Sitemap
+app.get("/sitemap-jobs.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(generateJobsSitemap());
+});
+
+// 7. Industry Category Hubs Sitemap
+app.get("/sitemap-categories.xml", (req, res) => {
+  res.setHeader("Content-Type", "application/xml; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=86400");
+  res.send(generateCategoriesSitemap());
+});
+
+// Helper function to inject SEO metadata, Open Graph tags & JSON-LD schema into HTML
+function injectSeoToHtml(rawHtml: string, reqPath: string): string {
+  try {
+    const route = parseCurrentRoute(reqPath);
+    const meta = getSeoMetadataForRoute(route);
+
+    let html = rawHtml;
+
+    // Replace Title
+    html = html.replace(/<title>.*?<\/title>/i, `<title>${meta.title}</title>`);
+
+    // Prepare dynamic SEO tags
+    const seoTags = `
+    <!-- Dynamic SEO Meta Tags -->
+    <meta name="description" content="${meta.description.replace(/"/g, '&quot;')}" />
+    <meta name="keywords" content="${meta.keywords.join(', ').replace(/"/g, '&quot;')}" />
+    <link rel="canonical" href="${meta.canonicalUrl}" />
+    <meta name="robots" content="${meta.noIndex ? 'noindex, nofollow' : 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1'}" />
+
+    <!-- Open Graph Protocol -->
+    <meta property="og:title" content="${meta.title.replace(/"/g, '&quot;')}" />
+    <meta property="og:description" content="${meta.description.replace(/"/g, '&quot;')}" />
+    <meta property="og:url" content="${meta.canonicalUrl}" />
+    <meta property="og:type" content="${meta.ogType}" />
+    <meta property="og:image" content="${meta.ogImage}" />
+    <meta property="og:site_name" content="ConsulPortal" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${meta.title.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:description" content="${meta.description.replace(/"/g, '&quot;')}" />
+    <meta name="twitter:image" content="${meta.ogImage}" />
+
+    <!-- Structured Data JSON-LD -->
+    ${meta.jsonLd && meta.jsonLd.length > 0 ? meta.jsonLd.map(schema => `<script type="application/ld+json" data-seo="consulportal-jsonld">${JSON.stringify(schema)}</script>`).join("\n    ") : ""}
+    `;
+
+    // Inject before </head>
+    html = html.replace("</head>", `${seoTags}\n  </head>`);
+    return html;
+  } catch (err) {
+    console.error("SEO Injection Error:", err);
+    return rawHtml;
+  }
+}
+
 // Global Express Error Handler to catch all unhandled route errors and return clean JSON
 app.use((err: any, req: any, res: any, next: any) => {
   console.error("[Global Express Route Error]:", err);
@@ -6245,14 +6355,17 @@ async function startServer() {
     }
   } else {
     console.log("Starting server in PRODUCTION mode (Hostinger / Standalone Node.js)...");
-    app.use(express.static(distPath));
+    app.use(express.static(distPath, { index: false }));
     app.get("*", (req: any, res: any) => {
       if (req.path.startsWith("/api/")) {
         return res.status(404).json({ error: "API endpoint not found" });
       }
       const indexPath = path.join(distPath, "index.html");
       if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
+        const rawHtml = fs.readFileSync(indexPath, "utf-8");
+        const renderedHtml = injectSeoToHtml(rawHtml, req.path);
+        res.setHeader("Content-Type", "text/html; charset=utf-8");
+        res.send(renderedHtml);
       } else {
         res.status(404).send("Application build not found. Please run 'npm run build' first.");
       }

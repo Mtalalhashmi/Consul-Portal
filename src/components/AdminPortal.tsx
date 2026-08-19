@@ -19,6 +19,7 @@ import { PassportTrack, PassportStep } from "../types";
 import { RAW_COUNTRIES } from "../utils/countriesData";
 import { addAdminJob, updateAdminJob, deleteAdminJob, validateJobDatabase, searchStructuredJobs, StructuredJob } from "../utils/jobDatabase";
 import { AdminEmailManager } from "./AdminEmailManager";
+import { AdminSeoManager } from "./AdminSeoManager";
 
 export interface ClientRecord {
   id: string;
@@ -215,7 +216,7 @@ export default function AdminPortal({
   const [selectedClientDetail, setSelectedClientDetail] = useState<ClientRecord | null>(null);
   const [clientSearchQuery, setClientSearchQuery] = useState("");
   const [clientStatusFilter, setClientStatusFilter] = useState<string>("All");
-  const [adminTab, setAdminTab] = useState<"applications" | "clients" | "passports" | "payments" | "activities" | "settings" | "chatbot" | "fees" | "jobs" | "emails">("applications");
+  const [adminTab, setAdminTab] = useState<"applications" | "clients" | "passports" | "payments" | "activities" | "settings" | "chatbot" | "fees" | "jobs" | "emails" | "seo">("applications");
   
   // Jobs Management & Database Audit State
   const [adminJobCountryFilter, setAdminJobCountryFilter] = useState("All");
@@ -2133,6 +2134,20 @@ export default function AdminPortal({
           <span>Automated Email System</span>
           <span className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold">
             Brevo & Resend
+          </span>
+        </button>
+        <button 
+          onClick={() => setAdminTab("seo")}
+          className={`px-4 py-3 text-xs sm:text-sm font-semibold transition-all border-b-2 whitespace-nowrap flex items-center gap-1.5 ${
+            adminTab === "seo" 
+              ? "border-amber-500 text-amber-400 bg-amber-500/5 font-bold" 
+              : "border-transparent text-slate-400 hover:text-white"
+          }`}
+        >
+          <Globe className="w-4 h-4 text-emerald-400" />
+          <span>SEO & Sitemaps Engine</span>
+          <span className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold">
+            Index & SERP
           </span>
         </button>
       </div>
@@ -5149,6 +5164,12 @@ export default function AdminPortal({
       {adminTab === "emails" && (
         <div className="w-full animate-fade-in">
           <AdminEmailManager />
+        </div>
+      )}
+
+      {adminTab === "seo" && (
+        <div className="w-full animate-fade-in">
+          <AdminSeoManager />
         </div>
       )}
 

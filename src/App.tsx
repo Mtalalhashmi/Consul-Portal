@@ -56,6 +56,8 @@ import CountryGuideSection from "./components/CountryGuideSection";
 import WorkforceSectors from "./components/WorkforceSectors";
 import { UniversalTopSearch } from "./components/UniversalTopSearch";
 import { FloatingWhatsAppButtons } from "./components/FloatingWhatsAppButtons";
+import { SeoHead } from "./components/SeoHead";
+import { parseCurrentRoute, getUrlForTab, slugify } from "./utils/seoRoutes";
 
 // Lazy-loaded heavy page/tab modules for ultra-fast initial page load
 const AdminPortal = lazy(() => import("./components/AdminPortal"));
@@ -74,6 +76,12 @@ const VisaExpensesPage = lazy(() => import("./components/VisaExpensesPage"));
 const AiMatchEvaluator = lazy(() => import("./components/AiMatchEvaluator"));
 const AgencyB2BPortal = lazy(() => import("./components/AgencyB2BPortal"));
 const PartnersSection = lazy(() => import("./components/PartnersSection"));
+const AboutPage = lazy(() => import("./components/AboutPage").then(m => ({ default: m.AboutPage })));
+const FaqPage = lazy(() => import("./components/FaqPage").then(m => ({ default: m.FaqPage })));
+const LegalPage = lazy(() => import("./components/LegalPages").then(m => ({ default: m.LegalPage })));
+const CountryDetailsPage = lazy(() => import("./components/CountryDetailsPage").then(m => ({ default: m.CountryDetailsPage })));
+const JobDetailsPage = lazy(() => import("./components/JobDetailsPage").then(m => ({ default: m.JobDetailsPage })));
+const CountryConsularHub = lazy(() => import("./components/CountryConsularHub").then(m => ({ default: m.CountryConsularHub })));
 
 // Elegant skeleton loader fallback for lazy modules
 function ModuleSkeleton() {
@@ -121,9 +129,47 @@ const getVacancyTags = (vacancyId: string): string[] => {
   }
 };
 
+export type AppTab = 
+  | "home" 
+  | "vacancies" 
+  | "tracker" 
+  | "flights" 
+  | "portal" 
+  | "admin" 
+  | "ai-showcase" 
+  | "girls-jobs" 
+  | "country-picker" 
+  | "currency" 
+  | "consultants" 
+  | "ai-employees" 
+  | "visa-expenses" 
+  | "ai-evaluator" 
+  | "agency-b2b" 
+  | "visa-services" 
+  | "contact" 
+  | "payment" 
+  | "partners"
+  | "about"
+  | "faq"
+  | "terms"
+  | "privacy"
+  | "country-detail"
+  | "job-detail"
+  | "official-verification"
+  | "country-visa";
+
 export default function App() {
+  // Parse initial route from browser URL for direct deep-linking & SEO
+  const initialRoute = useMemo(() => {
+    if (typeof window !== "undefined") {
+      return parseCurrentRoute(window.location.pathname);
+    }
+    return { path: "/", tab: "home" };
+  }, []);
+
   // Navigation / Tabs State
-  const [activeTab, setActiveTab] = useState<"home" | "vacancies" | "tracker" | "flights" | "portal" | "admin" | "ai-showcase" | "girls-jobs" | "country-picker" | "currency" | "consultants" | "ai-employees" | "visa-expenses" | "ai-evaluator" | "agency-b2b" | "visa-services" | "contact" | "payment" | "partners">("home");
+  const [activeTab, setActiveTab] = useState<AppTab>((initialRoute.tab as AppTab) || "home");
+  const [selectedJobId, setSelectedJobId] = useState<string>(initialRoute.jobId || "v-01");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<string>("PKR");
   const [paymentItem, setPaymentItem] = useState<{
@@ -138,9 +184,8 @@ export default function App() {
     details: "Candidate Passport Processing & Verified Seat Reservation"
   });
 
-
   // Country Guide State
-  const [selectedCountryGuide, setSelectedCountryGuide] = useState<string>("Saudi Arabia");
+  const [selectedCountryGuide, setSelectedCountryGuide] = useState<string>(initialRoute.country || "Saudi Arabia");
   const [hubRegionFilter, setHubRegionFilter] = useState<"All" | "GCC" | "Schengen">("All");
 
   // Dynamic Settings States
@@ -152,6 +197,65 @@ export default function App() {
   const [whatsAppDisplay3, setWhatsAppDisplay3] = useState("+1 (587) 838-9106");
   const [officeAddress, setOfficeAddress] = useState("145 NE 18th Ave, Camas, Washington");
   const [paymentMethods, setPaymentMethods] = useState<any[]>(PAKISTANI_PAYMENT_METHODS);
+
+  // Search and Filter States for Vacancies
+  const [selectedRegion, setSelectedRegion] = useState<"All" | "Gulf" | "Schengen" | "Europe">("All");
+  const [selectedCountry, setSelectedCountry] = useState<string>(initialRoute.country || "All");
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialRoute.category || "All");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Clean SEO URL Navigation Handler (PushState without page reload)
+  const handleNavigate = useCallback((tab: AppTab, options?: { country?: string; jobId?: string; category?: string; replace?: boolean }) => {
+    setActiveTab(tab);
+    if (options?.country) {
+      setSelectedCountry(options.country);
+      setSelectedCountryGuide(options.country);
+    }
+    if (options?.category) setSelectedCategory(options.category);
+    if (options?.jobId) setSelectedJobId(options.jobId);
+
+    const targetUrl = getUrlForTab(tab, {
+      country: options?.country || (selectedCountry !== "All" ? selectedCountry : selectedCountryGuide),
+      jobId: options?.jobId || selectedJobId,
+      category: options?.category || (selectedCategory !== "All" ? selectedCategory : undefined)
+    });
+
+    if (typeof window !== "undefined") {
+      if (options?.replace) {
+        window.history.replaceState({ tab, options }, "", targetUrl);
+      } else {
+        window.history.pushState({ tab, options }, "", targetUrl);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [selectedCountry, selectedCountryGuide, selectedJobId, selectedCategory]);
+
+  // Navigate by path string
+  const handleNavigateByPath = useCallback((path: string) => {
+    const route = parseCurrentRoute(path);
+    handleNavigate(route.tab as AppTab, {
+      country: route.country,
+      jobId: route.jobId,
+      category: route.category
+    });
+  }, [handleNavigate]);
+
+  // Synchronize Browser Back / Forward History Buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const route = parseCurrentRoute(window.location.pathname);
+      setActiveTab((route.tab as AppTab) || "home");
+      if (route.country) {
+        setSelectedCountry(route.country);
+        setSelectedCountryGuide(route.country);
+      }
+      if (route.category) setSelectedCategory(route.category);
+      if (route.jobId) setSelectedJobId(route.jobId);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // Fetch settings from server on mount with resilient retries
   useEffect(() => {
@@ -188,12 +292,6 @@ export default function App() {
       active = false;
     };
   }, []);
-
-  // Search and Filter States for Vacancies
-  const [selectedRegion, setSelectedRegion] = useState<"All" | "Gulf" | "Schengen" | "Europe">("All");
-  const [selectedCountry, setSelectedCountry] = useState<string>("All");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [searchQuery, setSearchQuery] = useState("");
 
   const availableCountries = Array.from(new Set(VACANCIES.map(v => v.country)));
   const availableCategories = Array.from(new Set(VACANCIES.map(v => v.category)));
@@ -895,6 +993,12 @@ export default function App() {
 
   return (
     <div id="root-portal" className="min-h-screen bg-[#050505] text-slate-100 font-sans selection:bg-[#D4AF37] selection:text-[#050505] overflow-x-hidden">
+      <SeoHead 
+        tab={activeTab} 
+        country={selectedCountry !== "All" ? selectedCountry : selectedCountryGuide} 
+        jobId={selectedJobId} 
+        category={selectedCategory !== "All" ? selectedCategory : undefined} 
+      />
       
       {/* Main Header Bar */}
       <header className="sticky top-0 z-50 bg-[#050505]/95 backdrop-blur-md border-b border-[#D4AF37]/30 shadow-2xl">
@@ -957,37 +1061,37 @@ export default function App() {
 
             {/* Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-1 text-xs font-semibold flex-wrap">
-              <button onClick={() => setActiveTab("home")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "home" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("home")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "home" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Home
               </button>
-              <button onClick={() => setActiveTab("vacancies")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "vacancies" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("vacancies")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "vacancies" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Overseas Vacancies
               </button>
-              <button onClick={() => setActiveTab("girls-jobs")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "girls-jobs" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("girls-jobs")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "girls-jobs" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Girls Jobs
               </button>
-              <button onClick={() => setActiveTab("tracker")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "tracker" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("tracker")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "tracker" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Passport Tracker 🛡️
               </button>
-              <button onClick={() => setActiveTab("flights")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "flights" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("flights")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "flights" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Flights
               </button>
-              <button onClick={() => setActiveTab("country-picker")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "country-picker" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("country-picker")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "country-picker" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 200 Countries
               </button>
-              <button onClick={() => setActiveTab("currency")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "currency" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("currency")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "currency" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Currency Desk
               </button>
-              <button onClick={() => setActiveTab("visa-expenses")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "visa-expenses" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("visa-expenses")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "visa-expenses" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Fee Calculator
               </button>
-              <button onClick={() => setActiveTab("ai-evaluator")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "ai-evaluator" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("ai-evaluator")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "ai-evaluator" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 AI CV Match
               </button>
-              <button onClick={() => setActiveTab("agency-b2b")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "agency-b2b" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
+              <button onClick={() => handleNavigate("agency-b2b")} className={`px-2.5 py-1.5 rounded-lg transition cursor-pointer ${activeTab === "agency-b2b" ? "text-[#F5D76E] bg-[#111111] border border-[#D4AF37]/50 shadow-[0_0_10px_rgba(212,175,55,0.2)] font-bold" : "text-[#A7A7A7] hover:text-[#F5D76E] hover:bg-[#111111]/60"}`}>
                 Agency B2B
               </button>
-              <button onClick={() => setActiveTab("portal")} className="ml-1 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] text-[#050505] text-xs font-black transition cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:brightness-110">
+              <button onClick={() => handleNavigate("portal")} className="ml-1 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#F5D76E] via-[#D4AF37] to-[#AA7C11] text-[#050505] text-xs font-black transition cursor-pointer shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:brightness-110">
                 Portal Login
               </button>
             </nav>
@@ -1003,14 +1107,14 @@ export default function App() {
             <UniversalTopSearch
               mode="header-inline"
               onNavigateTab={(tab) => {
-                setActiveTab(tab);
+                handleNavigate(tab as AppTab);
                 setIsMobileMenuOpen(false);
               }}
               onSelectCountry={(c) => {
                 setSelectedCountry(c);
                 setSelectedCountryGuide(c);
                 setSelectedRegion("All");
-                setActiveTab("vacancies");
+                handleNavigate("vacancies", { country: c });
                 setIsMobileMenuOpen(false);
               }}
               onSelectVacancy={(v) => {
@@ -1027,7 +1131,7 @@ export default function App() {
 
           {/* Item 1: Home Portal */}
           <button 
-            onClick={() => { setActiveTab("home"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("home"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'home' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
           >
             <span>Home Portal</span>
@@ -1035,7 +1139,7 @@ export default function App() {
 
           {/* Item 2: Overseas Vacancies */}
           <button 
-            onClick={() => { setActiveTab("vacancies"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("vacancies"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'vacancies' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
           >
             <span>Overseas Vacancies</span>
@@ -1043,7 +1147,7 @@ export default function App() {
 
           {/* Item 3: Girls Jobs Abroad */}
           <button 
-            onClick={() => { setActiveTab("girls-jobs"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("girls-jobs"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'girls-jobs' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
           >
             <span>Girls Jobs Abroad 🌸</span>
@@ -1052,7 +1156,7 @@ export default function App() {
 
           {/* Item 4: Country Explorer */}
           <button 
-            onClick={() => { setActiveTab("country-picker"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("country-picker"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'country-picker' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-emerald-400'}`}
           >
             <span className="text-emerald-400">Country Explorer 🌐</span>
@@ -1061,7 +1165,7 @@ export default function App() {
 
           {/* Item 5: Currency Desk */}
           <button 
-            onClick={() => { setActiveTab("currency"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("currency"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'currency' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
           >
             <span>Currency Desk 💱</span>
@@ -1070,7 +1174,7 @@ export default function App() {
 
           {/* Item 6: 3-Step Fees & Expenses */}
           <button 
-            onClick={() => { setActiveTab("visa-expenses"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("visa-expenses"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'visa-expenses' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
           >
             <span className="text-[#F5D76E]">3-Step Fees &amp; Expenses 💳</span>
@@ -1079,7 +1183,7 @@ export default function App() {
 
           {/* Item 7: AI Smart Evaluator */}
           <button 
-            onClick={() => { setActiveTab("ai-evaluator"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("ai-evaluator"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'ai-evaluator' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
           >
             <span className="text-[#F5D76E]">AI Smart Evaluator 🤖</span>
@@ -1088,7 +1192,7 @@ export default function App() {
 
           {/* Item 8: Agency B2B Portal */}
           <button 
-            onClick={() => { setActiveTab("agency-b2b"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("agency-b2b"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'agency-b2b' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-blue-300'}`}
           >
             <span className="text-blue-300">Agency B2B Portal 🏢</span>
@@ -1097,7 +1201,7 @@ export default function App() {
 
           {/* Item 9: Live Passport Tracking */}
           <button 
-            onClick={() => { setActiveTab("tracker"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("tracker"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'tracker' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
           >
             <span>Live Passport Tracking</span>
@@ -1105,7 +1209,7 @@ export default function App() {
 
           {/* Item 10: Visa Consultants */}
           <button 
-            onClick={() => { setActiveTab("consultants"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("consultants"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'consultants' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
           >
             <span className="flex items-center gap-2">Visa Consultants <span className="text-blue-400">👥</span></span>
@@ -1113,7 +1217,7 @@ export default function App() {
 
           {/* Item 11: Flight Booking */}
           <button 
-            onClick={() => { setActiveTab("flights"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("flights"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'flights' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
           >
             <span>Flight Booking ✈️</span>
@@ -1122,7 +1226,7 @@ export default function App() {
 
           {/* Item 12: AI Employees Hub */}
           <button 
-            onClick={() => { setActiveTab("ai-employees"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("ai-employees"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'ai-employees' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
           >
             <span className="text-[#F5D76E]">AI Employees Hub 🤖</span>
@@ -1131,7 +1235,7 @@ export default function App() {
 
           {/* Item 13: AI Integration Showcase */}
           <button 
-            onClick={() => { setActiveTab("ai-showcase"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("ai-showcase"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'ai-showcase' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
           >
             <span className="text-[#F5D76E]">AI Integration Showcase ⚡</span>
@@ -1140,7 +1244,7 @@ export default function App() {
 
           {/* Item 14: Login / Sign In */}
           <button 
-            onClick={() => { setActiveTab("portal"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("portal"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'portal' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-slate-200'}`}
           >
             <span className="flex items-center gap-1.5">Login / Sign In <span className="text-blue-400">👤</span></span>
@@ -1149,7 +1253,7 @@ export default function App() {
 
           {/* Item 15: Admin Portal */}
           <button 
-            onClick={() => { setActiveTab("admin"); setIsMobileMenuOpen(false); }} 
+            onClick={() => { handleNavigate("admin"); setIsMobileMenuOpen(false); }} 
             className={`w-full text-left px-4 py-3 rounded-2xl border transition flex items-center justify-between font-bold text-sm cursor-pointer ${activeTab === 'admin' ? 'border-[#D4AF37] bg-[#111111] text-[#F5D76E] shadow-[0_0_12px_rgba(212,175,55,0.2)]' : 'border-[#D4AF37]/20 bg-[#0B0B0B] hover:bg-[#111111] text-[#F5D76E]'}`}
           >
             <span className="text-[#F5D76E] flex items-center gap-1.5">Admin Portal 🔐</span>
@@ -3043,6 +3147,96 @@ export default function App() {
           <div className="animate-fade-in max-w-7xl mx-auto">
             <Suspense fallback={<ModuleSkeleton />}>
               <PartnersSection whatsAppNum={whatsAppNum} whatsAppDisplay={whatsAppDisplay} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB: COUNTRY DETAIL DEDICATED PAGE */}
+        {activeTab === "country-detail" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <CountryDetailsPage 
+                countrySlug={slugify(selectedCountry !== "All" ? selectedCountry : selectedCountryGuide)}
+                onNavigate={handleNavigateByPath}
+                onApplyJob={(jobId) => {
+                  const v = VACANCIES.find(item => item.id === jobId);
+                  if (v) setApplyingVacancy(v);
+                }}
+              />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB: JOB DETAIL DEDICATED PAGE */}
+        {activeTab === "job-detail" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <JobDetailsPage 
+                jobId={selectedJobId}
+                onNavigate={handleNavigateByPath}
+                onApply={(id) => {
+                  const v = VACANCIES.find(item => item.id === id);
+                  if (v) setApplyingVacancy(v);
+                }}
+                whatsAppNum={whatsAppNum}
+              />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB: COUNTRY VISA SERVICES & EXPENSES HUB */}
+        {activeTab === "country-visa" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <CountryConsularHub 
+                countryName={selectedCountry !== "All" ? selectedCountry : selectedCountryGuide}
+                onNavigate={handleNavigateByPath}
+                onSelectCategory={(cat) => handleNavigate("vacancies", { category: cat })}
+                whatsAppNum={whatsAppNum}
+              />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB: OFFICIAL GOVERNMENT & EMBASSY VERIFICATION */}
+        {activeTab === "official-verification" && (
+          <div className="animate-fade-in max-w-7xl mx-auto px-4 py-8 space-y-6">
+            <OfficialVerificationDesk onReturnHome={() => handleNavigate("home")} />
+          </div>
+        )}
+
+        {/* TAB: ABOUT PAGE */}
+        {activeTab === "about" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <AboutPage onNavigate={handleNavigateByPath} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB: FAQ PAGE */}
+        {activeTab === "faq" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <FaqPage onNavigate={handleNavigateByPath} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB: TERMS OF SERVICE */}
+        {activeTab === "terms" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <LegalPage type="terms" onNavigate={handleNavigateByPath} />
+            </Suspense>
+          </div>
+        )}
+
+        {/* TAB: PRIVACY POLICY */}
+        {activeTab === "privacy" && (
+          <div className="animate-fade-in">
+            <Suspense fallback={<ModuleSkeleton />}>
+              <LegalPage type="privacy" onNavigate={handleNavigateByPath} />
             </Suspense>
           </div>
         )}
