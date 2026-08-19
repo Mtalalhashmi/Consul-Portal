@@ -246,7 +246,8 @@ export function getSeoMetadataForRoute(route: {
           "@type": "Organization",
           "name": SITE_NAME,
           "url": SITE_URL,
-          "logo": `${SITE_URL}/favicon.svg`,
+          "logo": `${SITE_URL}/consulportal-logo.png`,
+          "image": `${SITE_URL}/consulportal-logo.png`,
           "description": "ConsulPortal provides visa and work permit information, global job listings, and travel services for destinations around the world.",
           "address": {
             "@type": "PostalAddress",

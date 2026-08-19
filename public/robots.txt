@@ -15,14 +15,22 @@ Allow: /about
 Allow: /faq
 Allow: /terms
 Allow: /privacy-policy
+Allow: /favicon*
+Allow: /apple-touch-icon*
+Allow: /*.png
+Allow: /*.ico
+Allow: /*.svg
 
 Disallow: /admin
 Disallow: /portal
 Disallow: /api/
 
-Sitemap: https://consulportal.tech/sitemap.xml
-Sitemap: https://consulportal.tech/sitemap-pages.xml
-Sitemap: https://consulportal.tech/sitemap-countries.xml
-Sitemap: https://consulportal.tech/sitemap-visa.xml
-Sitemap: https://consulportal.tech/sitemap-jobs.xml
-Sitemap: https://consulportal.tech/sitemap-categories.xml
+User-agent: Googlebot-Favicon
+Allow: /
+
+Sitemap: https://www.consulportal.tech/sitemap.xml
+Sitemap: https://www.consulportal.tech/sitemap-pages.xml
+Sitemap: https://www.consulportal.tech/sitemap-countries.xml
+Sitemap: https://www.consulportal.tech/sitemap-visa.xml
+Sitemap: https://www.consulportal.tech/sitemap-jobs.xml
+Sitemap: https://www.consulportal.tech/sitemap-categories.xml
