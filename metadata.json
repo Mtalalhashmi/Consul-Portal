@@ -1,6 +1,6 @@
 {
-  "name": "Remix: Gulf, Schengen \u0026 Europe Career Portal",
-  "description": "A premium recruitment, consular visa consultancy, and SEO-optimized career portal with dynamic sitemaps, server-side OpenGraph and JSON-LD meta injection, live tracking, and verified international job boards.",
+  "name": "ConsulPortal",
+  "description": "ConsulPortal provides visa and work permit information, global job listings, and travel services for destinations around the world.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

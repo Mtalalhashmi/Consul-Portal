@@ -13,7 +13,7 @@ export interface AppRoute {
   type?: "terms" | "privacy";
 }
 
-export const SITE_URL = "https://consulportal.tech";
+export const SITE_URL = "https://www.consulportal.tech";
 export const SITE_NAME = "ConsulPortal";
 export const DEFAULT_OG_IMAGE = "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&q=80&w=1200";
 

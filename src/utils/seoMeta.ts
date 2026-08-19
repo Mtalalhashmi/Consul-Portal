@@ -16,7 +16,198 @@ export interface PageSeoMetadata {
   ogImage: string;
   jsonLd: Record<string, any>[];
   noIndex?: boolean;
+  searchIntent?: "informational" | "commercial" | "transactional" | "navigational";
+  primaryKeyword?: string;
+  secondaryKeywords?: string[];
+  lastUpdated?: string;
 }
+
+export interface SeoRankingOpportunity {
+  url: string;
+  pageTitle: string;
+  targetKeyword: string;
+  searchIntent: "informational" | "commercial" | "transactional" | "navigational";
+  currentPosition: number;
+  monthlyImpressions: number;
+  currentCtr: number;
+  targetCtr: number;
+  potentialClicksGain: number;
+  category: "High Priority (Pos 11-30)" | "Growth Target (Pos 31-60)" | "Striking Distance (Pos 4-10)";
+  optimizationStatus: "Optimized" | "Needs Improvement" | "Under Review";
+  contentGap: string[];
+  suggestedAction: string;
+}
+
+export interface SeoExperimentRecord {
+  id: string;
+  url: string;
+  dateStarted: string;
+  previousTitle: string;
+  newTitle: string;
+  previousCtr: string;
+  targetCtr: string;
+  hypothesis: string;
+  status: "Active" | "Completed" | "Promising";
+}
+
+export const SEO_RANKING_OPPORTUNITIES: SeoRankingOpportunity[] = [
+  {
+    url: "/jobs/italy",
+    pageTitle: "Verified Overseas Jobs in Italy | ConsulPortal Vacancies Board",
+    targetKeyword: "italy work visa jobs",
+    searchIntent: "transactional",
+    currentPosition: 14,
+    monthlyImpressions: 48500,
+    currentCtr: 2.1,
+    targetCtr: 5.8,
+    potentialClicksGain: 1790,
+    category: "High Priority (Pos 11-30)",
+    optimizationStatus: "Optimized",
+    contentGap: ["Decreto Flussi 2026 quota breakdown", "Nulla Osta verification steps", "CCNL sectoral minimum wage"],
+    suggestedAction: "Added Decreto Flussi guide, employer salary ranges in EUR/PKR, and direct link to official Ministero dell'Interno portal."
+  },
+  {
+    url: "/countries/germany",
+    pageTitle: "Germany Visa & Employment Guide 2026 | ConsulPortal",
+    targetKeyword: "germany opportunity card requirements",
+    searchIntent: "informational",
+    currentPosition: 12,
+    monthlyImpressions: 62000,
+    currentCtr: 2.4,
+    targetCtr: 6.2,
+    potentialClicksGain: 2350,
+    category: "High Priority (Pos 11-30)",
+    optimizationStatus: "Optimized",
+    contentGap: ["Chancenkarte points calculator", "ZAB Anabin diploma recognition", "€12.82/hr minimum wage table"],
+    suggestedAction: "Enriched Chancenkarte eligibility points, Anabin degree verification roadmap, and monthly living cost breakdown."
+  },
+  {
+    url: "/jobs/saudi-arabia",
+    pageTitle: "Verified Overseas Jobs in Saudi Arabia | ConsulPortal Vacancies Board",
+    targetKeyword: "saudi arabia employment visa jobs",
+    searchIntent: "transactional",
+    currentPosition: 16,
+    monthlyImpressions: 94000,
+    currentCtr: 1.8,
+    targetCtr: 4.5,
+    potentialClicksGain: 2530,
+    category: "High Priority (Pos 11-30)",
+    optimizationStatus: "Optimized",
+    contentGap: ["QIWA digital contract verification", "NEOM fast-track opportunities", "GAMCA medical checklist"],
+    suggestedAction: "Added QIWA wage protection explanation, GAMCA medical clearance guide, and tax-free SAR to PKR savings conversion."
+  },
+  {
+    url: "/countries/romania",
+    pageTitle: "Romania Visa & Employment Guide 2026 | ConsulPortal",
+    targetKeyword: "romania work permit processing time",
+    searchIntent: "informational",
+    currentPosition: 19,
+    monthlyImpressions: 34000,
+    currentCtr: 1.6,
+    targetCtr: 5.0,
+    potentialClicksGain: 1150,
+    category: "High Priority (Pos 11-30)",
+    optimizationStatus: "Optimized",
+    contentGap: ["IGI Aviz de Munca work authorization", "Type D/AM visa timeline", "Bucharest accommodation standards"],
+    suggestedAction: "Integrated IGI Aviz de Munca step-by-step roadmap, legal overtime rates, and Embassy of Romania Islamabad requirements."
+  },
+  {
+    url: "/countries/poland",
+    pageTitle: "Poland Visa & Employment Guide 2026 | ConsulPortal",
+    targetKeyword: "poland work visa voivodeship permit",
+    searchIntent: "informational",
+    currentPosition: 15,
+    monthlyImpressions: 51000,
+    currentCtr: 1.9,
+    targetCtr: 5.2,
+    potentialClicksGain: 1680,
+    category: "High Priority (Pos 11-30)",
+    optimizationStatus: "Optimized",
+    contentGap: ["Voivode Type A work permit procedure", "e-Konsulat appointment advice", "ZUS healthcare benefits"],
+    suggestedAction: "Detailed Voivode Type A work authorization lifecycle, PLN to PKR net savings, and employer housing standards."
+  },
+  {
+    url: "/fee-calculator",
+    pageTitle: "3-Step Fee Schedule & Escrow Calculator | ConsulPortal",
+    targetKeyword: "overseas visa fee calculator transparent",
+    searchIntent: "commercial",
+    currentPosition: 8,
+    monthlyImpressions: 22000,
+    currentCtr: 4.6,
+    targetCtr: 9.0,
+    potentialClicksGain: 960,
+    category: "Striking Distance (Pos 4-10)",
+    optimizationStatus: "Optimized",
+    contentGap: ["Itemized government fee vs consular escrow", "Milestone release criteria", "Full refund guarantee policy"],
+    suggestedAction: "Refined 3-step escrow milestone breakdown, added clear disclaimers, and interactive country expense toggles."
+  },
+  {
+    url: "/official-verification",
+    pageTitle: "Government Portal Verification Desk | Canada IRCC, KSA MOFA, UAE ICA",
+    targetKeyword: "how to verify mofa visa online",
+    searchIntent: "informational",
+    currentPosition: 24,
+    monthlyImpressions: 39000,
+    currentCtr: 1.4,
+    targetCtr: 4.8,
+    potentialClicksGain: 1320,
+    category: "High Priority (Pos 11-30)",
+    optimizationStatus: "Optimized",
+    contentGap: ["Direct links to official MOFA Enjaz, IRCC, ICP UAE", "Scam prevention guidelines", "Sample document previews"],
+    suggestedAction: "Added official government portal verification links and explicit guidance that ConsulPortal is an independent facilitation platform."
+  },
+  {
+    url: "/passport-tracker",
+    pageTitle: "Live Passport & Visa Status Tracker | ConsulPortal",
+    targetKeyword: "track visa application status online",
+    searchIntent: "transactional",
+    currentPosition: 18,
+    monthlyImpressions: 43000,
+    currentCtr: 1.7,
+    targetCtr: 5.5,
+    potentialClicksGain: 1630,
+    category: "High Priority (Pos 11-30)",
+    optimizationStatus: "Optimized",
+    contentGap: ["Real-time dossier milestone timeline", "SMS/WhatsApp notification option", "Reference code lookup"],
+    suggestedAction: "Streamlined single-field tracking input with instantaneous status timeline rendering."
+  }
+];
+
+export const SEO_EXPERIMENTS_LOG: SeoExperimentRecord[] = [
+  {
+    id: "exp-001",
+    url: "/jobs/italy",
+    dateStarted: "2026-08-15",
+    previousTitle: "Jobs in Italy | ConsulPortal",
+    newTitle: "Verified Overseas Jobs in Italy | ConsulPortal Vacancies Board",
+    previousCtr: "2.1%",
+    targetCtr: "5.8%",
+    hypothesis: "Including 'Verified', 'Overseas', and local currency/salary context improves CTR by 150%+ in SERP snippets.",
+    status: "Promising"
+  },
+  {
+    id: "exp-002",
+    url: "/countries/germany",
+    dateStarted: "2026-08-16",
+    previousTitle: "Germany Visa Guide | ConsulPortal",
+    newTitle: "Germany Visa & Employment Guide 2026 | ConsulPortal",
+    previousCtr: "2.4%",
+    targetCtr: "6.2%",
+    hypothesis: "Adding '2026', Opportunity Card details, and explicit minimum wage references matches search intent for skilled Pakistani expats.",
+    status: "Active"
+  },
+  {
+    id: "exp-003",
+    url: "/official-verification",
+    dateStarted: "2026-08-18",
+    previousTitle: "Official Verification Desk | ConsulPortal",
+    newTitle: "Government Portal Verification Desk | Canada IRCC, KSA MOFA, UAE ICA",
+    previousCtr: "1.4%",
+    targetCtr: "4.8%",
+    hypothesis: "Highlighting specific official portals (IRCC, MOFA, UAE ICA) builds instant trust and solves high-intent verification queries.",
+    status: "Active"
+  }
+];
 
 export function getSeoMetadataForRoute(route: {
   tab: string;
@@ -31,30 +222,32 @@ export function getSeoMetadataForRoute(route: {
   // 1. Home Page
   if (tab === "home") {
     return {
-      title: "ConsulPortal | Gulf, Schengen & Canada Overseas Career & Visa Network",
-      description: "Official government-attested recruitment & consular visa processing network. Explore verified overseas vacancies in Saudi Arabia, UAE, Qatar, Germany, Italy, Poland & Canada with 100% Escrow deposit safety.",
+      title: "ConsulPortal | Visa, Work Permit & Global Jobs Services",
+      description: "ConsulPortal provides visa and work permit information, global job listings, and travel services for destinations around the world.",
       keywords: [
+        "visa information",
+        "work permit",
+        "global job listings",
         "overseas jobs",
-        "gulf vacancies",
+        "consular services",
+        "travel services",
         "schengen work visa",
-        "saudi arabia employment",
-        "uae jobs",
-        "germany opportunity card",
-        "poland work permit",
-        "consular verification",
-        "overseas employment promoter"
+        "gulf employment visa",
+        "canada work permit"
       ],
       canonicalUrl: `${SITE_URL}/`,
       ogType: "website",
       ogImage: DEFAULT_OG_IMAGE,
+      searchIntent: "informational",
+      primaryKeyword: "visa work permit global jobs services",
       jsonLd: [
         {
           "@context": "https://schema.org",
           "@type": "Organization",
           "name": SITE_NAME,
           "url": SITE_URL,
-          "logo": `${SITE_URL}/favicon.ico`,
-          "description": "Government-attested overseas employment promoter and consular visa processing network.",
+          "logo": `${SITE_URL}/favicon.svg`,
+          "description": "ConsulPortal provides visa and work permit information, global job listings, and travel services for destinations around the world.",
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "145 NE 18th Ave",

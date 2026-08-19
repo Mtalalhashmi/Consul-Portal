@@ -6287,6 +6287,19 @@ function injectSeoToHtml(rawHtml: string, reqPath: string): string {
     // Replace Title
     html = html.replace(/<title>.*?<\/title>/i, `<title>${meta.title}</title>`);
 
+    // Remove static tags in template so dynamic ones don't collide
+    html = html.replace(/<meta\s+name=["']description["'].*?>/gi, "");
+    html = html.replace(/<meta\s+name=["']keywords["'].*?>/gi, "");
+    html = html.replace(/<link\s+rel=["']canonical["'].*?>/gi, "");
+    html = html.replace(/<meta\s+property=["']og:title["'].*?>/gi, "");
+    html = html.replace(/<meta\s+property=["']og:description["'].*?>/gi, "");
+    html = html.replace(/<meta\s+property=["']og:url["'].*?>/gi, "");
+    html = html.replace(/<meta\s+property=["']og:type["'].*?>/gi, "");
+    html = html.replace(/<meta\s+property=["']og:image["'].*?>/gi, "");
+    html = html.replace(/<meta\s+name=["']twitter:title["'].*?>/gi, "");
+    html = html.replace(/<meta\s+name=["']twitter:description["'].*?>/gi, "");
+    html = html.replace(/<meta\s+name=["']twitter:image["'].*?>/gi, "");
+
     // Prepare dynamic SEO tags
     const seoTags = `
     <!-- Dynamic SEO Meta Tags -->
@@ -6350,6 +6363,27 @@ async function startServer() {
         appType: "spa",
       });
       app.use(vite.middlewares);
+
+      // In dev mode, handle all non-API GET requests by reading and transforming index.html with Vite
+      app.use("*", async (req: any, res: any, next: any) => {
+        if (req.method !== "GET" || req.originalUrl.startsWith("/api/")) {
+          return next();
+        }
+        try {
+          const indexPath = path.join(process.cwd(), "index.html");
+          if (fs.existsSync(indexPath)) {
+            let template = fs.readFileSync(indexPath, "utf-8");
+            template = await vite.transformIndexHtml(req.originalUrl, template);
+            const renderedHtml = injectSeoToHtml(template, req.path);
+            res.status(200).set({ "Content-Type": "text/html; charset=utf-8" }).end(renderedHtml);
+          } else {
+            next();
+          }
+        } catch (e: any) {
+          vite.ssrFixStacktrace(e);
+          next(e);
+        }
+      });
     } catch (err) {
       console.error("Vite middleware error:", err);
     }

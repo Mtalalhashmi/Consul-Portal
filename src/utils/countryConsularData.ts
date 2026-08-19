@@ -538,6 +538,225 @@ const DETAILED_PROFILES: Record<string, Partial<CountryConsularProfile>> = {
       { step: 3, title: "Qatar Visa Centre (QVC) Appointment", agency: "Qatar Visa Center Islamabad / Karachi", details: "In-country biometric registration, medical checkup, and digital contract signing under one roof." },
       { step: 4, title: "QID Stamping in Doha", agency: "Ministry of Interior (MOI Qatar)", details: "Biometric Qatar ID card delivery upon arrival." }
     ]
+  },
+  "Italy": {
+    safetyScore: "9.2 / 10",
+    qualityOfLife: "High European Lifestyle & Cultural Heritage",
+    avgProcessingTime: "8 – 14 Weeks",
+    minWageString: "€1,300 – €1,600 / mo (Governed by Sectoral Collective Agreements CCNL)",
+    avgExpatSalaryString: "€1,800 – €3,800 / mo",
+    exchangeRateToPkr: 304.20,
+    exchangeRateToUsd: 1.08,
+    officialPortalUrl: "https://www.interno.gov.it/it/temi/immigrazione-e-asilo",
+    officialPortalName: "Ministero dell'Interno (Italian Ministry of the Interior - Sportello Unico)",
+    visaPathways: [
+      {
+        title: "Decreto Flussi Work Visa (Nulla Osta)",
+        badge: "Official Government Quota",
+        description: "Official annual immigration quota work authorization (Nulla Osta al Lavoro) issued through the Sportello Unico per l'Immigrazione for non-seasonal and seasonal employment.",
+        targetProfessions: ["Road Freight Drivers (Patente C/CE/CQC)", "Construction Trades", "Hospitality Crew", "Agriculture Technicians", "Mechanical Maintenance"],
+        processingDuration: "8 – 12 Weeks"
+      },
+      {
+        title: "EU Blue Card Italy (Carta Blu UE)",
+        badge: "High-Skilled Professional",
+        description: "Fast-track residence and work authorization for university-degreed professionals with an employment contract of at least 1 year meeting national salary thresholds.",
+        targetProfessions: ["Software Engineers", "Architects", "Biomedical Specialists", "Financial Analysts"],
+        processingDuration: "6 – 8 Weeks"
+      },
+      {
+        title: "Seasonal Agriculture & Tourism Subordinate Visa",
+        badge: "Seasonal Quota",
+        description: "9-month multi-entry employment visa for seasonal agricultural harvesting and peak hospitality operations, convertible to permanent subordinate contracts.",
+        targetProfessions: ["Farm Equipment Operators", "Harvest Supervisors", "Hotel Line Staff"],
+        processingDuration: "6 – 10 Weeks"
+      }
+    ],
+    costOfLiving: {
+      singleRoomRent: "€350 – €650 / mo (Northern/Central Italy) / €250 – €450 / mo (Southern)",
+      groceriesAndFood: "€200 – €320 / mo",
+      publicTransport: "€35 – €60 / mo (Trenitalia / Local Urban Network)",
+      estimatedTotal: "€650 – €1,100 / mo",
+      potentialNetSavingsPkr: "PKR 350,000 – 850,000 / mo"
+    },
+    laborLaws: {
+      standardHours: "40 Hours / Week (8 Hours / Day max as per CCNL standards)",
+      overtimeRate: "1.15x to 1.30x standard hourly rate depending on sector CCNL",
+      weeklyOff: "Sunday + Saturday half-day/full day",
+      mandatoryBenefits: ["Servizio Sanitario Nazionale (SSN) Public Healthcare", "INPS National Pension & Unemployment (NASpI) Protection", "13th & 14th Month Bonus Salary (Tredicesima/Quattordicesima)", "20 – 26 Days Paid Vacation"],
+      endOfServiceGratuity: "TFR (Trattamento di Fine Rapporto) — approx. 1 month salary accumulated for each year worked, paid upon termination."
+    },
+    inDemandSectors: [
+      { sector: "Heavy Road Transport & European Logistics", growth: "+33% YoY", roles: ["Class C/CE Truck Drivers", "Forklift Operators", "Fleet Coordinators", "Warehouse Pickers"] },
+      { sector: "Construction & Industrial Maintenance", growth: "+26% YoY", roles: ["Carpenters", "Welders", "Masons", "HVAC Mechanics", "Scaffolding Leads"] },
+      { sector: "Hospitality & Culinary Tourism", growth: "+21% YoY", roles: ["Pastry Chefs", "Line Cooks", "Banqueting Staff", "Housekeeping Leads"] },
+      { sector: "Agriculture & Agro-Industrial Processing", growth: "+18% YoY", roles: ["Greenhouse Technicians", "Tractor Operators", "Processing Plant Leads"] }
+    ],
+    attestationRoadmap: [
+      { step: 1, title: "Employer Nulla Osta Issuance", agency: "Sportello Unico per l'Immigrazione (Prefettura)", details: "Employer files electronic application via Ministero dell'Interno portal and obtains cleared Nulla Osta." },
+      { step: 2, title: "Declaration of Value (Dichiarazione di Valore) & MOFA", agency: "HEC, IBCC, MOFA & Italian Embassy", details: "Educational credential translation into Italian and official consular verification." },
+      { step: 3, title: "National D-Visa Application at Embassy/VFS", agency: "VFS Global / Embassy of Italy Islamabad/Karachi", details: "Submission of original Nulla Osta, employment contract, passport, and biometric enrollment." },
+      { step: 4, title: "Permesso di Soggiorno Application in Italy", agency: "Questura (Italian State Police)", details: "Poste Italiane kit submission and biometric residence card issuance upon arrival in Italy." }
+    ]
+  },
+  "Romania": {
+    safetyScore: "9.4 / 10",
+    qualityOfLife: "Rapidly Growing EU Economy",
+    avgProcessingTime: "6 – 10 Weeks",
+    minWageString: "RON 3,700 / mo (approx. €750 / mo statutory minimum gross)",
+    avgExpatSalaryString: "RON 4,500 – 9,000 / mo (€900 – €1,800)",
+    exchangeRateToPkr: 61.20,
+    exchangeRateToUsd: 0.22,
+    officialPortalUrl: "https://igi.mai.gov.ro",
+    officialPortalName: "Inspectoratul General pentru Imigrări (IGI Romania)",
+    visaPathways: [
+      {
+        title: "Aviz de Muncă Work Authorization",
+        badge: "Direct Government Permit",
+        description: "Official work authorization issued by the General Inspectorate for Immigration (IGI) allowing non-EU citizens to enter full-time employment contracts.",
+        targetProfessions: ["Construction Craftsmen", "Heavy Truck Drivers", "Factory Assemblers", "Food Packaging Technicians", "Hotel Service Staff"],
+        processingDuration: "5 – 8 Weeks"
+      },
+      {
+        title: "Long-Stay Visa for Employment (Type D/AM)",
+        badge: "National EU Visa",
+        description: "Long-stay employment entry visa stamped by Romanian diplomatic missions, leading to Permis de Ședere (Residence Permit) valid for 1–2 years renewable.",
+        targetProfessions: ["Welders", "Electricians", "Masons", "Forklift Operators", "Chefs"],
+        processingDuration: "4 – 6 Weeks"
+      }
+    ],
+    costOfLiving: {
+      singleRoomRent: "Free (Provided by Employer) or RON 700 – 1,300 / mo",
+      groceriesAndFood: "RON 500 – 800 / mo",
+      publicTransport: "RON 80 – 140 / mo (STB Bucharest transit / Metrorex)",
+      estimatedTotal: "RON 800 – 1,800 / mo",
+      potentialNetSavingsPkr: "PKR 220,000 – 520,000 / mo"
+    },
+    laborLaws: {
+      standardHours: "8 Hours / Day (40 Hours / Week)",
+      overtimeRate: "1.75x standard wage or equivalent paid time off",
+      weeklyOff: "2 Consecutive Days (Saturday & Sunday)",
+      mandatoryBenefits: ["Casa Națională de Asigurări de Sănătate (CNAS) Healthcare", "Social Security & Pension Contributions", "20 – 22 Days Paid Annual Leave", "Employer-Subsidized Housing & Utilities"],
+      endOfServiceGratuity: "Severance compensation as stipulated in individual and collective labor contracts."
+    },
+    inDemandSectors: [
+      { sector: "Commercial & Civil Infrastructure", growth: "+38% YoY", roles: ["Structural Welders", "Reinforcement Fixers", "Masons", "Civil Site Technicians"] },
+      { sector: "Manufacturing & Industrial Packaging", growth: "+29% YoY", roles: ["Production Machine Operators", "Assembly Line Staff", "Quality Checkers"] },
+      { sector: "Logistics & Fleet Transport", growth: "+25% YoY", roles: ["International Truck Drivers", "Warehouse Leads", "Forklift Drivers"] },
+      { sector: "Hospitality & Food Production", growth: "+19% YoY", roles: ["Line Cooks", "Pastry Bakers", "Hotel Attendants"] }
+    ],
+    attestationRoadmap: [
+      { step: 1, title: "IGI Aviz de Muncă Clearance", agency: "Inspectoratul General pentru Imigrări (Romania)", details: "Original approved labor authorization document issued in Romania." },
+      { step: 2, title: "Police Clearance Certificate & MOFA", agency: "Ministry of Foreign Affairs (MOFA)", details: "Attested character verification certificate from local police headquarters." },
+      { step: 3, title: "International Medical Fitness Check", agency: "Accredited Medical Center", details: "Panel medical report certifying absence of communicable diseases." },
+      { step: 4, title: "E-Visa Portal & Romanian Embassy Submission", agency: "Embassy of Romania Islamabad", details: "Electronic registration on eVisa.mae.ro, in-person interview, and D/AM visa sticker stamping." }
+    ]
+  },
+  "Kuwait": {
+    safetyScore: "9.5 / 10",
+    qualityOfLife: "High (High-Income Gulf State)",
+    avgProcessingTime: "3 – 6 Weeks",
+    minWageString: "KWD 150 – 250 / mo (Statutory minimum KWD 75, market skilled KWD 250-600)",
+    avgExpatSalaryString: "KWD 300 – 1,200 / mo",
+    exchangeRateToPkr: 905.00,
+    exchangeRateToUsd: 3.25,
+    officialPortalUrl: "https://www.manpower.gov.kw",
+    officialPortalName: "Public Authority for Manpower (PAM Kuwait) & MOI",
+    visaPathways: [
+      {
+        title: "Article 18 Private Sector Work Visa (Iqama)",
+        badge: "Standard Work Permit",
+        description: "Official private sector employment visa issued under Article 18 by the Public Authority for Manpower and Kuwait Ministry of Interior.",
+        targetProfessions: ["Automotive Mechanics", "Heavy Vehicle Drivers", "Electrical Technicians", "Nurses", "Store Managers"],
+        processingDuration: "3 – 5 Weeks"
+      },
+      {
+        title: "Government Project & Oil Sector Visa",
+        badge: "KPC / State Contracts",
+        description: "Direct quota allocations for state oil and gas refineries (KNPC/KOC), infrastructure works, and healthcare facilities.",
+        targetProfessions: ["Pipeline Welders", "Chemical Lab Techs", "Safety Engineers", "Heavy Plant Operators"],
+        processingDuration: "2 – 4 Weeks"
+      }
+    ],
+    costOfLiving: {
+      singleRoomRent: "Free (Provided by Employer) or KWD 80 – 160 / mo",
+      groceriesAndFood: "KWD 40 – 70 / mo",
+      publicTransport: "Free (Company Transport) or KWD 15 – 25 / mo (KPTC bus network)",
+      estimatedTotal: "KWD 80 – 220 / mo",
+      potentialNetSavingsPkr: "PKR 280,000 – 950,000 / mo (100% Tax Free)"
+    },
+    laborLaws: {
+      standardHours: "8 Hours / Day (48 Hours / Week)",
+      overtimeRate: "1.25x basic hourly pay, 1.5x on weekly off days",
+      weeklyOff: "Friday",
+      mandatoryBenefits: ["Employer-Paid Health Insurance & Ministry Health Card", "Employer-Furnished Accommodation or Housing Allowance", "Round-Trip Air Ticket Every 1-2 Years", "30 Days Paid Annual Vacation"],
+      endOfServiceGratuity: "15 days salary per year for first 5 years, full month salary per year thereafter."
+    },
+    inDemandSectors: [
+      { sector: "Automotive & Heavy Fleet Services", growth: "+27% YoY", roles: ["Diesel Mechanics", "Auto Electricians", "Fleet Supervisors", "Trailer Drivers"] },
+      { sector: "Oil Refining & Petrochemical Tech", growth: "+22% YoY", roles: ["Rig Technicians", "Inspection Engineers", "Industrial Welders"] },
+      { sector: "Hospitality, Retail & Cafe Chains", growth: "+18% YoY", roles: ["Baristas", "Restaurant Supervisors", "Cashiers", "Chefs"] },
+      { sector: "Healthcare & Private Clinics", growth: "+24% YoY", roles: ["General Nurses", "Physiotherapists", "Pharmacy Technicians"] }
+    ],
+    attestationRoadmap: [
+      { step: 1, title: "GAMCA / Wafid Medical Clearance", agency: "GAMCA Approved Clinic", details: "Standard blood panel, infectious disease tests, and digital medical fit certificate." },
+      { step: 2, title: "Degree & Technical Certificate Attestation", agency: "HEC, IBCC, MOFA & Kuwait Cultural / Embassy", details: "Sequential verification and Kuwait Embassy sticker attestation." },
+      { step: 3, title: "Police Clearance Certificate (PCC) Attestation", agency: "Local Police HQ & MOFA", details: "Fingerprint character certificate authenticated by MOFA and Kuwait Embassy." },
+      { step: 4, title: "Protector of Emigrants & Visa Endorsement", agency: "Bureau of Emigration (Pakistan)", details: "Official Protector endorsement insuring foreign worker insurance rights." }
+    ]
+  },
+  "Oman": {
+    safetyScore: "9.7 / 10 (High GCC Stability)",
+    qualityOfLife: "High Standard & Peaceful Sultanate",
+    avgProcessingTime: "3 – 5 Weeks",
+    minWageString: "OMR 250 – 400 / mo (Standard for Skilled Expats)",
+    avgExpatSalaryString: "OMR 350 – 1,100 / mo",
+    exchangeRateToPkr: 735.00,
+    exchangeRateToUsd: 2.65,
+    officialPortalUrl: "https://www.mol.gov.om",
+    officialPortalName: "Ministry of Labour (MOL Oman) & Royal Oman Police (ROP)",
+    visaPathways: [
+      {
+        title: "Standard Employment Residence Visa",
+        badge: "MOL Work Permit",
+        description: "Official work visa approved by the Ministry of Labour (Sanad System) and stamped by the Royal Oman Police (ROP) Directorate General of Passports.",
+        targetProfessions: ["Site Engineers", "HVAC Mechanics", "Hotel Supervisors", "Heavy Drivers", "Electricians"],
+        processingDuration: "3 – 4 Weeks"
+      },
+      {
+        title: "Special Economic Zone Duqm (SEZAD) Fast Track",
+        badge: "Priority Economic Zone",
+        description: "Expedited visa and clearance quotas for industrial, port, and logistics enterprises operating within Special Economic Zones.",
+        targetProfessions: ["Logistics Supervisors", "Port Operators", "Marine Technicians"],
+        processingDuration: "2 – 3 Weeks"
+      }
+    ],
+    costOfLiving: {
+      singleRoomRent: "Free (Provided) or OMR 80 – 150 / mo",
+      groceriesAndFood: "OMR 40 – 65 / mo",
+      publicTransport: "OMR 15 – 30 / mo (Mwasalat bus & taxi network)",
+      estimatedTotal: "OMR 75 – 200 / mo",
+      potentialNetSavingsPkr: "PKR 240,000 – 780,000 / mo (100% Tax Free)"
+    },
+    laborLaws: {
+      standardHours: "8 Hours / Day (40 – 45 Hours / Week, 36 hrs during Ramadan)",
+      overtimeRate: "1.25x daytime, 1.5x night-time or holiday shifts",
+      weeklyOff: "2 Days (Friday & Saturday)",
+      mandatoryBenefits: ["Employer-Paid Health Insurance Card", "Company Provided Housing or Allowance", "Annual Round-Trip Flight Ticket", "30 Days Paid Annual Leave"],
+      endOfServiceGratuity: "15 days basic wage per year for first 3 years, 1 month wage for each subsequent year."
+    },
+    inDemandSectors: [
+      { sector: "Construction & Industrial Maintenance", growth: "+23% YoY", roles: ["Civil Supervisors", "Electricians", "Welders", "Plumbing Leads"] },
+      { sector: "Hospitality & Ecotourism Resorts", growth: "+27% YoY", roles: ["Front Desk Associates", "Executive Chefs", "Baristas", "Housekeepers"] },
+      { sector: "Transport, Fleets & Port Operations", growth: "+19% YoY", roles: ["Heavy Drivers", "Forklift Operators", "Port Cargo Handlers"] },
+      { sector: "Private Healthcare & Clinics", growth: "+17% YoY", roles: ["Registered Nurses", "Lab Technicians", "Radiology Assistants"] }
+    ],
+    attestationRoadmap: [
+      { step: 1, title: "GAMCA Medical Examination", agency: "GAMCA / Wafid Center", details: "Complete medical fitness certification required for all GCC work permits." },
+      { step: 2, title: "Educational Attestation & MOFA", agency: "HEC, IBCC, MOFA & Oman Embassy", details: "Academic and professional experience certificate authentication." },
+      { step: 3, title: "Royal Oman Police E-Visa Clearance", agency: "Royal Oman Police (ROP)", details: "Employer clears electronic work visa and labor permit in Muscat." },
+      { step: 4, title: "Protector of Emigrants Stamping", agency: "Bureau of Emigration", details: "Government protector clearance before international departure." }
+    ]
   }
 };
 
