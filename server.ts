@@ -6299,6 +6299,7 @@ function injectSeoToHtml(rawHtml: string, reqPath: string): string {
     html = html.replace(/<meta\s+name=["']twitter:title["'].*?>/gi, "");
     html = html.replace(/<meta\s+name=["']twitter:description["'].*?>/gi, "");
     html = html.replace(/<meta\s+name=["']twitter:image["'].*?>/gi, "");
+    html = html.replace(/<script\s+type=["']application\/ld\+json["'].*?<\/script>/gis, "");
 
     // Prepare dynamic SEO tags
     const seoTags = `

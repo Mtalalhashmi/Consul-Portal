@@ -1,6 +1,6 @@
 {
   "name": "ConsulPortal",
-  "description": "ConsulPortal provides visa and work permit information, global job listings, and travel services for destinations around the world.",
+  "description": "ConsulPortal provides global visa services, work permits, verified job opportunities, immigration guidance, and travel services across 200+ countries.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

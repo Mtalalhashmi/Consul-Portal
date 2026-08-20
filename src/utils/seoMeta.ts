@@ -222,12 +222,13 @@ export function getSeoMetadataForRoute(route: {
   // 1. Home Page
   if (tab === "home") {
     return {
-      title: "ConsulPortal | Visa, Work Permit & Global Jobs Services",
-      description: "ConsulPortal provides visa and work permit information, global job listings, and travel services for destinations around the world.",
+      title: "ConsulPortal | Global Visa Services & Jobs Worldwide",
+      description: "ConsulPortal provides global visa services, work permits, verified job opportunities, immigration guidance, and travel services across 200+ countries.",
       keywords: [
-        "visa information",
-        "work permit",
-        "global job listings",
+        "global visa services",
+        "work permits",
+        "verified job opportunities",
+        "immigration guidance",
         "overseas jobs",
         "consular services",
         "travel services",
@@ -239,16 +240,17 @@ export function getSeoMetadataForRoute(route: {
       ogType: "website",
       ogImage: DEFAULT_OG_IMAGE,
       searchIntent: "informational",
-      primaryKeyword: "visa work permit global jobs services",
+      primaryKeyword: "global visa services jobs worldwide",
       jsonLd: [
         {
           "@context": "https://schema.org",
           "@type": "Organization",
-          "name": SITE_NAME,
-          "url": SITE_URL,
+          "name": "ConsulPortal",
+          "alternateName": ["Consul Portal", "consulportal.tech"],
+          "url": `${SITE_URL}/`,
           "logo": `${SITE_URL}/consulportal-logo.png`,
           "image": `${SITE_URL}/consulportal-logo.png`,
-          "description": "ConsulPortal provides visa and work permit information, global job listings, and travel services for destinations around the world.",
+          "description": "ConsulPortal provides global visa services, work permits, verified job opportunities, immigration guidance, and travel services across 200+ countries.",
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "145 NE 18th Ave",
@@ -268,8 +270,9 @@ export function getSeoMetadataForRoute(route: {
         {
           "@context": "https://schema.org",
           "@type": "WebSite",
-          "name": SITE_NAME,
-          "url": SITE_URL,
+          "name": "ConsulPortal",
+          "alternateName": ["Consul Portal", "consulportal.tech"],
+          "url": `${SITE_URL}/`,
           "potentialAction": {
             "@type": "SearchAction",
             "target": `${SITE_URL}/jobs?q={search_term_string}`,

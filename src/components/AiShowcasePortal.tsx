@@ -336,23 +336,23 @@ export function AiShowcasePortal() {
     }, 3000);
   };
 
-  const generatedScriptSnippet = `<!-- AI Studio Support Widget Core -->
-<div id="aistudio-chat-container"></div>
+  const generatedScriptSnippet = `<!-- ConsulPortal AI Support Widget Core -->
+<div id="consulportal-chat-container"></div>
 <script>
-  window.AiStudioChatConfig = {
+  window.ConsulPortalChatConfig = {
     brandName: "${widgetBrand}",
     themeColor: "${widgetColor}",
     greetingText: "${widgetGreeting}",
     knowledgeBaseUrl: "${customKnowledge || "Auto-Page-Scraping-Enabled"}",
-    clientId: "consul-portal-showcase-1002"
+    clientId: "consul-portal-ai-1002"
   };
   (function(d, s, id) {
     var js, fjs = d.getElementsByTagName(s)[0];
     if (d.getElementById(id)) return;
     js = d.createElement(s); js.id = id;
-    js.src = "https://cdn.aistudio.build/widgets/support-v3.min.js";
+    js.src = "https://cdn.consulportal.tech/widgets/support-v3.min.js";
     fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'aistudio-chat-sdk'));
+  }(document, 'script', 'consulportal-chat-sdk'));
 </script>`;
 
   const copyToClipboard = () => {

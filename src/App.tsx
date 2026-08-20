@@ -1015,7 +1015,7 @@ export default function App() {
                 Consul<span className="gold-text-gradient">Portal</span>
               </span>
               <p className="text-[10px] font-mono font-bold text-[#D4AF37] tracking-wider uppercase">
-                GULF &amp; SCHENGEN SERVICES
+                GLOBAL VISA &amp; WORK PERMITS
               </p>
             </div>
           </div>
